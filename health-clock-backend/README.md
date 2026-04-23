@@ -8,7 +8,7 @@
 - Supabase (Auth + Postgres)
 - Cloudflare R2 (对象存储)
 - LangChain + Dashscope Qwen3.6-Plus (AI)
-- 腾讯云 OCR
+- 百度 OCR
 
 ## 安装依赖
 

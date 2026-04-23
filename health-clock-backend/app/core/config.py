@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     AI_MODEL_PROVIDER: str = "dashscope"
     AI_MODEL_NAME: str = "qwen-plus"
 
-    TENCENT_SECRET_ID: str = ""
-    TENCENT_SECRET_KEY: str = ""
+    BAIDU_OCR_API_KEY: str = ""
+    BAIDU_OCR_SECRET_KEY: str = ""
 
     APP_ENV: str = "dev"
     APP_DEBUG: bool = True

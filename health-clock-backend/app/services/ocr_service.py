@@ -1,19 +1,46 @@
 import base64
 import json
 
-from tencentcloud.common import credential
-from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
-from tencentcloud.common.profile.client_profile import ClientProfile
-from tencentcloud.common.profile.http_profile import HttpProfile
-from tencentcloud.ocr.v20181119 import models, ocr_client
+import requests
 
 from app.core.config import settings
 
 
 class OCRService:
     def __init__(self):
-        self.secret_id = settings.TENCENT_SECRET_ID
-        self.secret_key = settings.TENCENT_SECRET_KEY
+        self.api_key = settings.BAIDU_OCR_API_KEY
+        self.secret_key = settings.BAIDU_OCR_SECRET_KEY
+        self.access_token = None
+
+    def _get_access_token(self) -> str:
+        """
+        获取百度 OCR Access Token
+
+        Returns:
+            Access Token
+        """
+        if self.access_token:
+            return self.access_token
+
+        url = "https://aip.baidubce.com/oauth/2.0/token"
+        params = {
+            "grant_type": "client_credentials",
+            "client_id": self.api_key,
+            "client_secret": self.secret_key,
+        }
+
+        try:
+            response = requests.post(url, params=params, timeout=10)
+            result = response.json()
+
+            if "access_token" in result:
+                self.access_token = result["access_token"]
+                return self.access_token
+            else:
+                raise Exception(f"获取 Access Token 失败: {result}")
+
+        except Exception as e:
+            raise Exception(f"获取 Access Token 失败: {str(e)}")
 
     def recognize_general(self, image_url: str) -> str:
         """
@@ -26,31 +53,32 @@ class OCRService:
             识别的文本内容
         """
         try:
-            cred = credential.Credential(self.secret_id, self.secret_key)
-            http_profile = HttpProfile()
-            http_profile.endpoint = "ocr.tencentcloudapi.com"
+            access_token = self._get_access_token()
+            url = f"https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic?access_token={access_token}"
 
-            client_profile = ClientProfile()
-            client_profile.httpProfile = http_profile
+            # 下载图片并转为 base64
+            image_response = requests.get(image_url, timeout=10)
+            image_base64 = base64.b64encode(image_response.content).decode("utf-8")
 
-            client = ocr_client.OcrClient(cred, "ap-guangzhou", client_profile)
+            # 调用百度 OCR
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+            data = {"image": image_base64}
 
-            req = models.GeneralAccurateOCRRequest()
-            params = {"ImageUrl": image_url}
-            req.from_json_string(json.dumps(params))
+            response = requests.post(url, headers=headers, data=data, timeout=10)
+            result = response.json()
 
-            resp = client.GeneralAccurateOCR(req)
-            result = json.loads(resp.to_json_string())
+            if "error_code" in result:
+                raise Exception(f"OCR 识别失败: {result.get('error_msg', '未知错误')}")
 
             # 提取文本
             text_lines = []
-            for item in result.get("TextDetections", []):
-                text_lines.append(item.get("DetectedText", ""))
+            for item in result.get("words_result", []):
+                text_lines.append(item.get("words", ""))
 
             return "\n".join(text_lines)
 
-        except TencentCloudSDKException as e:
-            raise Exception(f"OCR 识别失败: {e.message}")
+        except Exception as e:
+            raise Exception(f"OCR 识别失败: {str(e)}")
 
     def recognize_medical(self, image_url: str) -> dict:
         """
@@ -63,25 +91,27 @@ class OCRService:
             结构化的医疗信息
         """
         try:
-            cred = credential.Credential(self.secret_id, self.secret_key)
-            http_profile = HttpProfile()
-            http_profile.endpoint = "ocr.tencentcloudapi.com"
+            access_token = self._get_access_token()
+            url = f"https://aip.baidubce.com/rest/2.0/ocr/v1/medical_record?access_token={access_token}"
 
-            client_profile = ClientProfile()
-            client_profile.httpProfile = http_profile
+            # 下载图片并转为 base64
+            image_response = requests.get(image_url, timeout=10)
+            image_base64 = base64.b64encode(image_response.content).decode("utf-8")
 
-            client = ocr_client.OcrClient(cred, "ap-guangzhou", client_profile)
+            # 调用百度医疗票据识别
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+            data = {"image": image_base64}
 
-            req = models.MedicalInvoiceOCRRequest()
-            params = {"ImageUrl": image_url}
-            req.from_json_string(json.dumps(params))
+            response = requests.post(url, headers=headers, data=data, timeout=10)
+            result = response.json()
 
-            resp = client.MedicalInvoiceOCR(req)
-            result = json.loads(resp.to_json_string())
+            if "error_code" in result:
+                # 如果医疗识别失败，降级到通用识别
+                return {"text": self.recognize_general(image_url)}
 
             return result
 
-        except TencentCloudSDKException as e:
+        except Exception:
             # 如果医疗识别失败，降级到通用识别
             return {"text": self.recognize_general(image_url)}
 

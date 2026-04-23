@@ -15,7 +15,7 @@
 - **后端**: FastAPI
   - LangChain (AI 框架)
   - Dashscope Qwen3.6-Plus (AI 模型)
-  - 腾讯云 OCR
+  - 百度 OCR
 - **数据库**: Supabase Postgres
 - **认证**: Supabase Auth (手机号 + Apple 登录)
 - **存储**: Cloudflare R2
