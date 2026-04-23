@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from supabase import Client
 
 from app.schemas.member import MemberCreate, MemberUpdate
@@ -62,7 +64,7 @@ class MemberRepository:
         """软删除成员"""
         response = (
             self.supabase.table(self.table)
-            .update({"deleted_at": "now()"})
+            .update({"deleted_at": datetime.now().isoformat()})
             .eq("id", member_id)
             .eq("user_id", user_id)
             .is_("deleted_at", "null")
