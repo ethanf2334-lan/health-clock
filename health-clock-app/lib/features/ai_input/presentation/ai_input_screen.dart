@@ -78,7 +78,7 @@ class _AIInputScreenState extends ConsumerState<AIInputScreen> {
   }
 
   Widget _buildResultSection() {
-    final resultAsync = ref.watch(aiParseResultProvider);
+    final resultAsync = ref.watch(aIParseResultProvider);
 
     return resultAsync.when(
       data: (result) {
@@ -145,8 +145,7 @@ class _AIInputScreenState extends ConsumerState<AIInputScreen> {
                       child: OutlinedButton(
                         onPressed: () {
                           _textController.clear();
-                          ref.read(aiParseResultProvider.notifier).state =
-                              const AsyncValue.data(null);
+                          ref.invalidate(aIParseResultProvider);
                         },
                         child: const Text('重新输入'),
                       ),
@@ -240,7 +239,7 @@ class _AIInputScreenState extends ConsumerState<AIInputScreen> {
     });
 
     try {
-      await ref.read(aiParseResultProvider.notifier).parseText(text);
+      await ref.read(aIParseResultProvider.notifier).parseText(text);
     } finally {
       if (mounted) {
         setState(() {

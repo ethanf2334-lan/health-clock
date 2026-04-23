@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../shared/models/member.dart';
+import '../../../shared/models/member.dart';
 import '../providers/member_provider.dart';
 
 class MemberFormScreen extends ConsumerStatefulWidget {
@@ -67,7 +67,7 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _relation,
+              initialValue: _relation,
               decoration: const InputDecoration(
                 labelText: '关系',
               ),
@@ -87,7 +87,7 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _gender,
+              initialValue: _gender,
               decoration: const InputDecoration(
                 labelText: '性别',
               ),

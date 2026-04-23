@@ -1,7 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/services/api_client.dart';
+import '../../../core/services/api_client.dart';
 
 part 'ai_input_provider.g.dart';
 

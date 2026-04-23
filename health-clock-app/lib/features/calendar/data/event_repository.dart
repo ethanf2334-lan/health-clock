@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../shared/models/health_event.dart';
-import '../services/api_client.dart';
+import '../../../core/services/api_client.dart';
+import '../../../shared/models/health_event.dart';
 
 part 'event_repository.g.dart';
 

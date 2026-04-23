@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -61,11 +62,17 @@ class NotificationService {
       ),
     );
 
+    // 转换为 TZDateTime
+    final tz.TZDateTime tzScheduledDate = tz.TZDateTime.from(
+      scheduledDate,
+      tz.local,
+    );
+
     await _notifications.zonedSchedule(
       id,
       title,
       body,
-      scheduledDate,
+      tzScheduledDate,
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:

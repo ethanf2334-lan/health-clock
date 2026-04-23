@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../shared/models/member.dart';
+import '../../../shared/models/member.dart';
 import '../data/member_repository.dart';
 
 part 'member_provider.g.dart';
