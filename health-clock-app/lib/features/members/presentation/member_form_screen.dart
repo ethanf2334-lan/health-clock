@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/models/member.dart';
+import '../data/member_repository.dart';
 import '../providers/member_provider.dart';
 
 class MemberFormScreen extends ConsumerStatefulWidget {
@@ -161,15 +162,27 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
     });
 
     try {
-      final memberData = MemberCreate(
-        name: _nameController.text,
-        relation: _relation,
-        gender: _gender,
-        birthDate: _birthDate,
-        notes: _notesController.text.isEmpty ? null : _notesController.text,
-      );
-
-      await ref.read(memberListProvider.notifier).addMember(memberData);
+      if (widget.member != null) {
+        final repo = ref.read(memberRepositoryProvider);
+        final updates = <String, dynamic>{
+          'name': _nameController.text,
+          'relation': _relation,
+          'gender': _gender,
+          'birth_date': _birthDate?.toIso8601String(),
+          'notes': _notesController.text.isEmpty ? null : _notesController.text,
+        };
+        await repo.updateMember(widget.member!.id, updates);
+        await ref.read(memberListProvider.notifier).refresh();
+      } else {
+        final memberData = MemberCreate(
+          name: _nameController.text,
+          relation: _relation,
+          gender: _gender,
+          birthDate: _birthDate,
+          notes: _notesController.text.isEmpty ? null : _notesController.text,
+        );
+        await ref.read(memberListProvider.notifier).addMember(memberData);
+      }
 
       if (mounted) {
         Navigator.of(context).pop();

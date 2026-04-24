@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/services/notification_service.dart';
 
@@ -49,10 +50,9 @@ class _NotificationPermissionScreenState
             child: const Text('取消'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).pop();
-              // TODO: 打开系统设置
-              // openAppSettings();
+              await openAppSettings();
             },
             child: const Text('去设置'),
           ),

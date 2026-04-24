@@ -11,7 +11,8 @@ class AIParseResult extends _$AIParseResult {
     return null;
   }
 
-  Future<void> parseText(String text, {String? memberName}) async {
+  Future<void> parseText(String text,
+      {String? memberId, String? memberName}) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final dio = ref.read(dioProvider);
@@ -19,6 +20,7 @@ class AIParseResult extends _$AIParseResult {
         '/ai/parse-text',
         data: {
           'text': text,
+          if (memberId != null) 'member_id': memberId,
           if (memberName != null) 'member_name': memberName,
         },
       );

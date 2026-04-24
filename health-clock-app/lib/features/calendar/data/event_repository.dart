@@ -11,6 +11,25 @@ EventRepository eventRepository(EventRepositoryRef ref) {
   return EventRepository(ref.watch(dioProvider));
 }
 
+Map<String, dynamic> _normalizeEvent(Map<String, dynamic> j) => {
+      'id': j['id'],
+      'memberId': j['member_id'] ?? j['memberId'],
+      'title': j['title'],
+      'description': j['description'],
+      'eventType': j['event_type'] ?? j['eventType'],
+      'scheduledAt': j['scheduled_at'] ?? j['scheduledAt'],
+      'isAllDay': j['is_all_day'] ?? j['isAllDay'] ?? false,
+      'repeatRule': j['repeat_rule'] ?? j['repeatRule'],
+      'notifyOffsets': j['notify_offsets'] ?? j['notifyOffsets'],
+      'status': j['status'] ?? 'pending',
+      'sourceType': j['source_type'] ?? j['sourceType'] ?? 'manual',
+      'sourceText': j['source_text'] ?? j['sourceText'],
+      'aiConfidence': j['ai_confidence'] ?? j['aiConfidence'],
+      'createdAt': j['created_at'] ?? j['createdAt'],
+      'updatedAt': j['updated_at'] ?? j['updatedAt'],
+      'completedAt': j['completed_at'] ?? j['completedAt'],
+    };
+
 class EventRepository {
   final Dio _dio;
 
@@ -35,28 +54,24 @@ class EventRepository {
       queryParameters: queryParams,
     );
     final data = response.data['data'] as List;
-    return data.map((json) => HealthEvent.fromJson(json)).toList();
+    return data
+        .map((j) => HealthEvent.fromJson(_normalizeEvent(j as Map<String, dynamic>)))
+        .toList();
   }
 
   Future<HealthEvent> getEvent(String id) async {
     final response = await _dio.get('/events/$id');
-    return HealthEvent.fromJson(response.data['data']);
+    return HealthEvent.fromJson(_normalizeEvent(response.data['data'] as Map<String, dynamic>));
   }
 
   Future<HealthEvent> createEvent(EventCreate event) async {
-    final response = await _dio.post(
-      '/events',
-      data: event.toJson(),
-    );
-    return HealthEvent.fromJson(response.data['data']);
+    final response = await _dio.post('/events', data: event.toJson());
+    return HealthEvent.fromJson(_normalizeEvent(response.data['data'] as Map<String, dynamic>));
   }
 
   Future<HealthEvent> updateEvent(String id, Map<String, dynamic> updates) async {
-    final response = await _dio.put(
-      '/events/$id',
-      data: updates,
-    );
-    return HealthEvent.fromJson(response.data['data']);
+    final response = await _dio.put('/events/$id', data: updates);
+    return HealthEvent.fromJson(_normalizeEvent(response.data['data'] as Map<String, dynamic>));
   }
 
   Future<void> deleteEvent(String id) async {
@@ -65,6 +80,6 @@ class EventRepository {
 
   Future<HealthEvent> completeEvent(String id) async {
     final response = await _dio.post('/events/$id/complete');
-    return HealthEvent.fromJson(response.data['data']);
+    return HealthEvent.fromJson(_normalizeEvent(response.data['data'] as Map<String, dynamic>));
   }
 }

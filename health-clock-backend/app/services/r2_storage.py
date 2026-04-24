@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import boto3
 from botocore.client import Config
@@ -9,15 +9,27 @@ from app.core.config import settings
 
 class R2StorageService:
     def __init__(self):
-        self.s3_client = boto3.client(
-            "s3",
-            endpoint_url=settings.R2_ENDPOINT_URL,
-            aws_access_key_id=settings.R2_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
-            config=Config(signature_version="s3v4"),
-        )
+        self._s3_client = None
         self.bucket = settings.R2_BUCKET
         self.public_url = settings.R2_PUBLIC_URL
+
+    @property
+    def s3_client(self):
+        """Lazy 初始化 S3 客户端，未配置时首次调用才会报错，避免启动阶段崩溃。"""
+        if self._s3_client is None:
+            if not settings.R2_ENDPOINT_URL:
+                raise RuntimeError(
+                    "R2 未配置：请在 .env 中设置 R2_ENDPOINT_URL / R2_ACCESS_KEY_ID / "
+                    "R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_PUBLIC_URL"
+                )
+            self._s3_client = boto3.client(
+                "s3",
+                endpoint_url=settings.R2_ENDPOINT_URL,
+                aws_access_key_id=settings.R2_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
+                config=Config(signature_version="s3v4"),
+            )
+        return self._s3_client
 
     def generate_upload_signature(
         self,
@@ -37,13 +49,11 @@ class R2StorageService:
                 "expires_in": 3600
             }
         """
-        # 生成唯一的对象 key
         timestamp = datetime.now().strftime("%Y%m%d")
         unique_id = str(uuid.uuid4())
         file_ext = file_name.split(".")[-1] if "." in file_name else ""
         object_key = f"documents/{member_id}/{timestamp}/{unique_id}.{file_ext}"
 
-        # 生成预签名上传 URL
         upload_url = self.s3_client.generate_presigned_url(
             "put_object",
             Params={
@@ -54,7 +64,6 @@ class R2StorageService:
             ExpiresIn=expires_in,
         )
 
-        # 生成文件访问 URL
         file_url = f"{self.public_url}/{object_key}"
 
         return {
