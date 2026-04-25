@@ -22,12 +22,12 @@ class DocumentDetailScreen extends ConsumerWidget {
         title: const Text('文档详情'),
         actions: [
           detailAsync.whenOrNull(
-            data: (doc) => IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
-              tooltip: '删除文档',
-              onPressed: () => _confirmDelete(context, ref, doc),
-            ),
-          ) ??
+                data: (doc) => IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  tooltip: '删除文档',
+                  onPressed: () => _confirmDelete(context, ref, doc),
+                ),
+              ) ??
               const SizedBox.shrink(),
         ],
       ),
@@ -45,6 +45,7 @@ class DocumentDetailScreen extends ConsumerWidget {
     final dateText = doc.documentDate != null
         ? DateFormat('yyyy-MM-dd').format(doc.documentDate!.toLocal())
         : DateFormat('yyyy-MM-dd').format(doc.createdAt.toLocal());
+    final aiEntries = _visibleAiEntries(doc);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -72,8 +73,7 @@ class DocumentDetailScreen extends ConsumerWidget {
           [
             _infoRow('标题', doc.title ?? doc.fileName),
             _infoRow('分类', _categoryLabel(doc.category)),
-            if (doc.hospitalName != null)
-              _infoRow('医院', doc.hospitalName!),
+            if (doc.hospitalName != null) _infoRow('医院', doc.hospitalName!),
             _infoRow('日期', dateText),
             _infoRow('文件名', doc.fileName),
             _infoRow('大小', _formatSize(doc.fileSize)),
@@ -82,34 +82,20 @@ class DocumentDetailScreen extends ConsumerWidget {
         const SizedBox(height: 16),
 
         // AI 摘要
-        if (doc.aiSummary != null && doc.aiSummary!.isNotEmpty) ...[
-          // 有效信息字段（排除内部字段）
-          final _aiHidden = {'candidate_events', 'raw_text', 'error', 'ai_error'};
-          final validEntries = doc.aiSummary!.entries
-              .where((e) => !_aiHidden.contains(e.key) && e.value != null)
-              .toList();
-          if (validEntries.isNotEmpty)
-            _section(
-              context,
-              'AI 提取信息',
-              validEntries
-                  .where((e) {
-                    final v = e.value;
-                    if (v == null) return false;
-                    if (v is List && v.isEmpty) return false;
-                    if (v is String && v.trim().isEmpty) return false;
-                    return true;
-                  })
-                  .map((e) => _infoRow(_labelKey(e.key), _formatValue(e.value)))
-                  .toList(),
-            ),
+        if (aiEntries.isNotEmpty) ...[
+          _section(
+            context,
+            'AI 提取信息',
+            aiEntries
+                .map((e) => _infoRow(_labelKey(e.key), _formatValue(e.value)))
+                .toList(),
+          ),
           const SizedBox(height: 16),
         ],
 
         // OCR 全文
         if (doc.ocrText != null && doc.ocrText!.isNotEmpty) ...[
-          Text('OCR 识别文本',
-              style: Theme.of(context).textTheme.titleMedium),
+          Text('OCR 识别文本', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Card(
             child: Padding(
@@ -164,8 +150,7 @@ class DocumentDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _section(
-      BuildContext context, String title, List<Widget> children) {
+  Widget _section(BuildContext context, String title, List<Widget> children) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -190,16 +175,29 @@ class DocumentDetailScreen extends ConsumerWidget {
           SizedBox(
             width: 80,
             child: Text(label,
-                style: const TextStyle(
-                    color: Colors.grey, fontSize: 13)),
+                style: const TextStyle(color: Colors.grey, fontSize: 13)),
           ),
           Expanded(
-            child: Text(value,
-                style: const TextStyle(fontSize: 14)),
+            child: Text(value, style: const TextStyle(fontSize: 14)),
           ),
         ],
       ),
     );
+  }
+
+  List<MapEntry<String, dynamic>> _visibleAiEntries(HealthDocument doc) {
+    final summary = doc.aiSummary;
+    if (summary == null || summary.isEmpty) return [];
+
+    const hidden = {'candidate_events', 'raw_text', 'error', 'ai_error'};
+    return summary.entries.where((entry) {
+      if (hidden.contains(entry.key)) return false;
+      final value = entry.value;
+      if (value == null) return false;
+      if (value is List && value.isEmpty) return false;
+      if (value is String && value.trim().isEmpty) return false;
+      return true;
+    }).toList();
   }
 
   Future<void> _openInBrowser(BuildContext context, HealthDocument doc) async {
@@ -234,8 +232,7 @@ class DocumentDetailScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child:
-                const Text('删除', style: TextStyle(color: Colors.red)),
+            child: const Text('删除', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

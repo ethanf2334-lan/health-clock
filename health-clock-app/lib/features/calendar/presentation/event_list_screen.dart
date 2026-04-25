@@ -9,6 +9,8 @@ import '../providers/event_provider.dart';
 
 enum EventRange { today, week, month, all }
 
+enum EventView { list, week, month }
+
 class EventListScreen extends ConsumerStatefulWidget {
   const EventListScreen({super.key});
 
@@ -18,7 +20,10 @@ class EventListScreen extends ConsumerStatefulWidget {
 
 class _EventListScreenState extends ConsumerState<EventListScreen> {
   EventRange _range = EventRange.week;
+  EventView _view = EventView.list;
   bool _showCompleted = false;
+  DateTime _focusedDate = DateTime.now();
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void initState() {
@@ -29,22 +34,35 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
   void _applyFilter() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    DateTime? start = today;
+    DateTime? start;
     DateTime? end;
 
-    switch (_range) {
-      case EventRange.today:
-        end = today.add(const Duration(days: 1));
+    switch (_view) {
+      case EventView.list:
+        start = today;
+        switch (_range) {
+          case EventRange.today:
+            end = today.add(const Duration(days: 1));
+            break;
+          case EventRange.week:
+            end = today.add(const Duration(days: 7));
+            break;
+          case EventRange.month:
+            end = today.add(const Duration(days: 30));
+            break;
+          case EventRange.all:
+            start = null;
+            end = null;
+            break;
+        }
         break;
-      case EventRange.week:
-        end = today.add(const Duration(days: 7));
+      case EventView.week:
+        start = _startOfWeek(_focusedDate);
+        end = start.add(const Duration(days: 7));
         break;
-      case EventRange.month:
-        end = today.add(const Duration(days: 30));
-        break;
-      case EventRange.all:
-        start = null;
-        end = null;
+      case EventView.month:
+        start = DateTime(_focusedDate.year, _focusedDate.month);
+        end = DateTime(_focusedDate.year, _focusedDate.month + 1);
         break;
     }
 
@@ -66,15 +84,71 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
 
     return Column(
       children: [
-        _buildRangeBar(),
+        _buildViewBar(),
+        if (_view == EventView.list) _buildRangeBar(),
         Expanded(
           child: eventsAsync.when(
-            data: (events) => _buildList(events),
+            data: (events) => _view == EventView.list
+                ? _buildList(events)
+                : _buildCalendar(events),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('加载失败：$e')),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildViewBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: SegmentedButton<EventView>(
+              segments: const [
+                ButtonSegment(
+                  value: EventView.list,
+                  icon: Icon(Icons.view_agenda_outlined),
+                  label: Text('列表'),
+                ),
+                ButtonSegment(
+                  value: EventView.week,
+                  icon: Icon(Icons.view_week_outlined),
+                  label: Text('周'),
+                ),
+                ButtonSegment(
+                  value: EventView.month,
+                  icon: Icon(Icons.calendar_month_outlined),
+                  label: Text('月'),
+                ),
+              ],
+              selected: {_view},
+              onSelectionChanged: (s) {
+                setState(() {
+                  _view = s.first;
+                  _focusedDate = _selectedDate;
+                });
+                _applyFilter();
+              },
+              style: const ButtonStyle(
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            tooltip: _showCompleted ? '隐藏已完成' : '显示已完成',
+            icon: Icon(
+              _showCompleted ? Icons.check_circle : Icons.check_circle_outline,
+            ),
+            onPressed: () {
+              setState(() => _showCompleted = !_showCompleted);
+              _applyFilter();
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -101,18 +175,262 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: _showCompleted ? '隐藏已完成' : '显示已完成',
-            icon: Icon(
-              _showCompleted ? Icons.check_circle : Icons.check_circle_outline,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendar(List<HealthEvent> events) {
+    final selectedEvents = events
+        .where((e) => _isSameDay(e.scheduledAt.toLocal(), _selectedDate))
+        .toList();
+
+    return RefreshIndicator(
+      onRefresh: () => ref.read(eventListProvider.notifier).refresh(),
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 96),
+        children: [
+          _buildCalendarHeader(),
+          if (_view == EventView.week)
+            _buildWeekGrid(events)
+          else
+            _buildMonthGrid(events),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+            child: Text(
+              DateFormat('M月d日 EEEE', 'zh_CN').format(_selectedDate),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
+          ),
+          if (selectedEvents.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: Center(
+                child: Text(
+                  '当天暂无提醒',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ),
+            )
+          else
+            ...selectedEvents.map(_buildTile),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarHeader() {
+    final title = _view == EventView.week
+        ? '${DateFormat('M月d日', 'zh_CN').format(_startOfWeek(_focusedDate))} - ${DateFormat('M月d日', 'zh_CN').format(_startOfWeek(_focusedDate).add(const Duration(days: 6)))}'
+        : DateFormat('yyyy年M月', 'zh_CN').format(_focusedDate);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: '上一页',
+            icon: const Icon(Icons.chevron_left),
+            onPressed: () => _moveCalendar(-1),
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          TextButton(
             onPressed: () {
-              setState(() => _showCompleted = !_showCompleted);
+              final now = DateTime.now();
+              final today = DateTime(now.year, now.month, now.day);
+              setState(() {
+                _focusedDate = today;
+                _selectedDate = today;
+              });
               _applyFilter();
+            },
+            child: const Text('今天'),
+          ),
+          IconButton(
+            tooltip: '下一页',
+            icon: const Icon(Icons.chevron_right),
+            onPressed: () => _moveCalendar(1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeekGrid(List<HealthEvent> events) {
+    final start = _startOfWeek(_focusedDate);
+    final days = List.generate(7, (i) => start.add(Duration(days: i)));
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: days
+            .map(
+              (day) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: _buildDayCell(day, events, inCurrentMonth: true),
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+
+  Widget _buildMonthGrid(List<HealthEvent> events) {
+    final first = DateTime(_focusedDate.year, _focusedDate.month);
+    final start = _startOfWeek(first);
+    final days = List.generate(42, (i) => start.add(Duration(days: i)));
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Column(
+        children: [
+          Row(
+            children: const ['一', '二', '三', '四', '五', '六', '日']
+                .map(
+                  (label) => Expanded(
+                    child: Center(
+                      child: Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 6),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: days.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 4,
+              crossAxisSpacing: 4,
+              childAspectRatio: 0.82,
+            ),
+            itemBuilder: (_, index) {
+              final day = days[index];
+              return _buildDayCell(
+                day,
+                events,
+                inCurrentMonth: day.month == _focusedDate.month,
+              );
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDayCell(
+    DateTime day,
+    List<HealthEvent> events, {
+    required bool inCurrentMonth,
+  }) {
+    final normalizedDay = DateTime(day.year, day.month, day.day);
+    final count = events
+        .where((e) => _isSameDay(e.scheduledAt.toLocal(), normalizedDay))
+        .length;
+    final selected = _isSameDay(normalizedDay, _selectedDate);
+    final now = DateTime.now();
+    final today =
+        _isSameDay(normalizedDay, DateTime(now.year, now.month, now.day));
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () {
+        final shouldRefetch = _view == EventView.month &&
+            normalizedDay.month != _focusedDate.month;
+        setState(() {
+          _selectedDate = normalizedDay;
+          if (shouldRefetch) {
+            _focusedDate = normalizedDay;
+          }
+        });
+        if (shouldRefetch) {
+          _applyFilter();
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        decoration: BoxDecoration(
+          color: selected
+              ? colorScheme.primaryContainer
+              : today
+                  ? colorScheme.secondaryContainer.withValues(alpha: 0.55)
+                  : null,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: selected ? colorScheme.primary : Colors.grey.shade300,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _view == EventView.week
+                  ? DateFormat('E', 'zh_CN').format(normalizedDay)
+                  : '${normalizedDay.day}',
+              style: TextStyle(
+                fontSize: _view == EventView.week ? 12 : 13,
+                color: inCurrentMonth ? null : Colors.grey,
+                fontWeight:
+                    selected || today ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+            if (_view == EventView.week) ...[
+              const SizedBox(height: 2),
+              Text(
+                '${normalizedDay.day}',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: inCurrentMonth ? null : Colors.grey,
+                  fontWeight:
+                      selected || today ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ],
+            const SizedBox(height: 4),
+            SizedBox(
+              height: 18,
+              child: count == 0
+                  ? const SizedBox.shrink()
+                  : Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        count > 99 ? '99+' : '$count',
+                        style: TextStyle(
+                          color: colorScheme.onPrimary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -197,7 +515,9 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
           ),
         ),
         subtitle: Text(
-          e.isAllDay ? '全天  ·  ${_typeLabel(e.eventType)}' : '$time  ·  ${_typeLabel(e.eventType)}',
+          e.isAllDay
+              ? '全天  ·  ${_typeLabel(e.eventType)}'
+              : '$time  ·  ${_typeLabel(e.eventType)}',
         ),
         trailing: isDone
             ? const Icon(Icons.check_circle, color: Colors.green)
@@ -242,12 +562,15 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
         icon = Icons.event;
     }
     return CircleAvatar(
-      backgroundColor:
-          done ? Colors.grey[300] : Theme.of(context).colorScheme.primaryContainer,
-      child: Icon(icon,
-          color: done
-              ? Colors.grey[600]
-              : Theme.of(context).colorScheme.onPrimaryContainer),
+      backgroundColor: done
+          ? Colors.grey[300]
+          : Theme.of(context).colorScheme.primaryContainer,
+      child: Icon(
+        icon,
+        color: done
+            ? Colors.grey[600]
+            : Theme.of(context).colorScheme.onPrimaryContainer,
+      ),
     );
   }
 
@@ -262,4 +585,27 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
     };
     return m[type] ?? type;
   }
+
+  void _moveCalendar(int direction) {
+    setState(() {
+      if (_view == EventView.week) {
+        _focusedDate = _focusedDate.add(Duration(days: 7 * direction));
+      } else {
+        _focusedDate =
+            DateTime(_focusedDate.year, _focusedDate.month + direction);
+      }
+      _selectedDate = _view == EventView.week
+          ? _startOfWeek(_focusedDate)
+          : DateTime(_focusedDate.year, _focusedDate.month, 1);
+    });
+    _applyFilter();
+  }
+
+  DateTime _startOfWeek(DateTime date) {
+    final day = DateTime(date.year, date.month, date.day);
+    return day.subtract(Duration(days: day.weekday - 1));
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 }
