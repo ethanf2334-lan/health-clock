@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../shared/models/member.dart';
 import '../providers/current_member_provider.dart';
@@ -189,6 +190,15 @@ class MemberListScreen extends ConsumerWidget {
               onTap: () {
                 Navigator.pop(context);
                 ref.read(currentMemberIdProvider.notifier).state = member.id;
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.badge_outlined),
+              title: const Text('查看综合档案'),
+              onTap: () {
+                Navigator.pop(context);
+                ref.read(currentMemberIdProvider.notifier).state = member.id;
+                context.push('/members/${member.id}');
               },
             ),
             ListTile(

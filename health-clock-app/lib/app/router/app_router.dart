@@ -18,7 +18,9 @@ import '../../features/health_records/presentation/metric_history_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/members/presentation/member_form_screen.dart';
 import '../../features/members/presentation/member_list_screen.dart';
+import '../../features/members/presentation/member_profile_screen.dart';
 import '../../features/notifications/presentation/notification_permission_screen.dart';
+import '../../features/settings/presentation/about_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -59,6 +61,12 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/members/new',
         name: 'members-new',
         builder: (context, state) => const MemberFormScreen(),
+      ),
+      GoRoute(
+        path: '/members/:id',
+        name: 'member-profile',
+        builder: (context, state) =>
+            MemberProfileScreen(memberId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/ai-input',
@@ -123,6 +131,11 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/notifications/permission',
         name: 'notifications-permission',
         builder: (context, state) => const NotificationPermissionScreen(),
+      ),
+      GoRoute(
+        path: '/about',
+        name: 'about',
+        builder: (context, state) => const AboutScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

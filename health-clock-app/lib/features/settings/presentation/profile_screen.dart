@@ -73,16 +73,8 @@ class ProfileScreen extends ConsumerWidget {
           leading: const Icon(Icons.info_outline),
           title: const Text('关于'),
           subtitle: const Text('健康时钟 v1.0.0'),
-          onTap: () {
-            showAboutDialog(
-              context: context,
-              applicationName: '健康时钟',
-              applicationVersion: '1.0.0',
-              children: [
-                const Text('基于 AI 的家庭健康提醒与档案管理。'),
-              ],
-            );
-          },
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/about'),
         ),
         const SizedBox(height: 24),
         Padding(
