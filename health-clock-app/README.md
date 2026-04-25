@@ -100,13 +100,12 @@ flutter test
 
 1. 打开 `ios/Runner.xcworkspace`
 2. 配置 Bundle Identifier
-3. 配置 Apple 登录能力
-4. 配置通知权限
+3. 在 Signing & Capabilities 中确认 Sign in with Apple 已启用
+4. 确认通知、麦克风、语音识别权限说明已配置
+5. 后端 `.env` 配置 `APPLE_CLIENT_ID=<iOS Bundle ID>`
 
 ## 下一步
 
-1. 配置 Supabase 认证
-2. 实现登录功能
-3. 实现成员管理
-4. 实现 AI 创建提醒
-5. 实现日历视图
+1. 完整端到端回归验证
+2. 真机验证 Apple 登录与语音输入
+3. 完成通知设置页 / 关于页（可选）

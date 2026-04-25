@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/app_constants.dart';
@@ -139,6 +140,67 @@ class Auth extends _$Auth {
       );
     } on DioException catch (e) {
       throw Exception(_extractError(e, '验证码校验失败'));
+    }
+  }
+
+  /// 使用 Apple 登录；后端验证 identity token 后签发应用自己的 access_token。
+  Future<void> signInWithApple() async {
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final identityToken = credential.identityToken;
+      if (identityToken == null || identityToken.isEmpty) {
+        throw Exception('Apple 未返回 identity token');
+      }
+
+      final fullName = [
+        credential.givenName,
+        credential.familyName,
+      ].where((part) => part != null && part.trim().isNotEmpty).join('');
+
+      final resp = await _dio.post<dynamic>(
+        '/auth/apple',
+        data: {
+          'identity_token': identityToken,
+          'authorization_code': credential.authorizationCode,
+          if (fullName.isNotEmpty) 'full_name': fullName,
+        },
+      );
+      final data = (resp.data is Map<String, dynamic>)
+          ? (resp.data as Map<String, dynamic>)['data'] as Map<String, dynamic>?
+          : null;
+      if (data == null) {
+        throw Exception('服务端返回数据格式异常');
+      }
+      final token = data['access_token'] as String?;
+      final expiresAt = data['expires_at'] as int?;
+      final user = data['user'] as Map<String, dynamic>? ?? const {};
+      if (token == null || token.isEmpty) {
+        throw Exception('未获取到 access_token');
+      }
+
+      await _setAuthenticated(
+        AuthState(
+          status: AuthStatus.authenticated,
+          userId: user['id'] as String?,
+          phone: user['phone'] as String?,
+          email: user['email'] as String?,
+          accessToken: token,
+          expiresAt: expiresAt,
+        ),
+      );
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        throw Exception('已取消 Apple 登录');
+      }
+      throw Exception('Apple 登录失败：${e.message}');
+    } on DioException catch (e) {
+      throw Exception(_extractError(e, 'Apple 登录失败'));
     }
   }
 

@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Optional
 
 import httpx
@@ -64,6 +65,117 @@ def _search_user_by_phone_via_rest(phone_no_plus: str) -> Optional[dict]:
     except Exception:
         logger.exception("查询 Supabase 用户失败（REST fallback）")
         return None
+
+
+def _search_user_by_email_via_rest(email: str) -> Optional[dict]:
+    """按 email 查询 Supabase 用户。失败返回 None。"""
+    url = f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1/admin/users"
+    headers = {
+        "apikey": settings.SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": f"Bearer {settings.SUPABASE_SERVICE_ROLE_KEY}",
+    }
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            resp = client.get(url, headers=headers, params={"email": email})
+            if resp.status_code != 200:
+                return None
+            data = resp.json()
+            users = data.get("users") if isinstance(data, dict) else data
+            if not users:
+                return None
+            for u in users:
+                if (u.get("email") or "").lower() == email.lower():
+                    return u
+            return None
+    except Exception:
+        logger.exception("查询 Supabase 邮箱用户失败（REST fallback）")
+        return None
+
+
+def _apple_email(apple_sub: str) -> str:
+    safe = re.sub(r"[^a-zA-Z0-9_.-]", "_", apple_sub)
+    return f"apple_{safe}@apple.health-clock.local"
+
+
+def ensure_user_by_email(
+    email: str,
+    *,
+    provider: str = "email",
+    provider_user_id: str | None = None,
+    display_name: str | None = None,
+) -> dict:
+    """按邮箱查找或创建 Supabase 用户。
+
+    Apple 登录使用稳定的内部邮箱保存用户，避免 Apple 只在首次授权返回真实邮箱导致后续找不到同一用户。
+    """
+    normalized_email = email.strip().lower()
+    admin = _require_admin_client()
+
+    found = _search_user_by_email_via_rest(normalized_email)
+    if found and found.get("id"):
+        return {"id": found["id"], "email": normalized_email}
+
+    user_metadata = {
+        "provider": provider,
+    }
+    if provider_user_id:
+        user_metadata["provider_user_id"] = provider_user_id
+    if display_name:
+        user_metadata["name"] = display_name
+
+    try:
+        resp = admin.auth.admin.create_user(
+            {
+                "email": normalized_email,
+                "email_confirm": True,
+                "user_metadata": user_metadata,
+            }
+        )
+        user = getattr(resp, "user", None) or (resp if isinstance(resp, dict) else None)
+        if user:
+            uid = getattr(user, "id", None) or (user.get("id") if isinstance(user, dict) else None)
+            if uid:
+                return {"id": uid, "email": normalized_email}
+    except Exception as exc:
+        err_text = str(exc).lower()
+        if "exist" not in err_text and "register" not in err_text and "already" not in err_text:
+            logger.warning("create_user(email) 未知错误，尝试 fallback 查找: %s", exc)
+
+    found = _search_user_by_email_via_rest(normalized_email)
+    if found and found.get("id"):
+        return {"id": found["id"], "email": normalized_email}
+
+    try:
+        for page in range(1, 6):
+            result = admin.auth.admin.list_users(page=page, per_page=1000)
+            users = result if isinstance(result, list) else getattr(result, "users", []) or []
+            if not users:
+                break
+            for u in users:
+                u_email = getattr(u, "email", None)
+                if u_email is None and isinstance(u, dict):
+                    u_email = u.get("email")
+                if (u_email or "").lower() == normalized_email:
+                    uid = getattr(u, "id", None) or (u.get("id") if isinstance(u, dict) else None)
+                    if uid:
+                        return {"id": uid, "email": normalized_email}
+            if len(users) < 1000:
+                break
+    except Exception:
+        logger.exception("list_users email fallback 失败")
+
+    raise RuntimeError(f"无法创建或查找邮箱 {normalized_email} 对应的 Supabase 用户")
+
+
+def ensure_user_by_apple(apple_sub: str, display_name: str | None = None) -> dict:
+    """按 Apple sub 同步 Supabase 用户。"""
+    email = _apple_email(apple_sub)
+    return ensure_user_by_email(
+        email,
+        provider="apple",
+        provider_user_id=apple_sub,
+        display_name=display_name,
+    )
 
 
 def ensure_user_by_phone(phone: str) -> dict:

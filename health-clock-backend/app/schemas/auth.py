@@ -61,3 +61,9 @@ class VerifySmsCodeResponse(BaseModel):
     access_token: str
     expires_at: int
     user: dict
+
+
+class AppleLoginRequest(BaseModel):
+    identity_token: str = Field(..., min_length=20)
+    authorization_code: str | None = None
+    full_name: str | None = Field(None, max_length=200)

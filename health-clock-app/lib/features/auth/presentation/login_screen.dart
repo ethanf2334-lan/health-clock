@@ -15,6 +15,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _codeController = TextEditingController();
   bool _codeSent = false;
   bool _loading = false;
+  bool _appleLoading = false;
   int _countdown = 0;
 
   @override
@@ -74,6 +75,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _snack('登录失败：$e');
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() => _appleLoading = true);
+    try {
+      await ref.read(authProvider.notifier).signInWithApple();
+    } catch (e) {
+      _snack('Apple 登录失败：$e');
+    } finally {
+      if (mounted) setState(() => _appleLoading = false);
     }
   }
 
@@ -146,6 +158,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 24),
               const Divider(),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed:
+                    (_loading || _appleLoading) ? null : _signInWithApple,
+                icon: const Icon(Icons.apple),
+                label: _appleLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('使用 Apple 登录'),
+              ),
               const SizedBox(height: 12),
               TextButton.icon(
                 onPressed: () {

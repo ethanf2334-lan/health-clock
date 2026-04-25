@@ -14,10 +14,10 @@
   - Drift (本地数据库)
 - **后端**: FastAPI
   - LangChain (AI 框架)
-  - Dashscope Qwen3.6-Plus (AI 模型)
+  - Dashscope Qwen Plus (AI 模型)
   - 百度 OCR
 - **数据库**: Supabase Postgres
-- **认证**: Supabase Auth (手机号 + Apple 登录)
+- **认证**: 阿里云短信验证码 + Apple 登录 + Supabase 兼容 JWT
 - **存储**: Cloudflare R2
 
 ## 项目结构

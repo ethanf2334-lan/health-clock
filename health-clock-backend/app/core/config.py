@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     ALIYUN_SMS_SCHEME_NAME: str = ""
     ALIYUN_DYPNSAPI_ENDPOINT: str = "dypnsapi.aliyuncs.com"
 
+    APPLE_CLIENT_ID: str = ""
+
     APP_ENV: str = "dev"
     APP_DEBUG: bool = True
     APP_HOST: str = "0.0.0.0"

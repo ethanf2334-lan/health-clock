@@ -42,6 +42,78 @@
 
 ## 认证
 
+### 发送短信验证码
+
+```
+POST /auth/send-sms-code
+```
+
+**请求体:**
+```json
+{
+  "phone": "+8613800138000"
+}
+```
+
+### 校验短信验证码
+
+```
+POST /auth/verify-sms-code
+```
+
+**请求体:**
+```json
+{
+  "phone": "+8613800138000",
+  "code": "000000"
+}
+```
+
+### Apple 登录
+
+```
+POST /auth/apple
+```
+
+后端会验证 Apple `identity_token`，同步 Supabase 用户，并签发 Supabase 兼容 JWT。
+
+**请求体:**
+```json
+{
+  "identity_token": "<apple_identity_token>",
+  "authorization_code": "<apple_authorization_code>",
+  "full_name": "张三"
+}
+```
+
+**响应:**
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "access_token": "<jwt>",
+    "expires_at": 1770000000,
+    "user": {
+      "id": "uuid",
+      "email": "apple_xxx@apple.health-clock.local",
+      "phone": null
+    }
+  }
+}
+```
+
+### 续签登录态
+
+```
+POST /auth/refresh
+```
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
 ### 获取当前用户信息
 
 ```

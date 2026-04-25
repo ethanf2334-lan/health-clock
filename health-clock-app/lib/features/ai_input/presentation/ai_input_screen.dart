@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import '../../calendar/presentation/event_form_screen.dart';
 import '../../members/presentation/member_picker_field.dart';
@@ -16,7 +17,11 @@ class AIInputScreen extends ConsumerStatefulWidget {
 
 class _AIInputScreenState extends ConsumerState<AIInputScreen> {
   final _textController = TextEditingController();
+  final SpeechToText _speech = SpeechToText();
   bool _isProcessing = false;
+  bool _isListening = false;
+  bool _speechReady = false;
+  bool _speechInitAttempted = false;
   String? _memberId;
 
   @override
@@ -29,6 +34,7 @@ class _AIInputScreenState extends ConsumerState<AIInputScreen> {
 
   @override
   void dispose() {
+    _speech.cancel();
     _textController.dispose();
     super.dispose();
   }
@@ -63,12 +69,25 @@ class _AIInputScreenState extends ConsumerState<AIInputScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _textController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: '请输入提醒内容...',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  tooltip: _isListening ? '停止语音输入' : '语音输入',
+                  onPressed: _isProcessing ? null : _toggleListening,
+                  icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
+                ),
               ),
               maxLines: 4,
               enabled: !_isProcessing,
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: _isProcessing ? null : _toggleListening,
+              icon: Icon(
+                _isListening ? Icons.stop_circle_outlined : Icons.mic_none,
+              ),
+              label: Text(_isListening ? '停止听写' : '按住想法太累？点这里语音输入'),
             ),
             const SizedBox(height: 12),
             ElevatedButton(
@@ -245,6 +264,71 @@ class _AIInputScreenState extends ConsumerState<AIInputScreen> {
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
+  }
+
+  Future<void> _toggleListening() async {
+    if (_isListening) {
+      await _speech.stop();
+      if (mounted) setState(() => _isListening = false);
+      return;
+    }
+
+    final ready = await _ensureSpeechReady();
+    if (!ready) return;
+
+    setState(() => _isListening = true);
+    await _speech.listen(
+      localeId: 'zh_CN',
+      listenOptions: SpeechListenOptions(
+        listenMode: ListenMode.dictation,
+        partialResults: true,
+        autoPunctuation: true,
+      ),
+      onResult: (result) {
+        if (!mounted) return;
+        setState(() {
+          _textController.text = result.recognizedWords;
+          _textController.selection = TextSelection.collapsed(
+            offset: _textController.text.length,
+          );
+        });
+      },
+    );
+  }
+
+  Future<bool> _ensureSpeechReady() async {
+    if (_speechReady) return true;
+    if (_speechInitAttempted && !_speechReady) {
+      _showSpeechUnavailable();
+      return false;
+    }
+
+    _speechInitAttempted = true;
+    final ready = await _speech.initialize(
+      onStatus: (status) {
+        if (!mounted) return;
+        if (status == 'done' || status == 'notListening') {
+          setState(() => _isListening = false);
+        }
+      },
+      onError: (error) {
+        if (!mounted) return;
+        setState(() => _isListening = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('语音输入失败：${error.errorMsg}')),
+        );
+      },
+    );
+    if (!mounted) return false;
+    setState(() => _speechReady = ready);
+    if (!ready) _showSpeechUnavailable();
+    return ready;
+  }
+
+  void _showSpeechUnavailable() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('语音识别不可用，请检查麦克风和语音识别权限')),
+    );
   }
 
   Future<void> _gotoConfirm(Map<String, dynamic> event) async {

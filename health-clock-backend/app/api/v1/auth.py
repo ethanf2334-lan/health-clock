@@ -2,6 +2,7 @@
 
 - POST /auth/send-sms-code    发送阿里云短信验证码
 - POST /auth/verify-sms-code  校验验证码并签发 Supabase 兼容 JWT
+- POST /auth/apple            校验 Apple identity token 并签发 JWT
 - POST /auth/refresh          用当前有效 token 续签 access_token
 - GET  /auth/me               获取当前登录用户信息（需 Bearer token）
 """
@@ -15,14 +16,16 @@ from fastapi import APIRouter, HTTPException, status
 from app.core.response import success_response
 from app.core.security import CurrentUser
 from app.schemas.auth import (
+    AppleLoginRequest,
     SendSmsCodeRequest,
     SendSmsCodeResponse,
     VerifySmsCodeRequest,
     VerifySmsCodeResponse,
 )
 from app.services.aliyun_sms import AliyunSmsError, aliyun_sms_service
+from app.services.apple_auth import verify_apple_identity_token
 from app.services.jwt_service import sign_supabase_access_token
-from app.services.user_service import ensure_user_by_phone
+from app.services.user_service import ensure_user_by_apple, ensure_user_by_phone
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +87,37 @@ def verify_sms_code(payload: VerifySmsCodeRequest):
         access_token=token,
         expires_at=exp_at,
         user={"id": user["id"], "phone": user["phone"]},
+    )
+    return success_response(resp.model_dump())
+
+
+@router.post("/apple", response_model=None)
+def login_with_apple(payload: AppleLoginRequest):
+    """校验 Apple identity token，通过后签发 access_token。"""
+    try:
+        claims = verify_apple_identity_token(payload.identity_token)
+        user = ensure_user_by_apple(
+            claims["sub"],
+            display_name=payload.full_name,
+        )
+        token, exp_at = sign_supabase_access_token(
+            user_id=user["id"],
+            email=user.get("email"),
+            provider="apple",
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+
+    resp = VerifySmsCodeResponse(
+        access_token=token,
+        expires_at=exp_at,
+        user={
+            "id": user["id"],
+            "phone": None,
+            "email": user.get("email"),
+        },
     )
     return success_response(resp.model_dump())
 

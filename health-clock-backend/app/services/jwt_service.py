@@ -32,6 +32,7 @@ def sign_supabase_access_token(
     *,
     phone: Optional[str] = None,
     email: Optional[str] = None,
+    provider: str = "phone",
     ttl_seconds: int = DEFAULT_ACCESS_TOKEN_TTL_SECONDS,
 ) -> tuple[str, int]:
     """签发一个 Supabase 格式的 access_token。
@@ -55,8 +56,8 @@ def sign_supabase_access_token(
         "exp": exp,
         "session_id": str(uuid.uuid4()),
         "aal": "aal1",
-        "amr": [{"method": "otp", "timestamp": now}],
-        "app_metadata": {"provider": "phone", "providers": ["phone"]},
+        "amr": [{"method": provider, "timestamp": now}],
+        "app_metadata": {"provider": provider, "providers": [provider]},
         "user_metadata": {},
     }
     if phone:
