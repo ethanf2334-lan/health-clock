@@ -36,7 +36,23 @@ class DocumentList extends _$DocumentList {
   }
 
   Future<void> delete(String id) async {
-    await ref.read(documentRepositoryProvider).deleteDocument(id);
-    await refresh();
+    final previous = state.valueOrNull;
+    if (previous != null) {
+      state = AsyncValue.data(
+        previous.where((document) => document.id != id).toList(),
+      );
+    }
+
+    try {
+      await ref.read(documentRepositoryProvider).deleteDocument(id);
+    } catch (error, stackTrace) {
+      if (previous != null) {
+        state = AsyncValue.data(previous);
+      } else {
+        state = AsyncValue.error(error, stackTrace);
+      }
+      await refresh();
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
 }

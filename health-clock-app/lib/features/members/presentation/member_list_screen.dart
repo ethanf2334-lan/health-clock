@@ -5,6 +5,7 @@ import '../../../shared/models/member.dart';
 import '../providers/current_member_provider.dart';
 import '../providers/member_provider.dart';
 import 'member_form_screen.dart';
+import 'member_labels.dart';
 
 class MemberListScreen extends ConsumerWidget {
   const MemberListScreen({super.key});
@@ -130,7 +131,7 @@ class MemberListScreen extends ConsumerWidget {
                       ],
                     ),
                     subtitle: Text(
-                      member.relation ?? '未设置关系',
+                      memberRelationLabel(member.relation),
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                     trailing: IconButton(

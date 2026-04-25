@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../shared/models/document.dart';
 import '../../members/providers/current_member_provider.dart';
+import '../../members/providers/member_provider.dart';
 import '../providers/document_provider.dart';
 
 class DocumentListScreen extends ConsumerStatefulWidget {
@@ -26,10 +27,12 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(ensureCurrentMemberProvider);
     ref.listen(currentMemberIdProvider, (_, next) {
       ref.read(documentListProvider.notifier).setMemberFilter(next);
     });
     final docsAsync = ref.watch(documentListProvider);
+    final membersAsync = ref.watch(memberListProvider);
 
     return docsAsync.when(
       data: (docs) {
@@ -56,7 +59,10 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
           child: ListView.builder(
             padding: const EdgeInsets.only(bottom: 80),
             itemCount: docs.length,
-            itemBuilder: (_, i) => _tile(docs[i]),
+            itemBuilder: (_, i) => _tile(
+              docs[i],
+              _memberName(membersAsync, docs[i].memberId),
+            ),
           ),
         );
       },
@@ -65,7 +71,7 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
     );
   }
 
-  Widget _tile(HealthDocument d) {
+  Widget _tile(HealthDocument d, String memberName) {
     final dateText = d.documentDate != null
         ? DateFormat('yyyy-MM-dd').format(d.documentDate!.toLocal())
         : DateFormat('yyyy-MM-dd').format(d.createdAt.toLocal());
@@ -73,13 +79,20 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: ListTile(
         leading: _icon(d.mimeType),
-        title: Text(d.title ?? d.fileName),
+        title: Text(
+          _displayTitle(d),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         subtitle: Text(
           [
+            '归属：$memberName',
             _categoryLabel(d.category),
             if (d.hospitalName != null) d.hospitalName!,
             dateText,
           ].join('  ·  '),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
         onTap: () => context.push('/documents/${d.id}'),
         trailing: PopupMenuButton<String>(
@@ -103,7 +116,18 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
                 ),
               );
               if (ok == true) {
-                await ref.read(documentListProvider.notifier).delete(d.id);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('已删除文档')),
+                );
+                try {
+                  await ref.read(documentListProvider.notifier).delete(d.id);
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('删除失败：$e')),
+                  );
+                }
               }
             }
           },
@@ -120,6 +144,26 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
       return const Icon(Icons.picture_as_pdf, color: Colors.red);
     }
     return const Icon(Icons.image);
+  }
+
+  String _memberName(AsyncValue membersAsync, String memberId) {
+    return membersAsync.maybeWhen(
+      data: (members) {
+        for (final member in members) {
+          if (member.id == memberId) return member.name;
+        }
+        return '未知成员';
+      },
+      orElse: () => '加载中',
+    );
+  }
+
+  String _displayTitle(HealthDocument doc) {
+    final title = doc.title?.trim();
+    if (title != null && title.isNotEmpty) return title;
+
+    final date = doc.documentDate ?? doc.createdAt;
+    return '${_categoryLabel(doc.category)} ${DateFormat('yyyy-MM-dd').format(date.toLocal())}';
   }
 
   String _categoryLabel(String c) {

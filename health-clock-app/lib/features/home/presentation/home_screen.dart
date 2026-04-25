@@ -139,20 +139,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_titles[_index]),
-        actions: _index == 0
-            ? [
-                IconButton(
-                  tooltip: '记录指标',
-                  icon: const Icon(Icons.favorite_outline),
-                  onPressed: () => context.push('/metrics'),
-                ),
-                IconButton(
-                  tooltip: '上传文档',
-                  icon: const Icon(Icons.cloud_upload_outlined),
-                  onPressed: () => context.push('/documents/new'),
-                ),
-              ]
-            : null,
+        actions: _buildActions(context),
       ),
       body: IndexedStack(index: _index, children: body),
       bottomNavigationBar: NavigationBar(
@@ -181,26 +168,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: _index == 0
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FloatingActionButton.small(
-                  heroTag: 'fab_manual',
-                  tooltip: '手动创建',
-                  onPressed: () => context.push('/events/new'),
-                  child: const Icon(Icons.add),
-                ),
-                const SizedBox(height: 12),
-                FloatingActionButton.extended(
-                  heroTag: 'fab_ai',
-                  onPressed: () => context.push('/ai-input'),
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('AI 创建'),
-                ),
-              ],
-            )
-          : null,
+      floatingActionButton: _buildFab(context),
     );
+  }
+
+  List<Widget>? _buildActions(BuildContext context) {
+    if (_index == 0) {
+      return [
+        IconButton(
+          tooltip: '记录指标',
+          icon: const Icon(Icons.favorite_outline),
+          onPressed: () => context.push('/metrics'),
+        ),
+        IconButton(
+          tooltip: '上传文档',
+          icon: const Icon(Icons.cloud_upload_outlined),
+          onPressed: () => context.push('/documents/new'),
+        ),
+      ];
+    }
+    if (_index == 2) {
+      return [
+        IconButton(
+          tooltip: '上传文档',
+          icon: const Icon(Icons.cloud_upload_outlined),
+          onPressed: () => context.push('/documents/new'),
+        ),
+      ];
+    }
+    return null;
+  }
+
+  Widget? _buildFab(BuildContext context) {
+    if (_index == 0) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'fab_manual',
+            tooltip: '手动创建',
+            onPressed: () => context.push('/events/new'),
+            child: const Icon(Icons.add),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'fab_ai',
+            onPressed: () => context.push('/ai-input'),
+            icon: const Icon(Icons.auto_awesome),
+            label: const Text('AI 创建'),
+          ),
+        ],
+      );
+    }
+    if (_index == 2) {
+      return FloatingActionButton.extended(
+        heroTag: 'fab_upload_document',
+        onPressed: () => context.push('/documents/new'),
+        icon: const Icon(Icons.cloud_upload_outlined),
+        label: const Text('上传文档'),
+      );
+    }
+    return null;
   }
 }

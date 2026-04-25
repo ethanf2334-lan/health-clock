@@ -41,6 +41,12 @@ class _AIInputScreenState extends ConsumerState<AIInputScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(ensureCurrentMemberProvider);
+    ref.listen(currentMemberIdProvider, (_, next) {
+      if (_memberId == null && next != null) {
+        setState(() => _memberId = next);
+      }
+    });
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI 创建提醒'),

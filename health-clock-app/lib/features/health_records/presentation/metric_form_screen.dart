@@ -62,6 +62,12 @@ class _MetricFormScreenState extends ConsumerState<MetricFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(ensureCurrentMemberProvider);
+    ref.listen(currentMemberIdProvider, (_, next) {
+      if (_memberId == null && next != null) {
+        setState(() => _memberId = next);
+      }
+    });
     return Scaffold(
       appBar: AppBar(title: const Text('记录健康指标')),
       body: Form(

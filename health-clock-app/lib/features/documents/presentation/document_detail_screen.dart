@@ -266,9 +266,19 @@ class DocumentDetailScreen extends ConsumerWidget {
       ),
     );
     if (ok == true) {
-      await ref.read(documentRepositoryProvider).deleteDocument(doc.id);
-      await ref.read(documentListProvider.notifier).refresh();
-      if (context.mounted) Navigator.of(context).pop();
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('已删除文档')),
+      );
+      try {
+        await ref.read(documentListProvider.notifier).delete(doc.id);
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('删除失败：$e')),
+        );
+      }
     }
   }
 

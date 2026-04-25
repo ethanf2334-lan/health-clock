@@ -83,6 +83,12 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(ensureCurrentMemberProvider);
+    ref.listen(currentMemberIdProvider, (_, next) {
+      if (_memberId == null && next != null) {
+        setState(() => _memberId = next);
+      }
+    });
     final isEdit = widget.event != null;
     return Scaffold(
       appBar: AppBar(

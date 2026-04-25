@@ -135,9 +135,7 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
           fileSize: fileSize,
           mimeType: _mimeType!,
           category: _category,
-          title: _titleController.text.trim().isEmpty
-              ? null
-              : _titleController.text.trim(),
+          title: _documentTitle(),
           hospitalName: _hospitalController.text.trim().isEmpty
               ? null
               : _hospitalController.text.trim(),
@@ -186,6 +184,12 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(ensureCurrentMemberProvider);
+    ref.listen(currentMemberIdProvider, (_, next) {
+      if (_memberId == null && next != null) {
+        setState(() => _memberId = next);
+      }
+    });
     return Scaffold(
       appBar: AppBar(title: const Text('上传文档')),
       body: ListView(
@@ -245,7 +249,11 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.insert_drive_file),
-                title: Text(p.basename(_file!.path)),
+                title: Text(
+                  _shortFileName(_file!.path),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 subtitle: Text(_mimeType ?? ''),
                 trailing: IconButton(
                   icon: const Icon(Icons.close),
@@ -294,5 +302,30 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
         ],
       ),
     );
+  }
+
+  String _documentTitle() {
+    final input = _titleController.text.trim();
+    if (input.isNotEmpty) return input;
+    final date = _docDate ?? DateTime.now();
+    return '${_categoryLabel(_category)} ${_formatDate(date)}';
+  }
+
+  String _shortFileName(String path) {
+    final fileName = p.basename(path);
+    if (!fileName.toLowerCase().startsWith('image_picker_')) return fileName;
+    final ext = p.extension(fileName).isEmpty ? '.jpg' : p.extension(fileName);
+    return '拍照/相册图片$ext';
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String _categoryLabel(String value) {
+    return _categories.firstWhere(
+      (item) => item['value'] == value,
+      orElse: () => const {'value': 'other', 'label': '其他'},
+    )['label']!;
   }
 }

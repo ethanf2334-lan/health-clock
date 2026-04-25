@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/member_provider.dart';
+import 'member_labels.dart';
 
 /// 表单里用的成员下拉，返回选中的成员 ID。
 class MemberPickerField extends ConsumerWidget {
@@ -34,7 +35,7 @@ class MemberPickerField extends ConsumerWidget {
             .map(
               (m) => DropdownMenuItem<String>(
                 value: m.id,
-                child: Text(m.name),
+                child: Text('${m.name}（${memberRelationLabel(m.relation)}）'),
               ),
             )
             .toList();

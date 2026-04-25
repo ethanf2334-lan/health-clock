@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/current_member_provider.dart';
 import '../providers/member_provider.dart';
+import 'member_labels.dart';
 
 /// 顶部成员切换条：点击弹出底部选择。
 class MemberSwitcherBar extends ConsumerWidget {
@@ -13,11 +14,12 @@ class MemberSwitcherBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final membersAsync = ref.watch(memberListProvider);
+    ref.watch(ensureCurrentMemberProvider);
     final currentId = ref.watch(currentMemberIdProvider);
 
     final label = membersAsync.when(
       data: (members) {
-        if (currentId == null) return '全部成员';
+        if (currentId == null) return '请选择成员';
         final found = members.where((m) => m.id == currentId).toList();
         if (found.isEmpty) return '未选择';
         return found.first.name;
@@ -69,7 +71,7 @@ class MemberSwitcherBar extends ConsumerWidget {
               return ListView(
                 shrinkWrap: true,
                 children: [
-                  if (showAllOption)
+                  if (showAllOption && members.isEmpty)
                     ListTile(
                       leading: const Icon(Icons.groups),
                       title: const Text('全部成员'),
@@ -84,7 +86,7 @@ class MemberSwitcherBar extends ConsumerWidget {
                         child: Text(m.name.substring(0, 1)),
                       ),
                       title: Text(m.name),
-                      subtitle: Text(m.relation ?? ''),
+                      subtitle: Text(memberRelationLabel(m.relation)),
                       onTap: () {
                         ref.read(currentMemberIdProvider.notifier).state = m.id;
                         Navigator.pop(context);
