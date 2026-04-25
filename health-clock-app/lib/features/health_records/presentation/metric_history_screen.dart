@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../shared/models/metric_record.dart';
+import '../../members/presentation/member_switcher.dart';
 import '../../members/providers/current_member_provider.dart';
 import '../providers/metric_provider.dart';
 
@@ -58,6 +59,7 @@ class _MetricHistoryScreenState extends ConsumerState<MetricHistoryScreen> {
       ),
       body: Column(
         children: [
+          const MemberSwitcherBar(),
           SizedBox(
             height: 48,
             child: ListView(

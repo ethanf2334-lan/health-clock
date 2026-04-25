@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../core/navigation/navigation_key.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/notification_service.dart';
 import '../../features/ai_input/presentation/ai_input_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/calendar/presentation/event_detail_screen.dart';
 import '../../features/calendar/presentation/event_form_screen.dart';
+import '../../shared/models/health_event.dart';
+import '../../features/documents/presentation/document_detail_screen.dart';
 import '../../features/documents/presentation/document_list_screen.dart';
 import '../../features/documents/presentation/document_upload_screen.dart';
 import '../../features/health_records/presentation/metric_form_screen.dart';
@@ -22,7 +26,10 @@ part 'app_router.g.dart';
 GoRouter appRouter(AppRouterRef ref) {
   final auth = ref.watch(authProvider);
 
+  NotificationService.navigatorKey = appNavigatorKey;
+
   return GoRouter(
+    navigatorKey: appNavigatorKey,
     initialLocation: '/login',
     redirect: (context, state) {
       final loggingIn = state.matchedLocation == '/login';
@@ -70,16 +77,37 @@ GoRouter appRouter(AppRouterRef ref) {
             EventDetailScreen(id: state.pathParameters['id']!),
       ),
       GoRoute(
+        path: '/events/:id/edit',
+        name: 'event-edit',
+        builder: (context, state) {
+          // extra 传入完整 HealthEvent 对象
+          final event = state.extra as HealthEvent?;
+          return EventFormScreen(event: event);
+        },
+      ),
+      GoRoute(
         path: '/documents',
         name: 'documents',
-        builder: (context, state) => const Scaffold(
-          body: DocumentListScreen(),
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(title: const Text('我的文档')),
+          body: const DocumentListScreen(),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => context.push('/documents/new'),
+            icon: const Icon(Icons.cloud_upload_outlined),
+            label: const Text('上传文档'),
+          ),
         ),
       ),
       GoRoute(
         path: '/documents/new',
         name: 'documents-new',
         builder: (context, state) => const DocumentUploadScreen(),
+      ),
+      GoRoute(
+        path: '/documents/:id',
+        name: 'document-detail',
+        builder: (context, state) =>
+            DocumentDetailScreen(documentId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/metrics',

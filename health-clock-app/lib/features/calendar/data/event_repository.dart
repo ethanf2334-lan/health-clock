@@ -65,7 +65,20 @@ class EventRepository {
   }
 
   Future<HealthEvent> createEvent(EventCreate event) async {
-    final response = await _dio.post('/events', data: event.toJson());
+    final body = <String, dynamic>{
+      'member_id': event.memberId,
+      'title': event.title,
+      if (event.description != null) 'description': event.description,
+      'event_type': event.eventType,
+      'scheduled_at': event.scheduledAt.toIso8601String(),
+      'is_all_day': event.isAllDay,
+      if (event.repeatRule != null) 'repeat_rule': event.repeatRule,
+      if (event.notifyOffsets != null) 'notify_offsets': event.notifyOffsets,
+      'source_type': event.sourceType,
+      if (event.sourceText != null) 'source_text': event.sourceText,
+      if (event.aiConfidence != null) 'ai_confidence': event.aiConfidence,
+    };
+    final response = await _dio.post('/events', data: body);
     return HealthEvent.fromJson(_normalizeEvent(response.data['data'] as Map<String, dynamic>));
   }
 

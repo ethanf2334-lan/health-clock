@@ -1,6 +1,6 @@
 # 健康时钟 MVP 项目进度总览
 
-**更新时间：2026-04-24（第三轮联调完成）**
+**更新时间：2026-04-25（第五轮联调完成）**
 
 本文档基于以下资料交叉整理：
 
@@ -11,15 +11,15 @@
 
 ---
 
-## 1. 总体判断（第三轮收尾后）
+## 1. 总体判断（第五轮收尾后）
 
 | 维度 | 状态 |
 |------|------|
-| 后端完成度 | **高**（核心 API + 阿里云短信登录 + 自签 JWT + 鉴权链路全通） |
-| 前端完成度 | **高**（主链路页面已实现，正在联调） |
-| 整体 MVP 可用性 | **接近可体验**（登录已通，数据库已建，主链路待完整联调） |
+| 后端完成度 | **高**（核心 API + 阿里云短信登录 + 自签 JWT + 鉴权链路全通；OCR 链路修复完整） |
+| 前端完成度 | **高**（主链路全部可跑通；P0 问题全部修复；UI 显示修善） |
+| 整体 MVP 可用性 | **基本可体验**（登录、成员、提醒、文档上传/OCR、指标全链路已通） |
 
-一句话总结：登录链路已完全打通（手机号 OTP → 阿里云短信 → 自签 JWT → 后端本地验证），数据库表已建立，后端四个业务模块接口均返回 200；前端所有主链路页面已实现，当前进入"联调修 bug"阶段，主要剩余工作是修复 camelCase/snake_case 阻抗、完整验证各模块端到端。
+一句话总结：P0 三个阻断性问题（文档无法查看、新用户无引导、导航栈不一致）已全部修复；OCR 链路完整修复（百度 `health_report` 接口正确解析 `words_result` 格式）；AI 摘要展示不再显示英文 key 和空字段；MVP 核心功能已达可体验状态。
 
 ---
 
@@ -32,7 +32,7 @@
 | 健康提醒 | AI 创建、手动创建、编辑、删除、完成、筛选 | 后端 CRUD + 筛选 + 完成已实现；前端列表、表单、详情页已实现，联调中 | **✅ 基本完成** |
 | AI 文本创建提醒 | 自然语言解析、结构化预览、确认保存 | 全链路已实现（AI 解析 → 表单预填 → 保存 → 本地通知） | **✅ 已实现** |
 | 语音输入 | 语音转文字后再解析 | 前后端均未实现 | ❌ 未实现 |
-| 文档上传与 OCR | 上传图片/PDF、OCR、AI 结构化、候选提醒 | 前后端均已实现，端到端联调待验证 | **⚠️ 待验证** |
+| 文档上传与 OCR | 上传图片/PDF、OCR、AI 结构化、候选提醒 | 前后端完整实现并修复：百度 `health_report` 接口正确调用、`words_result` 格式正确解析、预签名 URL 传给 OCR、AI 摘要字段中文化 | **✅ 已实现** |
 | 健康指标记录 | 录入、历史记录、趋势展示 | 前后端均已实现，联调待验证 | **⚠️ 待验证** |
 | 日历与列表视图 | 今日、未来 7/30 天、月/周/列表 | 已实现时间区间筛选 + 按天分组列表；月/周网格视图未做 | **⚠️ 部分完成** |
 | 通知提醒 | 本地通知、权限、点击跳转 | 本地通知已接入提醒创建/完成/删除流程；点击跳转 TODO | **⚠️ 部分完成** |
@@ -46,14 +46,17 @@
 
 - FastAPI 服务 + CORS + 路由注册
 - **阿里云短信验证码登录**（`/auth/send-sms-code` + `/auth/verify-sms-code`）
+- **开发调试模式**：`APP_DEBUG=true` 时固定验证码 `000000`，跳过阿里云 SMS
 - **Supabase 兼容 JWT 自签**（`SUPABASE_JWT_SECRET` + HS256）
 - **本地 JWT 验证**（`security.py`，不走 GoTrue 远程 API）
 - Supabase `auth.users` 用户创建/同步（`user_service.py`）
-- 成员管理 CRUD
+- 成员管理 CRUD（含 `model_dump(mode="json")` 修复 date 序列化）
 - 健康提醒 CRUD、筛选查询、标记完成
-- AI 文本解析接口 `/ai/parse-text`（通义千问）
+- AI 文本解析接口 `/ai/parse-text`（通义千问 `qwen-plus`）
 - 文档上传签名接口、文档元数据 CRUD
-- 百度 OCR 识别与 OCR 后 AI 二次提取
+- **百度 OCR 完整链路**：`health_report` 专用接口（优先）→ `accurate_basic`（降级）→ AI 补充解析
+- `words_result` 格式正确解析（`{word, word_name}` → 标准字段映射）
+- 预签名下载 URL 传给 OCR（修复私有 R2 403 问题）
 - 候选提醒抽取
 - 健康指标记录新增、查询、删除
 - 数据库迁移脚本（已在 Supabase 执行）、RLS 策略
@@ -63,54 +66,74 @@
 - 应用入口、主题、中文本地化
 - **手机号 OTP 登录**（调后端 `/auth/send-sms-code` + `/auth/verify-sms-code`）
 - Auth 状态管理 + GoRouter redirect 守卫
+- **新用户引导**：首次进入成员为空时自动弹底部引导弹层
 - Home 页（4 Tab + MemberSwitcherBar + FAB）
 - 成员列表、新增、编辑、删除、切换
 - 健康提醒列表（筛选/分组/完成切换）
 - 健康提醒表单（手动创建 + AI 预填 + 编辑）
-- 健康提醒详情（完成/编辑/删除）
+- 健康提醒详情（完成 / 编辑（GoRouter）/ 删除）
 - AI 输入页（解析 → 预填表单）
 - 文档上传（拍照/相册/文件 + 直传 R2 + OCR 触发）
-- OCR 审核页（展示原文 + AI 摘要 + 候选提醒）
-- 文档列表
+- **文档详情页**：图片预览（手势缩放）、AI 摘要（中文字段、过滤空值）、OCR 原文、删除
+- OCR 审核页（中文字段展示、过滤空值、AI 不可用时橙色提示条）
+- 文档列表（含 `onTap` 跳转详情、独立页面有 AppBar/返回键）
 - 健康指标录入表单
-- 健康指标历史 + 折线图
+- 健康指标历史 + 折线图（含 MemberSwitcherBar）
 - 个人中心页
 - 本地通知调度（创建/完成/删除时联动）
+- 通知点击跳转事件详情（`GlobalKey<NavigatorState>` + GoRouter）
 - 全部 Repository snake_case → camelCase normalize 映射
+- `url_launcher` 包：支持在浏览器打开 PDF / 原文件
 
 ---
 
-## 4. 已知待修复问题（下次开发优先处理）
+## 4. 已知待修复问题（第五轮收尾状态）
 
-### P0 - 必须优先修
+### P0 - ✅ 全部已修复（含第五轮新增）
 
-| 编号 | 问题 | 影响 | 位置 |
+| 编号 | 问题 | 状态 | 修复位置 |
 |------|------|------|------|
-| #1 | `MemberCreate.toJson()` 输出 camelCase（`birthDate`），后端 Pydantic 期望 snake_case（`birth_date`）| 成员出生日期等字段创建时静默丢失 | `member_repository.dart` `createMember` |
-| #2 | `EventCreate.toJson()` 同样输出 camelCase | 提醒 `memberId`→`member_id`, `scheduledAt`→`scheduled_at` 等创建时出错 | `event_repository.dart` `createEvent` |
-| #3 | 验证 成员新增 端到端（含 normalize 修复后的完整测试）| 确认 member 能正常创建并出现在列表 | — |
+| #1 | `createMember` camelCase → snake_case | ✅ 已修 | `member_repository.dart` |
+| #2 | `createEvent` camelCase → snake_case | ✅ 已修 | `event_repository.dart` |
+| #3 | 成员新增 + 提醒创建端到端验证 | ✅ 已验证 | — |
+| #14 | 文档上传后无法查看（列表无 onTap） | ✅ 已修 | `document_list_screen.dart` + 新增 `document_detail_screen.dart` |
+| #15 | 新用户无引导（成员为空时白屏） | ✅ 已修 | `home_screen.dart`（首次进入弹引导底部弹层） |
+| #16 | EventDetailScreen 编辑用 Navigator 而非 GoRouter | ✅ 已修 | `event_detail_screen.dart` + 新路由 `/events/:id/edit` |
+| #17 | `/documents` 路由无 AppBar / 无返回键 | ✅ 已修 | `app_router.dart`（补 AppBar + FAB） |
 
-**修复方法**：在 createMember / createEvent 调用处，不用 `model.toJson()`，改为手写 snake_case Map，参考 `createMetric` 的做法（已是 snake_case，可作为范例）。
+**第四轮额外修复**：后端 `member_repository.py` 改 `model_dump(mode="json")`；阿里云 SMS debug bypass；通知跳转 GlobalKey；MemberSwitcherBar 导航修复。
 
-### P1 - 功能联调
+### P1 - ✅ 全部已联调
 
-| 编号 | 问题 | 说明 |
+| 编号 | 问题 | 状态 |
 |------|------|------|
-| #4 | 文档上传端到端联调 | R2 预签名、上传、OCR、AI 提取完整链路验证 |
-| #5 | 提醒创建完整流程联调 | 手动创建 + AI 预填 + 本地通知调度 |
-| #6 | 健康指标录入联调 | 录入后列表刷新、折线图显示 |
-| #7 | 成员切换后各 Tab 数据联动 | `currentMemberIdProvider` 变更后 provider filter 是否正常刷新 |
-| #8 | 成员编辑字段覆盖验证 | `updateMember` 已手写 snake_case，需确认出生日期等字段正常更新 |
+| #4 | 文档上传端到端联调 | ✅ 完整验证（上传 → OCR → AI 摘要 → 详情查看） |
+| #5 | 提醒创建完整流程联调 | ✅ 已验证 |
+| #6 | 健康指标录入联调 | ✅ 已验证 |
+| #7 | 成员切换后各 Tab 数据联动 | ✅ 已验证 |
+| #8 | 成员编辑字段覆盖验证 | ✅ 已修复 |
+
+### 第五轮新增修复（OCR 链路全面修复）
+
+| 编号 | 问题 | 状态 | 说明 |
+|------|------|------|------|
+| #18 | OCR 传私有 R2 URL（403） | ✅ 已修 | 改为先生成预签名 URL 再传给百度 |
+| #19 | OCR 超时 10s 不够 | ✅ 已修 | 改为 30s，加 `raise_for_status()` |
+| #20 | 使用 `accurate_basic` 而非 `health_report` | ✅ 已修 | 优先调体检报告专用接口，失败降级 |
+| #21 | `health_report` 返回 `words_result` 未解析 | ✅ 已修 | 正确解析 `{word, word_name}` 格式并映射中文字段名 |
+| #22 | AI 摘要显示英文 key + 空值 | ✅ 已修 | 加中文字段映射表、过滤空值/列表 |
+| #23 | Dashscope 模型名 `qwen3.6-plus` 无效 | ✅ 已修 | 改为 `qwen-plus` |
+| #24 | AI Key 失效显示原始异常堆栈 | ✅ 已修 | 友好提示 + OCR 审核页橙色提示条 |
 
 ### P2 - 体验优化（MVP 后补齐）
 
-| 编号 | 问题 |
-|------|------|
-| #9 | 通知点击跳转详情页（payload 已写，handler TODO） |
-| #10 | 日历月/周网格视图（当前为列表替代） |
-| #11 | 语音输入 |
-| #12 | Apple 登录 |
-| #13 | Token 过期自动刷新（当前固定 7 天，过期需重新登录） |
+| 编号 | 问题 | 状态 |
+|------|------|------|
+| #9 | 通知点击跳转详情页 | ✅ 已实现 |
+| #10 | 日历月/周网格视图 | ❌ 待做 |
+| #11 | 语音输入 | ❌ 待做 |
+| #12 | Apple 登录 | ❌ 待做 |
+| #13 | Token 过期自动刷新 | ❌ 待做（当前固定 7 天） |
 
 ---
 
@@ -153,11 +176,22 @@ Flutter → 后端 /auth/verify-sms-code → 阿里云 CheckSmsVerifyCode → Su
 
 ## 6. 下次开发建议顺序
 
-1. **修 #1 #2**：`createMember` 和 `createEvent` 改用 snake_case Map 发送 → 验证成员和提醒能正常创建
-2. **验证 #3 #5**：完整走一遍"添加成员 → 创建提醒 → 列表展示 → 完成提醒"主链路
-3. **联调 #4**：文档上传 → OCR → AI 摘要 → 候选提醒 → 创建提醒
-4. **联调 #6 #7**：健康指标录入，成员切换数据联动
-5. **清理 P2**：按需补充通知跳转、日历视图等
+1. **完整端到端回归验证**：
+   - 手机号 + 验证码 `000000` 登录
+   - 新用户引导 → 创建本人档案
+   - 添加提醒（手动 + AI 创建）→ 完成提醒
+   - 上传体检报告 → OCR 识别 → 查看文档详情
+   - 录入健康指标 → 查看趋势图
+
+2. **P2 体验优化**（按优先级）：
+   - Token 过期自动刷新（当前 7 天 JWT 到期直接登出）
+   - 日历月/周网格视图
+   - 语音输入
+   - Apple 登录
+
+3. **可选增强**：
+   - 成员综合档案页（汇总指标 + 提醒 + 文档）
+   - 首屏加载骨架屏优化
 
 ---
 

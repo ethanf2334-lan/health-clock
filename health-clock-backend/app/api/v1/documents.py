@@ -192,32 +192,23 @@ def process_ocr(
         return error_response(code=1001, message="文档不存在或无权访问")
 
     try:
-        # 调用 OCR
-        ocr_text = ocr_service.recognize_general(document["file_url"])
+        # 生成预签名下载 URL（R2 私有桶，外部 OCR 服务需要可访问的公网链接）
+        try:
+            ocr_image_url = r2_storage_service.generate_download_url(document["storage_key"])
+        except Exception:
+            ocr_image_url = document["file_url"]
 
-        # AI 二次解析
-        ai_summary = ocr_service.extract_health_info(ocr_text)
+        # 调用 OCR 完整流程：优先 health_report，失败降级到 accurate_basic + AI
+        result = ocr_service.process_document(ocr_image_url)
 
-        # 提取候选提醒
-        candidate_events = []
-        follow_up_suggestions = ai_summary.get("follow_up_suggestions", [])
-        for suggestion in follow_up_suggestions:
-            candidate_events.append(
-                {
-                    "title": suggestion.get("suggestion", "复查提醒"),
-                    "time_expression": suggestion.get("time_expression"),
-                    "source": "ai_document",
-                    "needs_confirmation": True,
-                }
-            )
+        ocr_text = result["ocr_text"]
+        ai_summary = result["ai_summary"]
+        candidate_events = result["candidate_events"]
 
         # 更新文档记录
         update_data = DocumentUpdate(
             ocr_text=ocr_text,
-            ai_summary={
-                **ai_summary,
-                "candidate_events": candidate_events,
-            },
+            ai_summary={**ai_summary, "candidate_events": candidate_events},
         )
         repo.update(request.document_id, current_user["id"], update_data)
 

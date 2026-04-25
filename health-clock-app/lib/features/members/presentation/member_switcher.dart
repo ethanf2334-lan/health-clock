@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../providers/current_member_provider.dart';
 import '../providers/member_provider.dart';
@@ -95,7 +96,7 @@ class MemberSwitcherBar extends ConsumerWidget {
                     title: const Text('添加新成员'),
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.of(context).pushNamed('/members');
+                      context.push('/members/new');
                     },
                   ),
                 ],

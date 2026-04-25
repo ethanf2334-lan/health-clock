@@ -50,10 +50,21 @@ class MemberRepository {
   }
 
   Future<Member> createMember(MemberCreate member) async {
-    final response = await _dio.post(
-      '/members',
-      data: member.toJson(),
-    );
+    final body = <String, dynamic>{
+      'name': member.name,
+      if (member.relation != null) 'relation': member.relation,
+      if (member.gender != null) 'gender': member.gender,
+      if (member.birthDate != null)
+        'birth_date': member.birthDate!.toIso8601String().split('T').first,
+      if (member.heightCm != null) 'height_cm': member.heightCm,
+      if (member.weightKg != null) 'weight_kg': member.weightKg,
+      if (member.bloodType != null) 'blood_type': member.bloodType,
+      if (member.chronicConditions != null)
+        'chronic_conditions': member.chronicConditions,
+      if (member.allergies != null) 'allergies': member.allergies,
+      if (member.notes != null) 'notes': member.notes,
+    };
+    final response = await _dio.post('/members', data: body);
     return Member.fromJson(_normalizeMember(response.data['data'] as Map<String, dynamic>));
   }
 

@@ -71,6 +71,11 @@ class AliyunSmsService:
                 "阿里云短信模板未配置：请在 .env 中设置 ALIYUN_SMS_SIGN_NAME 与 ALIYUN_SMS_TEMPLATE_CODE"
             )
 
+    @property
+    def _is_debug(self) -> bool:
+        """开发调试模式：APP_DEBUG=True 时启用固定验证码 000000，跳过真实 SMS 调用。"""
+        return bool(settings.APP_DEBUG)
+
     def send_verify_code(
         self,
         phone: str,
@@ -94,6 +99,11 @@ class AliyunSmsService:
             AliyunSmsError: 阿里云返回非 OK 时抛出。
             RuntimeError: 配置缺失。
         """
+        # 开发调试模式：直接跳过真实 SMS，固定验证码为 000000
+        if self._is_debug:
+            logger.info("[DEV] 调试模式：手机 %s 使用固定验证码 000000", phone)
+            return {"biz_id": "dev-bypass", "request_id": "dev-bypass"}
+
         self._require_template()
 
         request = dy_models.SendSmsVerifyCodeRequest(
@@ -146,6 +156,11 @@ class AliyunSmsService:
             AliyunSmsError: 阿里云调用返回非 OK 时抛出（例如签名错误、未开通等）。
             RuntimeError: 配置缺失。
         """
+        # 开发调试模式：固定验证码 000000 直接通过
+        if self._is_debug and code == "000000":
+            logger.info("[DEV] 调试模式：手机 %s 验证码 000000 直接通过", phone)
+            return True
+
         request = dy_models.CheckSmsVerifyCodeRequest(
             phone_number=phone,
             verify_code=code,

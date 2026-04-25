@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -6,6 +8,9 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
+
+  /// 全局 NavigatorKey，由 app_router.dart 注入，用于从通知回调中导航。
+  static GlobalKey<NavigatorState>? navigatorKey;
 
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
@@ -96,12 +101,28 @@ class NotificationService {
     return await _notifications.pendingNotificationRequests();
   }
 
-  /// 通知点击回调
+  /// 通知点击回调：payload 格式为 "event:<id>"
   void _onNotificationTapped(NotificationResponse response) {
-    // TODO: 处理通知点击事件，导航到对应页面
     final payload = response.payload;
-    if (payload != null) {
-      // 解析 payload 并导航
+    if (payload == null) return;
+
+    final context = navigatorKey?.currentContext;
+    if (context == null) return;
+
+    if (payload.startsWith('event:')) {
+      final id = payload.substring('event:'.length);
+      // 使用 GoRouter 进行路由跳转
+      _navigateToEvent(context, id);
+    }
+  }
+
+  void _navigateToEvent(BuildContext context, String eventId) {
+    // GoRouter 通过 context extension 导航
+    try {
+      // ignore: use_build_context_synchronously
+      GoRouter.of(context).push('/events/$eventId');
+    } catch (_) {
+      // 路由不可用时忽略
     }
   }
 }

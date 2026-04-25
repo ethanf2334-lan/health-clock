@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/services/notification_service.dart';
 import '../../../shared/models/health_event.dart';
 import '../providers/event_provider.dart';
-import 'event_form_screen.dart';
 
 class EventDetailScreen extends ConsumerWidget {
   final String id;
@@ -84,11 +84,7 @@ class EventDetailScreen extends ConsumerWidget {
                 icon: const Icon(Icons.edit),
                 label: const Text('编辑'),
                 onPressed: () async {
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => EventFormScreen(event: event),
-                    ),
-                  );
+                  await context.push('/events/${event.id}/edit', extra: event);
                   ref.invalidate(eventDetailProvider(event.id));
                 },
               ),

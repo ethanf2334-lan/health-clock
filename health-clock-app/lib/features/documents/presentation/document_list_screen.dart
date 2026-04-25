@@ -82,6 +82,7 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
             dateText,
           ].join('  ·  '),
         ),
+        onTap: () => context.push('/documents/${d.id}'),
         trailing: PopupMenuButton<String>(
           onSelected: (v) async {
             if (v == 'delete') {

@@ -36,7 +36,7 @@ class MemberRepository:
 
     def create(self, user_id: str, member_data: MemberCreate) -> dict:
         """创建成员"""
-        data = member_data.model_dump()
+        data = member_data.model_dump(mode="json")
         data["user_id"] = user_id
 
         response = self.supabase.table(self.table).insert(data).execute()
@@ -45,7 +45,7 @@ class MemberRepository:
     def update(self, member_id: str, user_id: str, member_data: MemberUpdate) -> dict | None:
         """更新成员"""
         # 只更新非 None 的字段
-        update_data = {k: v for k, v in member_data.model_dump().items() if v is not None}
+        update_data = {k: v for k, v in member_data.model_dump(mode="json").items() if v is not None}
 
         if not update_data:
             return self.get_by_id(member_id, user_id)
