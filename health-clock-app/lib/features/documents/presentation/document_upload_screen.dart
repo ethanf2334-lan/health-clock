@@ -27,7 +27,8 @@ class DocumentUploadScreen extends ConsumerStatefulWidget {
   const DocumentUploadScreen({super.key});
 
   @override
-  ConsumerState<DocumentUploadScreen> createState() => _DocumentUploadScreenState();
+  ConsumerState<DocumentUploadScreen> createState() =>
+      _DocumentUploadScreenState();
 }
 
 class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
@@ -127,23 +128,25 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
       await repo.putFileToSignedUrl(sig.uploadUrl, _file!, _mimeType!);
 
       setState(() => _status = '正在保存文档信息…');
-      final doc = await repo.createDocument(DocumentCreate(
-        memberId: _memberId!,
-        fileName: fileName,
-        fileSize: fileSize,
-        mimeType: _mimeType!,
-        category: _category,
-        title: _titleController.text.trim().isEmpty
-            ? null
-            : _titleController.text.trim(),
-        hospitalName: _hospitalController.text.trim().isEmpty
-            ? null
-            : _hospitalController.text.trim(),
-        documentDate: _docDate,
-        fileUrl: sig.fileUrl,
-        storageBucket: 'health-clock-files',
-        storageKey: sig.objectKey,
-      ));
+      final doc = await repo.createDocument(
+        DocumentCreate(
+          memberId: _memberId!,
+          fileName: fileName,
+          fileSize: fileSize,
+          mimeType: _mimeType!,
+          category: _category,
+          title: _titleController.text.trim().isEmpty
+              ? null
+              : _titleController.text.trim(),
+          hospitalName: _hospitalController.text.trim().isEmpty
+              ? null
+              : _hospitalController.text.trim(),
+          documentDate: _docDate,
+          fileUrl: sig.fileUrl,
+          storageBucket: 'health-clock-files',
+          storageKey: sig.objectKey,
+        ),
+      );
 
       setState(() => _status = '正在进行 OCR 识别…');
       Map<String, dynamic>? ocrResult;
@@ -197,10 +200,12 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
             initialValue: _category,
             decoration: const InputDecoration(labelText: '分类'),
             items: _categories
-                .map((e) => DropdownMenuItem<String>(
-                      value: e['value'],
-                      child: Text(e['label']!),
-                    ))
+                .map(
+                  (e) => DropdownMenuItem<String>(
+                    value: e['value'],
+                    child: Text(e['label']!),
+                  ),
+                )
                 .toList(),
             onChanged: (v) {
               if (v != null) setState(() => _category = v);
@@ -219,9 +224,11 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
           const SizedBox(height: 16),
           ListTile(
             title: const Text('文档日期'),
-            subtitle: Text(_docDate == null
-                ? '未设置'
-                : '${_docDate!.year}-${_docDate!.month.toString().padLeft(2, '0')}-${_docDate!.day.toString().padLeft(2, '0')}'),
+            subtitle: Text(
+              _docDate == null
+                  ? '未设置'
+                  : '${_docDate!.year}-${_docDate!.month.toString().padLeft(2, '0')}-${_docDate!.day.toString().padLeft(2, '0')}',
+            ),
             trailing: const Icon(Icons.calendar_today),
             onTap: () async {
               final d = await showDatePicker(
@@ -254,12 +261,14 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
             runSpacing: 8,
             children: [
               OutlinedButton.icon(
-                onPressed: _uploading ? null : () => _pickImage(ImageSource.camera),
+                onPressed:
+                    _uploading ? null : () => _pickImage(ImageSource.camera),
                 icon: const Icon(Icons.photo_camera),
                 label: const Text('拍照'),
               ),
               OutlinedButton.icon(
-                onPressed: _uploading ? null : () => _pickImage(ImageSource.gallery),
+                onPressed:
+                    _uploading ? null : () => _pickImage(ImageSource.gallery),
                 icon: const Icon(Icons.photo_library),
                 label: const Text('相册'),
               ),

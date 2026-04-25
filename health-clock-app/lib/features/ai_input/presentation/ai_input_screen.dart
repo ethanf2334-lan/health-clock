@@ -114,9 +114,13 @@ class _AIInputScreenState extends ConsumerState<AIInputScreen> {
                     children: [
                       Icon(Icons.check_circle, color: Colors.green),
                       SizedBox(width: 8),
-                      Text('解析结果',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text(
+                        '解析结果',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const Divider(height: 24),
@@ -142,8 +146,11 @@ class _AIInputScreenState extends ConsumerState<AIInputScreen> {
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.warning_amber,
-                              size: 16, color: Colors.orange),
+                          Icon(
+                            Icons.warning_amber,
+                            size: 16,
+                            color: Colors.orange,
+                          ),
                           SizedBox(width: 8),
                           Text('建议确认时间和内容'),
                         ],
@@ -201,8 +208,10 @@ class _AIInputScreenState extends ConsumerState<AIInputScreen> {
             child: Text(label, style: TextStyle(color: Colors.grey[600])),
           ),
           Expanded(
-            child: Text(value,
-                style: const TextStyle(fontWeight: FontWeight.w500)),
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),

@@ -70,7 +70,9 @@ class EventList extends _$EventList {
   }
 
   Future<HealthEvent> updateEvent(
-      String id, Map<String, dynamic> updates) async {
+    String id,
+    Map<String, dynamic> updates,
+  ) async {
     final event =
         await ref.read(eventRepositoryProvider).updateEvent(id, updates);
     await refresh();

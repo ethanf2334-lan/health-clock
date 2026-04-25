@@ -12,9 +12,8 @@ class ProfileScreen extends ConsumerWidget {
     final auth = ref.watch(authProvider);
     final isGuest = auth.status == AuthStatus.guest;
 
-    final displayName = isGuest
-        ? '测试用户'
-        : (auth.phone ?? auth.email ?? (auth.userId ?? '用户'));
+    final displayName =
+        isGuest ? '测试用户' : (auth.phone ?? auth.email ?? (auth.userId ?? '用户'));
 
     return ListView(
       children: [
@@ -39,8 +38,10 @@ class ProfileScreen extends ConsumerWidget {
         ),
         if (isGuest)
           Center(
-            child: Text('未登录（测试模式）',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+            child: Text(
+              '未登录（测试模式）',
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
           ),
         const SizedBox(height: 24),
         ListTile(
@@ -110,8 +111,10 @@ class ProfileScreen extends ConsumerWidget {
               }
             },
             icon: const Icon(Icons.logout, color: Colors.red),
-            label: Text(isGuest ? '退出测试' : '退出登录',
-                style: const TextStyle(color: Colors.red)),
+            label: Text(
+              isGuest ? '退出测试' : '退出登录',
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ),
         const SizedBox(height: 24),

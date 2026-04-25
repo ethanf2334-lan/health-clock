@@ -54,7 +54,9 @@ class DocumentRepository {
         'mime_type': req.mimeType,
       },
     );
-    return UploadSignature.fromJson(_normalizeSig(resp.data['data'] as Map<String, dynamic>));
+    return UploadSignature.fromJson(
+      _normalizeSig(resp.data['data'] as Map<String, dynamic>),
+    );
   }
 
   /// 直传 R2（PUT 预签名）。
@@ -78,40 +80,53 @@ class DocumentRepository {
   }
 
   Future<HealthDocument> createDocument(DocumentCreate data) async {
-    final resp = await _dio.post('/documents', data: {
-      'member_id': data.memberId,
-      'file_name': data.fileName,
-      'file_size': data.fileSize,
-      'mime_type': data.mimeType,
-      'category': data.category,
-      if (data.title != null) 'title': data.title,
-      if (data.documentDate != null)
-        'document_date': data.documentDate!.toIso8601String(),
-      if (data.hospitalName != null) 'hospital_name': data.hospitalName,
-      'file_url': data.fileUrl,
-      'storage_bucket': data.storageBucket,
-      'storage_key': data.storageKey,
-    });
-    return HealthDocument.fromJson(_normalizeDoc(resp.data['data'] as Map<String, dynamic>));
+    final resp = await _dio.post(
+      '/documents',
+      data: {
+        'member_id': data.memberId,
+        'file_name': data.fileName,
+        'file_size': data.fileSize,
+        'mime_type': data.mimeType,
+        'category': data.category,
+        if (data.title != null) 'title': data.title,
+        if (data.documentDate != null)
+          'document_date': data.documentDate!.toIso8601String(),
+        if (data.hospitalName != null) 'hospital_name': data.hospitalName,
+        'file_url': data.fileUrl,
+        'storage_bucket': data.storageBucket,
+        'storage_key': data.storageKey,
+      },
+    );
+    return HealthDocument.fromJson(
+      _normalizeDoc(resp.data['data'] as Map<String, dynamic>),
+    );
   }
 
   Future<List<HealthDocument>> listDocuments({
     String? memberId,
     String? category,
   }) async {
-    final resp = await _dio.get('/documents', queryParameters: {
-      if (memberId != null) 'member_id': memberId,
-      if (category != null) 'category': category,
-    });
+    final resp = await _dio.get(
+      '/documents',
+      queryParameters: {
+        if (memberId != null) 'member_id': memberId,
+        if (category != null) 'category': category,
+      },
+    );
     final data = resp.data['data'] as List;
     return data
-        .map((e) => HealthDocument.fromJson(_normalizeDoc(e as Map<String, dynamic>)))
+        .map(
+          (e) =>
+              HealthDocument.fromJson(_normalizeDoc(e as Map<String, dynamic>)),
+        )
         .toList();
   }
 
   Future<HealthDocument> getDocument(String id) async {
     final resp = await _dio.get('/documents/$id');
-    return HealthDocument.fromJson(_normalizeDoc(resp.data['data'] as Map<String, dynamic>));
+    return HealthDocument.fromJson(
+      _normalizeDoc(resp.data['data'] as Map<String, dynamic>),
+    );
   }
 
   Future<void> deleteDocument(String id) async {
@@ -119,9 +134,12 @@ class DocumentRepository {
   }
 
   Future<Map<String, dynamic>> processOcr(String documentId) async {
-    final resp = await _dio.post('/documents/ocr', data: {
-      'document_id': documentId,
-    });
+    final resp = await _dio.post(
+      '/documents/ocr',
+      data: {
+        'document_id': documentId,
+      },
+    );
     return resp.data['data'] as Map<String, dynamic>;
   }
 }

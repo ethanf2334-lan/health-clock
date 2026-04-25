@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/app_constants.dart';
@@ -59,10 +60,34 @@ class AuthState {
   }
 }
 
+class _StoredAuth {
+  final String userId;
+  final String? phone;
+  final String? email;
+  final String accessToken;
+  final int expiresAt;
+
+  const _StoredAuth({
+    required this.userId,
+    required this.accessToken,
+    required this.expiresAt,
+    this.phone,
+    this.email,
+  });
+}
+
 @Riverpod(keepAlive: true)
 class Auth extends _$Auth {
+  static const _tokenKey = 'auth.accessToken';
+  static const _expiresAtKey = 'auth.expiresAt';
+  static const _userIdKey = 'auth.userId';
+  static const _phoneKey = 'auth.phone';
+  static const _emailKey = 'auth.email';
+  static const _refreshWindowSeconds = 60 * 60 * 24;
+
   @override
   AuthState build() {
+    _restoreSession();
     return const AuthState(status: AuthStatus.unauthenticated);
   }
 
@@ -102,17 +127,80 @@ class Auth extends _$Auth {
         throw Exception('未获取到 access_token');
       }
 
-      ref.read(authTokenProvider.notifier).state = token;
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        userId: user['id'] as String?,
-        phone: user['phone'] as String?,
-        email: user['email'] as String?,
-        accessToken: token,
-        expiresAt: expiresAt,
+      await _setAuthenticated(
+        AuthState(
+          status: AuthStatus.authenticated,
+          userId: user['id'] as String?,
+          phone: user['phone'] as String?,
+          email: user['email'] as String?,
+          accessToken: token,
+          expiresAt: expiresAt,
+        ),
       );
     } on DioException catch (e) {
       throw Exception(_extractError(e, '验证码校验失败'));
+    }
+  }
+
+  /// 使用当前仍有效的 token 续签，避免 7 天过期后突然掉线。
+  Future<void> refreshSession() async {
+    final token = state.accessToken;
+    if (token == null || token.isEmpty) return;
+
+    ref.read(authTokenProvider.notifier).state = token;
+    try {
+      final resp = await _dio.post<dynamic>('/auth/refresh');
+      final data = (resp.data is Map<String, dynamic>)
+          ? (resp.data as Map<String, dynamic>)['data'] as Map<String, dynamic>?
+          : null;
+      if (data == null) {
+        throw Exception('服务端返回数据格式异常');
+      }
+      final newToken = data['access_token'] as String?;
+      final expiresAt = data['expires_at'] as int?;
+      final user = data['user'] as Map<String, dynamic>? ?? const {};
+      if (newToken == null || newToken.isEmpty) {
+        throw Exception('未获取到 access_token');
+      }
+
+      await _setAuthenticated(
+        AuthState(
+          status: AuthStatus.authenticated,
+          userId: user['id'] as String? ?? state.userId,
+          phone: user['phone'] as String? ?? state.phone,
+          email: user['email'] as String? ?? state.email,
+          accessToken: newToken,
+          expiresAt: expiresAt,
+        ),
+      );
+    } catch (_) {
+      await signOut();
+    }
+  }
+
+  Future<void> _restoreSession() async {
+    final stored = await _readStoredAuth();
+    if (stored == null) return;
+
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    if (stored.expiresAt <= now) {
+      await _clearStoredAuth();
+      return;
+    }
+
+    final restored = AuthState(
+      status: AuthStatus.authenticated,
+      userId: stored.userId,
+      phone: stored.phone,
+      email: stored.email,
+      accessToken: stored.accessToken,
+      expiresAt: stored.expiresAt,
+    );
+    ref.read(authTokenProvider.notifier).state = stored.accessToken;
+    state = restored;
+
+    if (stored.expiresAt - now <= _refreshWindowSeconds) {
+      await refreshSession();
     }
   }
 
@@ -124,6 +212,68 @@ class Auth extends _$Auth {
   Future<void> signOut() async {
     state = const AuthState(status: AuthStatus.unauthenticated);
     ref.read(authTokenProvider.notifier).state = null;
+    await _clearStoredAuth();
+  }
+
+  Future<void> _setAuthenticated(AuthState next) async {
+    final token = next.accessToken;
+    final expiresAt = next.expiresAt;
+    final userId = next.userId;
+    if (token == null || token.isEmpty || expiresAt == null || userId == null) {
+      throw Exception('登录状态数据不完整');
+    }
+
+    ref.read(authTokenProvider.notifier).state = token;
+    state = next;
+    await _saveAuth(next);
+  }
+
+  Future<_StoredAuth?> _readStoredAuth() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_tokenKey);
+    final expiresAt = prefs.getInt(_expiresAtKey);
+    final userId = prefs.getString(_userIdKey);
+    if (token == null || token.isEmpty || expiresAt == null || userId == null) {
+      return null;
+    }
+
+    return _StoredAuth(
+      userId: userId,
+      accessToken: token,
+      expiresAt: expiresAt,
+      phone: prefs.getString(_phoneKey),
+      email: prefs.getString(_emailKey),
+    );
+  }
+
+  Future<void> _saveAuth(AuthState auth) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tokenKey, auth.accessToken!);
+    await prefs.setInt(_expiresAtKey, auth.expiresAt!);
+    await prefs.setString(_userIdKey, auth.userId!);
+
+    final phone = auth.phone;
+    if (phone == null || phone.isEmpty) {
+      await prefs.remove(_phoneKey);
+    } else {
+      await prefs.setString(_phoneKey, phone);
+    }
+
+    final email = auth.email;
+    if (email == null || email.isEmpty) {
+      await prefs.remove(_emailKey);
+    } else {
+      await prefs.setString(_emailKey, email);
+    }
+  }
+
+  Future<void> _clearStoredAuth() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tokenKey);
+    await prefs.remove(_expiresAtKey);
+    await prefs.remove(_userIdKey);
+    await prefs.remove(_phoneKey);
+    await prefs.remove(_emailKey);
   }
 
   String _extractError(DioException e, String fallback) {

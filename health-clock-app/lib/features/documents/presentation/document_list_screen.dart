@@ -11,8 +11,7 @@ class DocumentListScreen extends ConsumerStatefulWidget {
   const DocumentListScreen({super.key});
 
   @override
-  ConsumerState<DocumentListScreen> createState() =>
-      _DocumentListScreenState();
+  ConsumerState<DocumentListScreen> createState() => _DocumentListScreenState();
 }
 
 class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {

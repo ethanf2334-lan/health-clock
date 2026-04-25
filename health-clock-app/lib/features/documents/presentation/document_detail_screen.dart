@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../shared/models/document.dart';
 import '../data/document_repository.dart';
 import '../providers/document_provider.dart';
+import 'candidate_event_list.dart';
 
 /// 文档详情页：显示元信息、图片预览、OCR/AI摘要，支持原文查看和删除。
 class DocumentDetailScreen extends ConsumerWidget {
@@ -46,6 +47,7 @@ class DocumentDetailScreen extends ConsumerWidget {
         ? DateFormat('yyyy-MM-dd').format(doc.documentDate!.toLocal())
         : DateFormat('yyyy-MM-dd').format(doc.createdAt.toLocal());
     final aiEntries = _visibleAiEntries(doc);
+    final candidateEvents = _candidateEvents(doc);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -89,6 +91,18 @@ class DocumentDetailScreen extends ConsumerWidget {
             aiEntries
                 .map((e) => _infoRow(_labelKey(e.key), _formatValue(e.value)))
                 .toList(),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // 候选提醒
+        if (candidateEvents.isNotEmpty) ...[
+          Text('候选提醒', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          CandidateEventList(
+            memberId: doc.memberId,
+            candidates: candidateEvents,
+            showEmptyState: false,
           ),
           const SizedBox(height: 16),
         ],
@@ -174,8 +188,10 @@ class DocumentDetailScreen extends ConsumerWidget {
         children: [
           SizedBox(
             width: 80,
-            child: Text(label,
-                style: const TextStyle(color: Colors.grey, fontSize: 13)),
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+            ),
           ),
           Expanded(
             child: Text(value, style: const TextStyle(fontSize: 14)),
@@ -200,6 +216,15 @@ class DocumentDetailScreen extends ConsumerWidget {
     }).toList();
   }
 
+  List<Map<String, dynamic>> _candidateEvents(HealthDocument doc) {
+    final raw = doc.aiSummary?['candidate_events'];
+    if (raw is! List) return [];
+    return raw
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
   Future<void> _openInBrowser(BuildContext context, HealthDocument doc) async {
     final url = doc.downloadUrl ?? doc.fileUrl;
     if (url.isEmpty) {
@@ -219,7 +244,10 @@ class DocumentDetailScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(
-      BuildContext context, WidgetRef ref, HealthDocument doc) async {
+    BuildContext context,
+    WidgetRef ref,
+    HealthDocument doc,
+  ) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(

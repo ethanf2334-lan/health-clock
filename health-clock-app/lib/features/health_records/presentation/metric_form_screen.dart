@@ -78,7 +78,10 @@ class _MetricFormScreenState extends ConsumerState<MetricFormScreen> {
               initialValue: _type,
               decoration: const InputDecoration(labelText: '指标'),
               items: _defs
-                  .map((d) => DropdownMenuItem(value: d.type, child: Text(d.label)))
+                  .map(
+                    (d) =>
+                        DropdownMenuItem(value: d.type, child: Text(d.label)),
+                  )
                   .toList(),
               onChanged: (v) {
                 if (v != null) setState(() => _type = v);
@@ -91,7 +94,8 @@ class _MetricFormScreenState extends ConsumerState<MetricFormScreen> {
                 labelText: _def.hasExtra ? '收缩压（高压）' : '数值',
                 suffixText: _def.unit,
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               validator: (v) {
                 if (v == null || v.isEmpty) return '请输入数值';
                 if (double.tryParse(v) == null) return '请输入有效数字';
@@ -119,7 +123,8 @@ class _MetricFormScreenState extends ConsumerState<MetricFormScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('记录时间'),
-              subtitle: Text(DateFormat('yyyy-MM-dd HH:mm').format(_recordedAt)),
+              subtitle:
+                  Text(DateFormat('yyyy-MM-dd HH:mm').format(_recordedAt)),
               trailing: const Icon(Icons.calendar_today),
               onTap: _pickDateTime,
             ),

@@ -23,7 +23,8 @@ Map<String, dynamic> _normalizeMember(Map<String, dynamic> json) {
     'heightCm': json['height_cm'] ?? json['heightCm'],
     'weightKg': json['weight_kg'] ?? json['weightKg'],
     'bloodType': json['blood_type'] ?? json['bloodType'],
-    'chronicConditions': json['chronic_conditions'] ?? json['chronicConditions'],
+    'chronicConditions':
+        json['chronic_conditions'] ?? json['chronicConditions'],
     'allergies': json['allergies'],
     'notes': json['notes'],
     'createdAt': json['created_at'] ?? json['createdAt'],
@@ -40,13 +41,18 @@ class MemberRepository {
     final response = await _dio.get('/members');
     final data = response.data['data'] as List;
     return data
-        .map((json) => Member.fromJson(_normalizeMember(json as Map<String, dynamic>)))
+        .map(
+          (json) =>
+              Member.fromJson(_normalizeMember(json as Map<String, dynamic>)),
+        )
         .toList();
   }
 
   Future<Member> getMember(String id) async {
     final response = await _dio.get('/members/$id');
-    return Member.fromJson(_normalizeMember(response.data['data'] as Map<String, dynamic>));
+    return Member.fromJson(
+      _normalizeMember(response.data['data'] as Map<String, dynamic>),
+    );
   }
 
   Future<Member> createMember(MemberCreate member) async {
@@ -65,7 +71,9 @@ class MemberRepository {
       if (member.notes != null) 'notes': member.notes,
     };
     final response = await _dio.post('/members', data: body);
-    return Member.fromJson(_normalizeMember(response.data['data'] as Map<String, dynamic>));
+    return Member.fromJson(
+      _normalizeMember(response.data['data'] as Map<String, dynamic>),
+    );
   }
 
   Future<Member> updateMember(String id, Map<String, dynamic> updates) async {
@@ -73,7 +81,9 @@ class MemberRepository {
       '/members/$id',
       data: updates,
     );
-    return Member.fromJson(_normalizeMember(response.data['data'] as Map<String, dynamic>));
+    return Member.fromJson(
+      _normalizeMember(response.data['data'] as Map<String, dynamic>),
+    );
   }
 
   Future<void> deleteMember(String id) async {

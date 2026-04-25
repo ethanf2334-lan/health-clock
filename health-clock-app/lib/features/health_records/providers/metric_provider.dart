@@ -26,20 +26,22 @@ class MetricList extends _$MetricList {
   Future<void> setFilter(MetricFilter filter) async {
     _filter = filter;
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() =>
-        ref.read(metricRepositoryProvider).listMetrics(
-          memberId: filter.memberId,
-          metricType: filter.metricType,
-        ));
+    state = await AsyncValue.guard(
+      () => ref.read(metricRepositoryProvider).listMetrics(
+            memberId: filter.memberId,
+            metricType: filter.metricType,
+          ),
+    );
   }
 
   Future<void> refresh() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() =>
-        ref.read(metricRepositoryProvider).listMetrics(
-          memberId: _filter.memberId,
-          metricType: _filter.metricType,
-        ));
+    state = await AsyncValue.guard(
+      () => ref.read(metricRepositoryProvider).listMetrics(
+            memberId: _filter.memberId,
+            metricType: _filter.metricType,
+          ),
+    );
   }
 
   Future<MetricRecord> add(MetricRecordCreate data) async {

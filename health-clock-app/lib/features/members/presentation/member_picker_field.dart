@@ -31,10 +31,12 @@ class MemberPickerField extends ConsumerWidget {
           );
         }
         final items = members
-            .map((m) => DropdownMenuItem<String>(
-                  value: m.id,
-                  child: Text(m.name),
-                ))
+            .map(
+              (m) => DropdownMenuItem<String>(
+                value: m.id,
+                child: Text(m.name),
+              ),
+            )
             .toList();
         return DropdownButtonFormField<String>(
           initialValue: value,

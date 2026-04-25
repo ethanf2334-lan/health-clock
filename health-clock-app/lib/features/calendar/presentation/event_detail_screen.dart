@@ -54,8 +54,10 @@ class EventDetailScreen extends ConsumerWidget {
         if (event.sourceText != null && event.sourceText!.isNotEmpty)
           _row('原始输入', event.sourceText!),
         if (event.aiConfidence != null)
-          _row('AI 置信度',
-              '${(event.aiConfidence! * 100).toStringAsFixed(0)}%'),
+          _row(
+            'AI 置信度',
+            '${(event.aiConfidence! * 100).toStringAsFixed(0)}%',
+          ),
         const SizedBox(height: 24),
         Row(
           children: [
@@ -73,7 +75,8 @@ class EventDetailScreen extends ConsumerWidget {
                     ref.invalidate(eventDetailProvider(event.id));
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('已完成')));
+                        const SnackBar(content: Text('已完成')),
+                      );
                     }
                   },
                 ),

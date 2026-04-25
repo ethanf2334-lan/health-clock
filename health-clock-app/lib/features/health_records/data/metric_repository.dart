@@ -42,21 +42,30 @@ class MetricRepository {
     final resp = await _dio.get('/metrics', queryParameters: qp);
     final list = resp.data['data'] as List;
     return list
-        .map((e) => MetricRecord.fromJson(_normalizeMetric(e as Map<String, dynamic>)))
+        .map(
+          (e) => MetricRecord.fromJson(
+            _normalizeMetric(e as Map<String, dynamic>),
+          ),
+        )
         .toList();
   }
 
   Future<MetricRecord> createMetric(MetricRecordCreate data) async {
-    final resp = await _dio.post('/metrics', data: {
-      'member_id': data.memberId,
-      'metric_type': data.metricType,
-      'value': data.value,
-      if (data.valueExtra != null) 'value_extra': data.valueExtra,
-      'unit': data.unit,
-      'recorded_at': data.recordedAt.toIso8601String(),
-      if (data.note != null) 'note': data.note,
-    });
-    return MetricRecord.fromJson(_normalizeMetric(resp.data['data'] as Map<String, dynamic>));
+    final resp = await _dio.post(
+      '/metrics',
+      data: {
+        'member_id': data.memberId,
+        'metric_type': data.metricType,
+        'value': data.value,
+        if (data.valueExtra != null) 'value_extra': data.valueExtra,
+        'unit': data.unit,
+        'recorded_at': data.recordedAt.toIso8601String(),
+        if (data.note != null) 'note': data.note,
+      },
+    );
+    return MetricRecord.fromJson(
+      _normalizeMetric(resp.data['data'] as Map<String, dynamic>),
+    );
   }
 
   Future<void> deleteMetric(String id) async {

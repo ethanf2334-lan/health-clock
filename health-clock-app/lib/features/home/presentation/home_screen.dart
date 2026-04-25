@@ -63,9 +63,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Icon(Icons.health_and_safety,
-                size: 56,
-                color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.health_and_safety,
+              size: 56,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(height: 16),
             const Text(
               '欢迎使用健康时钟',

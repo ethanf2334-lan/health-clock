@@ -107,10 +107,13 @@ class MemberListScreen extends ConsumerWidget {
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color:
-                                  Theme.of(context).colorScheme.primaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -132,8 +135,7 @@ class MemberListScreen extends ConsumerWidget {
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.more_vert),
-                      onPressed: () =>
-                          _showMemberOptions(context, ref, member),
+                      onPressed: () => _showMemberOptions(context, ref, member),
                     ),
                     onTap: () {
                       ref.read(currentMemberIdProvider.notifier).state =

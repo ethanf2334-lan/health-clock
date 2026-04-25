@@ -62,6 +62,7 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     final p = widget.prefill;
     if (p != null) {
       _titleController.text = (p['event_title'] ?? p['title'] ?? '') as String;
+      _descController.text = (p['description'] as String?) ?? '';
       _eventType = (p['event_type'] as String?) ?? 'follow_up';
       final sched = p['scheduled_at'];
       if (sched is String) {
@@ -109,10 +110,12 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
               initialValue: _eventType,
               decoration: const InputDecoration(labelText: '类型'),
               items: _typeOptions
-                  .map((o) => DropdownMenuItem<String>(
-                        value: o['value'],
-                        child: Text(o['label']!),
-                      ))
+                  .map(
+                    (o) => DropdownMenuItem<String>(
+                      value: o['value'],
+                      child: Text(o['label']!),
+                    ),
+                  )
                   .toList(),
               onChanged: (v) {
                 if (v != null) setState(() => _eventType = v);
@@ -168,8 +171,13 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     );
     if (date == null) return;
 
-    DateTime result = DateTime(date.year, date.month, date.day,
-        _scheduledAt.hour, _scheduledAt.minute);
+    DateTime result = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      _scheduledAt.hour,
+      _scheduledAt.minute,
+    );
     if (!_isAllDay) {
       if (!mounted) return;
       final time = await showTimePicker(
@@ -177,8 +185,8 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         initialTime: TimeOfDay.fromDateTime(_scheduledAt),
       );
       if (time == null) return;
-      result = DateTime(
-          date.year, date.month, date.day, time.hour, time.minute);
+      result =
+          DateTime(date.year, date.month, date.day, time.hour, time.minute);
     }
     setState(() => _scheduledAt = result);
   }
@@ -198,8 +206,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
       if (widget.event != null) {
         event = await notifier.updateEvent(widget.event!.id, {
           'title': _titleController.text.trim(),
-          'description':
-              _descController.text.trim().isEmpty ? null : _descController.text.trim(),
+          'description': _descController.text.trim().isEmpty
+              ? null
+              : _descController.text.trim(),
           'event_type': _eventType,
           'scheduled_at': _scheduledAt.toUtc().toIso8601String(),
           'is_all_day': _isAllDay,
@@ -214,7 +223,8 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
           eventType: _eventType,
           scheduledAt: _scheduledAt,
           isAllDay: _isAllDay,
-          sourceType: (widget.prefill != null) ? 'ai_text' : 'manual',
+          sourceType: (widget.prefill?['source_type'] as String?) ??
+              ((widget.prefill != null) ? 'ai_text' : 'manual'),
           sourceText: widget.prefill?['source_text'] as String?,
           aiConfidence: (widget.prefill?['confidence'] as num?)?.toDouble(),
         );
@@ -234,8 +244,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
 
       if (!mounted) return;
       Navigator.of(context).pop(event);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(widget.event == null ? '创建成功' : '已保存')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(widget.event == null ? '创建成功' : '已保存')),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)

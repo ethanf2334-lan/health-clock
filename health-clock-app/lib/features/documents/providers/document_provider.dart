@@ -11,20 +11,28 @@ class DocumentList extends _$DocumentList {
 
   @override
   Future<List<HealthDocument>> build() {
-    return ref.read(documentRepositoryProvider).listDocuments(memberId: _memberId);
+    return ref
+        .read(documentRepositoryProvider)
+        .listDocuments(memberId: _memberId);
   }
 
   Future<void> setMemberFilter(String? memberId) async {
     _memberId = memberId;
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() =>
-        ref.read(documentRepositoryProvider).listDocuments(memberId: memberId));
+    state = await AsyncValue.guard(
+      () => ref
+          .read(documentRepositoryProvider)
+          .listDocuments(memberId: memberId),
+    );
   }
 
   Future<void> refresh() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() =>
-        ref.read(documentRepositoryProvider).listDocuments(memberId: _memberId));
+    state = await AsyncValue.guard(
+      () => ref
+          .read(documentRepositoryProvider)
+          .listDocuments(memberId: _memberId),
+    );
   }
 
   Future<void> delete(String id) async {

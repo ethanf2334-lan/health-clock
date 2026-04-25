@@ -2,6 +2,7 @@
 
 - POST /auth/send-sms-code    发送阿里云短信验证码
 - POST /auth/verify-sms-code  校验验证码并签发 Supabase 兼容 JWT
+- POST /auth/refresh          用当前有效 token 续签 access_token
 - GET  /auth/me               获取当前登录用户信息（需 Bearer token）
 """
 
@@ -83,6 +84,30 @@ def verify_sms_code(payload: VerifySmsCodeRequest):
         access_token=token,
         expires_at=exp_at,
         user={"id": user["id"], "phone": user["phone"]},
+    )
+    return success_response(resp.model_dump())
+
+
+@router.post("/refresh", response_model=None)
+def refresh_token(current_user: CurrentUser):
+    """使用当前有效 access_token 续签一个新的 access_token。"""
+    try:
+        token, exp_at = sign_supabase_access_token(
+            user_id=current_user["id"],
+            phone=current_user.get("phone"),
+            email=current_user.get("email"),
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+
+    resp = VerifySmsCodeResponse(
+        access_token=token,
+        expires_at=exp_at,
+        user={
+            "id": current_user["id"],
+            "phone": current_user.get("phone"),
+            "email": current_user.get("email"),
+        },
     )
     return success_response(resp.model_dump())
 

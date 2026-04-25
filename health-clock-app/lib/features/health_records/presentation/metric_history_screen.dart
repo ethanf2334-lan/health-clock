@@ -66,17 +66,19 @@ class _MetricHistoryScreenState extends ConsumerState<MetricHistoryScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               children: _types
-                  .map((t) => Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: ChoiceChip(
-                          label: Text(t['label'] as String),
-                          selected: _type == t['value'],
-                          onSelected: (_) {
-                            setState(() => _type = t['value']);
-                            _apply();
-                          },
-                        ),
-                      ))
+                  .map(
+                    (t) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: ChoiceChip(
+                        label: Text(t['label'] as String),
+                        selected: _type == t['value'],
+                        onSelected: (_) {
+                          setState(() => _type = t['value']);
+                          _apply();
+                        },
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -113,7 +115,8 @@ class _MetricHistoryScreenState extends ConsumerState<MetricHistoryScreen> {
   }
 
   Widget _buildChart(List<MetricRecord> list) {
-    final sorted = [...list]..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+    final sorted = [...list]
+      ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
     final spots = <FlSpot>[];
     for (var i = 0; i < sorted.length; i++) {
       spots.add(FlSpot(i.toDouble(), sorted[i].value));
@@ -146,7 +149,7 @@ class _MetricHistoryScreenState extends ConsumerState<MetricHistoryScreen> {
     String valueText = '${r.value}${r.unit}';
     if (r.metricType == 'blood_pressure' && r.valueExtra != null) {
       final d = r.valueExtra!['diastolic'];
-      valueText = '${r.value}/${d}${r.unit}';
+      valueText = '${r.value}/$d${r.unit}';
     }
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
