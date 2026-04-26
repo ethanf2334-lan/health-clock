@@ -21,7 +21,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _index = 0;
   bool _onboardingShown = false;
 
-  final _titles = const ['健康日历', '家庭成员', '健康档案', '我的'];
+  final _titles = const ['今日照护', '家庭成员', '健康档案', '我的'];
 
   @override
   void initState() {
@@ -46,11 +46,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context: context,
       isDismissible: false,
       enableDrag: false,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -63,15 +60,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Icon(
-              Icons.health_and_safety,
-              size: 56,
-              color: Theme.of(context).colorScheme.primary,
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Icon(
+                Icons.health_and_safety,
+                size: 40,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               '欢迎使用健康时钟',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
@@ -177,7 +182,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return [
         IconButton(
           tooltip: '手动创建',
-          icon: const Icon(Icons.add),
+          icon: const Icon(Icons.add_alert_outlined),
           onPressed: () => context.push('/events/new'),
         ),
         IconButton(

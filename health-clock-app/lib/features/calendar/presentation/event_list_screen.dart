@@ -3,7 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_spacing.dart';
 import '../../../shared/models/health_event.dart';
+import '../../../shared/widgets/app_empty_state.dart';
+import '../../../shared/widgets/app_section_header.dart';
+import '../../../shared/widgets/app_status_chip.dart';
+import '../../../shared/widgets/app_surface_card.dart';
 import '../../ai_input/presentation/ai_quick_create_panel.dart';
 import '../../members/providers/current_member_provider.dart';
 import '../providers/event_provider.dart';
@@ -106,7 +112,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
 
   Widget _buildViewBar() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       child: Row(
         children: [
           Expanded(
@@ -136,9 +142,6 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                 });
                 _applyFilter();
               },
-              style: const ButtonStyle(
-                visualDensity: VisualDensity.compact,
-              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -158,31 +161,300 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
   }
 
   Widget _buildRangeBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: SegmentedButton<EventRange>(
-              segments: const [
-                ButtonSegment(value: EventRange.today, label: Text('今日')),
-                ButtonSegment(value: EventRange.week, label: Text('7天')),
-                ButtonSegment(value: EventRange.month, label: Text('30天')),
-                ButtonSegment(value: EventRange.all, label: Text('全部')),
-              ],
-              selected: {_range},
-              onSelectionChanged: (s) {
-                setState(() => _range = s.first);
-                _applyFilter();
-              },
-              style: const ButtonStyle(
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
-          ),
-        ],
+    final labels = {
+      EventRange.today: '今日',
+      EventRange.week: '7天',
+      EventRange.month: '30天',
+      EventRange.all: '全部',
+    };
+
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        itemBuilder: (context, index) {
+          final range = EventRange.values[index];
+          final selected = _range == range;
+          return ChoiceChip(
+            label: Text(labels[range]!),
+            selected: selected,
+            onSelected: (_) {
+              setState(() => _range = range);
+              _applyFilter();
+            },
+          );
+        },
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemCount: EventRange.values.length,
       ),
     );
+  }
+
+  Widget _buildCareSummary(AsyncValue<List<HealthEvent>> eventsAsync) {
+    return eventsAsync.maybeWhen(
+      data: (events) {
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final todayCount = events
+            .where((e) => _isSameDay(e.scheduledAt.toLocal(), today))
+            .length;
+        final overdueCount = events
+            .where(
+              (e) =>
+                  e.status == 'pending' &&
+                  e.scheduledAt.toLocal().isBefore(now),
+            )
+            .length;
+        final nextEvent = [...events]
+          ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+        final nextPending = nextEvent
+            .where((e) => e.status == 'pending' && !e.scheduledAt.isBefore(now))
+            .cast<HealthEvent?>()
+            .firstWhere((e) => e != null, orElse: () => null);
+        final mood = _careMood(todayCount, overdueCount);
+        final moodColor = _moodColor(mood);
+
+        return AppSurfaceCard(
+          margin: const EdgeInsets.fromLTRB(16, 2, 16, 12),
+          padding: EdgeInsets.zero,
+          color: Color.alphaBlend(
+            moodColor.withValues(alpha: 0.08),
+            Theme.of(context).colorScheme.surface,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Row(
+                  children: [
+                    _CareMoodOrb(
+                      mood: mood,
+                      color: moodColor,
+                    ),
+                    const SizedBox(width: AppSpacing.lg),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppStatusChip(
+                            label: _moodLabel(mood),
+                            icon: _moodIcon(mood),
+                            color: moodColor,
+                            compact: true,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            _summaryTitle(todayCount, overdueCount),
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(fontSize: 24),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            _summaryMessage(nextPending, mood),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                decoration: BoxDecoration(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surface
+                      .withValues(alpha: 0.76),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(AppSpacing.radiusLg),
+                  ),
+                  border: Border(
+                    top: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                ),
+                child: _buildCareRhythm(events, today),
+              ),
+            ],
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildCareRhythm(List<HealthEvent> events, DateTime today) {
+    final days = List.generate(7, (i) => today.add(Duration(days: i)));
+    final weekdayLabels = ['一', '二', '三', '四', '五', '六', '日'];
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '未来 7 天照护节奏',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+            ),
+            Text(
+              '颜色越深事项越多',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: days.map((day) {
+            final dayEvents = events
+                .where((e) => _isSameDay(e.scheduledAt.toLocal(), day))
+                .toList();
+            final count = dayEvents.length;
+            final dayColor = _dayColor(dayEvents);
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Column(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: Color.alphaBlend(
+                          dayColor.withValues(alpha: count == 0 ? 0.10 : 0.82),
+                          colorScheme.surface,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: dayColor.withValues(alpha: 0.20),
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: count == 0
+                          ? Icon(
+                              Icons.remove,
+                              size: 14,
+                              color: colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.42),
+                            )
+                          : Text(
+                              '$count',
+                              style: TextStyle(
+                                color: count >= 3
+                                    ? Colors.white
+                                    : Color.alphaBlend(
+                                        dayColor.withValues(alpha: 0.80),
+                                        colorScheme.onSurface,
+                                      ),
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      weekdayLabels[day.weekday - 1],
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: _isSameDay(day, today)
+                                ? FontWeight.w900
+                                : FontWeight.w600,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  String _summaryTitle(int todayCount, int overdueCount) {
+    if (overdueCount > 0) return '有事情在等你';
+    if (todayCount >= 4) return '今天需要多留意';
+    if (todayCount > 0) return '今天节奏可控';
+    return '今天很轻松';
+  }
+
+  String _summaryMessage(HealthEvent? nextPending, _CareMood mood) {
+    if (nextPending == null) {
+      return '没有待办提醒。可以把复查、用药或检查安排交给底部 AI 记录。';
+    }
+    final lead = switch (mood) {
+      _CareMood.calm => '保持现在的节奏就好',
+      _CareMood.steady => '按计划慢慢处理',
+      _CareMood.busy => '先抓最靠近的一件事',
+      _CareMood.alert => '建议先处理逾期事项',
+    };
+    return '$lead：${nextPending.title} · ${_formatNextTime(nextPending)}';
+  }
+
+  _CareMood _careMood(int todayCount, int overdueCount) {
+    if (overdueCount > 0) return _CareMood.alert;
+    if (todayCount >= 4) return _CareMood.busy;
+    if (todayCount > 0) return _CareMood.steady;
+    return _CareMood.calm;
+  }
+
+  Color _moodColor(_CareMood mood) {
+    return switch (mood) {
+      _CareMood.calm => AppColors.careBlue,
+      _CareMood.steady => AppColors.seed,
+      _CareMood.busy => AppColors.warmAmber,
+      _CareMood.alert => AppColors.danger,
+    };
+  }
+
+  String _moodLabel(_CareMood mood) {
+    return switch (mood) {
+      _CareMood.calm => '状态轻松',
+      _CareMood.steady => '照护稳定',
+      _CareMood.busy => '稍微忙碌',
+      _CareMood.alert => '需要关注',
+    };
+  }
+
+  IconData _moodIcon(_CareMood mood) {
+    return switch (mood) {
+      _CareMood.calm => Icons.spa_outlined,
+      _CareMood.steady => Icons.favorite_outline,
+      _CareMood.busy => Icons.notifications_active_outlined,
+      _CareMood.alert => Icons.error_outline,
+    };
+  }
+
+  Color _dayColor(List<HealthEvent> events) {
+    if (events.isEmpty) return AppColors.careBlue;
+    if (events.length >= 5) return AppColors.danger;
+    return _eventTypeColor(events.first.eventType);
+  }
+
+  String _formatNextTime(HealthEvent event) {
+    final local = event.scheduledAt.toLocal();
+    if (event.isAllDay) return DateFormat('M月d日').format(local);
+    return DateFormat('M月d日 HH:mm').format(local);
   }
 
   Widget _buildCalendar(List<HealthEvent> events) {
@@ -445,25 +717,33 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
       return LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxHeight < 160) {
-            return Center(
-              child: Text('暂无提醒', style: TextStyle(color: Colors.grey[600])),
-            );
-          }
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            return ListView(
+              padding: const EdgeInsets.only(bottom: 80),
               children: [
-                Icon(Icons.event_note, size: 56, color: Colors.grey[400]),
-                const SizedBox(height: 10),
-                Text('暂无提醒', style: TextStyle(color: Colors.grey[600])),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () => context.push('/events/new'),
-                  icon: const Icon(Icons.add),
-                  label: const Text('手动创建提醒'),
+                _buildCareSummary(AsyncValue.data(events)),
+                const AppEmptyState(
+                  icon: Icons.event_note_outlined,
+                  title: '暂无提醒',
+                  compact: true,
                 ),
               ],
-            ),
+            );
+          }
+          return ListView(
+            padding: const EdgeInsets.only(bottom: 80),
+            children: [
+              _buildCareSummary(AsyncValue.data(events)),
+              AppEmptyState(
+                icon: Icons.event_note_outlined,
+                title: '暂无提醒',
+                message: '可以手动创建，或者用底部 AI 输入一句话生成提醒。',
+                action: FilledButton.icon(
+                  onPressed: () => context.push('/events/new'),
+                  icon: const Icon(Icons.add_alert_outlined),
+                  label: const Text('手动创建'),
+                ),
+              ),
+            ],
           );
         },
       );
@@ -481,22 +761,24 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
       onRefresh: () => ref.read(eventListProvider.notifier).refresh(),
       child: ListView.builder(
         padding: const EdgeInsets.only(bottom: 80),
-        itemCount: keys.length,
+        itemCount: keys.length + 1,
         itemBuilder: (_, idx) {
-          final k = keys[idx];
+          if (idx == 0) {
+            return _buildCareSummary(AsyncValue.data(events));
+          }
+          final keyIndex = idx - 1;
+          final k = keys[keyIndex];
           final list = grouped[k]!;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-                child: Text(
-                  k,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
+              AppSectionHeader(
+                title: k,
+                trailing: Text(
+                  '${list.length} 条',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
               ),
               ...list.map(_buildTile),
@@ -516,51 +798,79 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
       _typeLabel(e.eventType),
       if (repeat != null) repeat,
     ].join('  ·  ');
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: ListTile(
-        leading: _typeIcon(e.eventType, isDone),
-        title: Text(
-          e.title,
-          style: TextStyle(
-            decoration: isDone ? TextDecoration.lineThrough : null,
-            color: isDone ? Colors.grey : null,
-            fontWeight: FontWeight.w500,
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return AppSurfaceCard(
+      onTap: () => context.push('/events/${e.id}'),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _typeIcon(e.eventType, isDone),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  e.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    decoration: isDone ? TextDecoration.lineThrough : null,
+                    color: isDone ? colorScheme.onSurfaceVariant : null,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  meta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
           ),
-        ),
-        subtitle: Text(meta),
-        trailing: isDone
-            ? const Icon(Icons.check_circle, color: Colors.green)
-            : IconButton(
-                tooltip: '标记完成',
-                icon: const Icon(Icons.check_circle_outline),
-                onPressed: () async {
-                  try {
-                    await ref
-                        .read(eventListProvider.notifier)
-                        .completeEvent(e.id);
-                    if (mounted) {
-                      ScaffoldMessenger.of(context)
-                        ..hideCurrentSnackBar()
-                        ..showSnackBar(
-                          const SnackBar(
-                            duration: Duration(milliseconds: 900),
-                            content: Text('已标记完成'),
-                          ),
-                        );
+          const SizedBox(width: 8),
+          isDone
+              ? const AppStatusChip(
+                  label: '已完成',
+                  icon: Icons.check,
+                  color: AppColors.success,
+                  compact: true,
+                )
+              : IconButton.filledTonal(
+                  tooltip: '标记完成',
+                  icon: const Icon(Icons.check),
+                  onPressed: () async {
+                    try {
+                      await ref
+                          .read(eventListProvider.notifier)
+                          .completeEvent(e.id);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context)
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            const SnackBar(
+                              duration: Duration(milliseconds: 900),
+                              content: Text('已标记完成'),
+                            ),
+                          );
+                      }
+                    } catch (error) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context)
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            SnackBar(content: Text('操作失败：$error')),
+                          );
+                      }
                     }
-                  } catch (error) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context)
-                        ..hideCurrentSnackBar()
-                        ..showSnackBar(
-                          SnackBar(content: Text('操作失败：$error')),
-                        );
-                    }
-                  }
-                },
-              ),
-        onTap: () => context.push('/events/${e.id}'),
+                  },
+                ),
+        ],
       ),
     );
   }
@@ -586,17 +896,31 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
       default:
         icon = Icons.event;
     }
+    final color = _eventTypeColor(type);
     return CircleAvatar(
-      backgroundColor: done
-          ? Colors.grey[300]
-          : Theme.of(context).colorScheme.primaryContainer,
+      backgroundColor: done ? Colors.grey[300] : color.withValues(alpha: 0.18),
       child: Icon(
         icon,
-        color: done
-            ? Colors.grey[600]
-            : Theme.of(context).colorScheme.onPrimaryContainer,
+        color: done ? Colors.grey[600] : color,
       ),
     );
+  }
+
+  Color _eventTypeColor(String type) {
+    switch (type) {
+      case 'follow_up':
+        return AppColors.careBlue;
+      case 'revisit':
+        return AppColors.coral;
+      case 'checkup':
+        return AppColors.sun;
+      case 'medication':
+        return AppColors.rose;
+      case 'monitoring':
+        return AppColors.lavender;
+      default:
+        return AppColors.seed;
+    }
   }
 
   String _typeLabel(String type) {
@@ -645,4 +969,158 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
 
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+enum _CareMood { calm, steady, busy, alert }
+
+class _CareMoodOrb extends StatelessWidget {
+  const _CareMoodOrb({
+    required this.mood,
+    required this.color,
+  });
+
+  final _CareMood mood;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 92,
+      height: 92,
+      child: CustomPaint(
+        painter: _CareMoodOrbPainter(
+          mood: mood,
+          color: color,
+          surface: Theme.of(context).colorScheme.surface,
+        ),
+      ),
+    );
+  }
+}
+
+class _CareMoodOrbPainter extends CustomPainter {
+  const _CareMoodOrbPainter({
+    required this.mood,
+    required this.color,
+    required this.surface,
+  });
+
+  final _CareMood mood;
+  final Color color;
+  final Color surface;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width * 0.50, size.height * 0.52);
+    final radius = size.shortestSide * 0.34;
+    final shadow = Paint()
+      ..color = color.withValues(alpha: 0.13)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
+    canvas.drawCircle(center.translate(0, 8), radius * 1.08, shadow);
+
+    final body = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-0.35, -0.45),
+        radius: 1.1,
+        colors: [
+          Color.alphaBlend(Colors.white.withValues(alpha: 0.34), color),
+          color,
+        ],
+      ).createShader(Offset.zero & size);
+    canvas.drawCircle(center, radius, body);
+
+    final highlight = Paint()
+      ..color = Colors.white.withValues(alpha: 0.30)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(
+      center.translate(-radius * 0.32, -radius * 0.35),
+      radius * 0.20,
+      highlight,
+    );
+
+    final cheek = Paint()..color = Colors.white.withValues(alpha: 0.28);
+    canvas.drawCircle(center.translate(radius * 0.38, radius * 0.05), 5, cheek);
+
+    final feature = Paint()
+      ..color = _faceColor()
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 3;
+    final leftEye = center.translate(-radius * 0.28, -radius * 0.08);
+    final rightEye = center.translate(radius * 0.22, -radius * 0.08);
+
+    if (mood == _CareMood.alert || mood == _CareMood.busy) {
+      canvas.drawLine(
+        leftEye.translate(-3, -2),
+        leftEye.translate(3, 2),
+        feature,
+      );
+      canvas.drawLine(
+        rightEye.translate(-3, 2),
+        rightEye.translate(3, -2),
+        feature,
+      );
+    } else {
+      canvas.drawCircle(leftEye, 2.4, feature);
+      canvas.drawCircle(rightEye, 2.4, feature);
+    }
+
+    final mouth = Path();
+    final mouthY = center.dy + radius * 0.18;
+    if (mood == _CareMood.alert) {
+      mouth.moveTo(center.dx - 8, mouthY + 3);
+      mouth.quadraticBezierTo(center.dx, mouthY - 4, center.dx + 8, mouthY + 3);
+    } else if (mood == _CareMood.busy) {
+      canvas.drawLine(
+        Offset(center.dx - 8, mouthY),
+        Offset(center.dx + 8, mouthY),
+        feature,
+      );
+    } else {
+      mouth.moveTo(center.dx - 9, mouthY - 2);
+      mouth.quadraticBezierTo(center.dx, mouthY + 8, center.dx + 9, mouthY - 2);
+    }
+    if (mood != _CareMood.busy) {
+      canvas.drawPath(mouth, feature..style = PaintingStyle.stroke);
+    }
+
+    final handPaint = Paint()
+      ..color = _faceColor().withValues(alpha: 0.76)
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 3;
+    canvas.drawLine(
+      center.translate(radius * 0.66, -radius * 0.58),
+      center.translate(radius * 0.86, -radius * 0.82),
+      handPaint,
+    );
+    canvas.drawLine(
+      center.translate(radius * 0.66, -radius * 0.58),
+      center.translate(radius * 0.90, -radius * 0.50),
+      handPaint,
+    );
+
+    final tickPaint = Paint()
+      ..color = _faceColor().withValues(alpha: 0.18)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius * 1.18),
+      -0.4,
+      1.15,
+      false,
+      tickPaint,
+    );
+  }
+
+  Color _faceColor() {
+    return mood == _CareMood.alert
+        ? const Color(0xFF532626)
+        : const Color(0xFF123C35);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CareMoodOrbPainter oldDelegate) {
+    return oldDelegate.mood != mood ||
+        oldDelegate.color != color ||
+        oldDelegate.surface != surface;
+  }
 }

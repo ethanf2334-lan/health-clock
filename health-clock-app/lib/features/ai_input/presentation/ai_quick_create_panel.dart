@@ -1,8 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_spacing.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../shared/models/health_event.dart';
 import '../../calendar/presentation/event_form_screen.dart';
@@ -72,6 +76,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     });
 
     if (widget.compact && !_expanded) {
+      final colorScheme = Theme.of(context).colorScheme;
       return SafeArea(
         top: false,
         child: DecoratedBox(
@@ -87,12 +92,26 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
                 child: Row(
                   children: [
-                    const Icon(Icons.auto_awesome, size: 18),
+                    const Icon(
+                      Icons.auto_awesome,
+                      size: 18,
+                      color: AppColors.lavender,
+                    ),
                     const SizedBox(width: 8),
-                    const Expanded(child: Text('AI 创建提醒')),
+                    Expanded(
+                      child: Text(
+                        'AI 创建提醒',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ),
                     Text(
                       '点这里输入',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(width: 4),
                     const Icon(Icons.keyboard_arrow_up),
@@ -137,12 +156,19 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
 
     if (!widget.compact) return content;
 
+    final media = MediaQuery.of(context);
+    final availableHeight = media.size.height - media.padding.top - 72;
+    final panelHeight = math.min(
+      320.0,
+      math.max(260.0, availableHeight * 0.42),
+    );
+
     return SafeArea(
       top: false,
       child: DecoratedBox(
         decoration: _panelDecoration(context),
         child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.42,
+          height: math.min(panelHeight, availableHeight),
           child: content,
         ),
       ),
@@ -153,10 +179,13 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     final colorScheme = Theme.of(context).colorScheme;
     return BoxDecoration(
       color: _panelColor(colorScheme),
+      border: Border(
+        top: BorderSide(color: colorScheme.outlineVariant),
+      ),
       boxShadow: [
         BoxShadow(
-          color: colorScheme.shadow.withValues(alpha: 0.10),
-          blurRadius: 12,
+          color: AppColors.lavender.withValues(alpha: 0.14),
+          blurRadius: 18,
           offset: const Offset(0, -3),
         ),
       ],
@@ -165,14 +194,14 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
 
   Color _panelColor(ColorScheme colorScheme) {
     return Color.alphaBlend(
-      colorScheme.primaryContainer.withValues(alpha: 0.26),
+      AppColors.careBlue.withValues(alpha: 0.16),
       colorScheme.surface,
     );
   }
 
   Color _historyColor(ColorScheme colorScheme) {
     return Color.alphaBlend(
-      colorScheme.surfaceContainerHighest.withValues(alpha: 0.82),
+      colorScheme.surface.withValues(alpha: 0.74),
       _panelColor(colorScheme),
     );
   }
@@ -180,12 +209,26 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
   Widget _buildHeader() {
     return Row(
       children: [
-        const Icon(Icons.auto_awesome, size: 20),
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: AppColors.lavender.withValues(alpha: 0.18),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(
+            Icons.auto_awesome,
+            size: 17,
+            color: AppColors.lavender,
+          ),
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             'AI 创建提醒',
-            style: Theme.of(context).textTheme.titleSmall,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
           ),
         ),
         if (_entries.isNotEmpty)
@@ -216,14 +259,39 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     if (_entries.isEmpty) {
       final colorScheme = Theme.of(context).colorScheme;
       return Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: _historyColor(colorScheme),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          border: Border.all(color: colorScheme.outlineVariant),
         ),
-        child: Text(
-          '像聊天一样告诉我想创建什么健康提醒。',
-          style: TextStyle(color: Colors.grey[700], fontSize: 13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.chat_bubble_outline,
+                  size: 18,
+                  color: AppColors.lavender,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '像聊天一样告诉我想创建什么健康提醒。',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _buildExamples(wrap: true),
+          ],
         ),
       );
     }
@@ -268,7 +336,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
           border: entry.role == _AIChatRole.error
               ? Border.all(color: Theme.of(context).colorScheme.error)
               : null,
@@ -280,8 +348,21 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     );
   }
 
-  Widget _buildExamples() {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildExamples({bool wrap = false}) {
+    if (wrap) {
+      return Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: _examples.map((example) {
+          return _ExampleChip(
+            label: example,
+            enabled: !_isProcessing && !_saving,
+            onTap: () => _useExample(example),
+          );
+        }).toList(),
+      );
+    }
+
     return SizedBox(
       height: 30,
       child: ListView.separated(
@@ -291,30 +372,10 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
         separatorBuilder: (_, __) => const SizedBox(width: 6),
         itemBuilder: (_, index) {
           final example = _examples[index];
-          return InkWell(
-            borderRadius: BorderRadius.circular(999),
-            onTap:
-                (_isProcessing || _saving) ? null : () => _useExample(example),
-            child: Container(
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: colorScheme.outlineVariant,
-                ),
-              ),
-              child: Text(
-                example,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ),
+          return _ExampleChip(
+            label: example,
+            enabled: !_isProcessing && !_saving,
+            onTap: () => _useExample(example),
           );
         },
       ),
@@ -334,13 +395,18 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 7, 12, 10),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: colorScheme.surface.withValues(alpha: 0.78),
+        border: Border(
+          top: BorderSide(color: colorScheme.outlineVariant),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildExamples(),
-          const SizedBox(height: 8),
+          if (!widget.compact) ...[
+            _buildExamples(),
+            const SizedBox(height: 8),
+          ],
           _buildInputRow(),
         ],
       ),
@@ -360,7 +426,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
               isDense: true,
             ),
             minLines: 1,
-            maxLines: widget.compact ? 2 : 4,
+            maxLines: widget.compact ? 1 : 4,
             enabled: !_isProcessing && !_saving,
             textInputAction: TextInputAction.send,
             onSubmitted: (_) => _handleSubmit(fromVoice: false),
@@ -714,6 +780,48 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
       'monthly': '每月',
     };
     return labels[frequency];
+  }
+}
+
+class _ExampleChip extends StatelessWidget {
+  const _ExampleChip({
+    required this.label,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: enabled ? onTap : null,
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: colorScheme.surface.withValues(alpha: 0.88),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: colorScheme.outlineVariant,
+          ),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 12,
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 }
 
