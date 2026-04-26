@@ -102,7 +102,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                       child: Text(
                         'AI 创建提醒',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w600,
                             ),
                       ),
                     ),
@@ -227,7 +227,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
           child: Text(
             'AI 创建提醒',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
           ),
         ),

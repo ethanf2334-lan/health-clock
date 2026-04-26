@@ -21,7 +21,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _index = 0;
   bool _onboardingShown = false;
 
-  final _titles = const ['今日照护', '家庭成员', '健康档案', '我的'];
+  final _titles = const ['健康日历', '家庭成员', '健康档案', '我的'];
 
   @override
   void initState() {
@@ -131,7 +131,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Expanded(child: EventListScreen()),
         ],
       ),
-      const MemberListScreen(),
+      const MemberListScreen(showAppBar: false),
       const Column(
         children: [
           MemberSwitcherBar(),
@@ -203,6 +203,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           tooltip: '上传文档',
           icon: const Icon(Icons.cloud_upload_outlined),
           onPressed: () => context.push('/documents/new'),
+        ),
+      ];
+    }
+    if (_index == 1) {
+      return [
+        IconButton(
+          tooltip: '添加成员',
+          icon: const Icon(Icons.person_add_alt_outlined),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const MemberFormScreen(),
+            ),
+          ),
         ),
       ];
     }

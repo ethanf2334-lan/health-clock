@@ -61,10 +61,10 @@ class MemberSwitcherBar extends ConsumerWidget {
                   radius: 17,
                   backgroundColor: AppColors.careBlue.withValues(alpha: 0.28),
                   child: Text(
-                    selectedMember?.name.substring(0, 1) ?? '家',
+                    _memberInitial(selectedMember?.name),
                     style: const TextStyle(
                       color: AppColors.mintDeep,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -79,13 +79,13 @@ class MemberSwitcherBar extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 15,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 1),
                       Text(
                         selectedMember?.relation == null
-                            ? '当前照护对象'
+                            ? '当前成员'
                             : memberRelationLabel(selectedMember!.relation),
                         style: TextStyle(
                           fontSize: 12,
@@ -114,7 +114,7 @@ class MemberSwitcherBar extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.careBlue,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       SizedBox(width: 2),
@@ -152,7 +152,7 @@ class MemberSwitcherBar extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
                     child: Text(
-                      '选择照护对象',
+                      '选择成员',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
@@ -168,7 +168,7 @@ class MemberSwitcherBar extends ConsumerWidget {
                   ...members.map(
                     (m) => ListTile(
                       leading: CircleAvatar(
-                        child: Text(m.name.substring(0, 1)),
+                        child: Text(_memberInitial(m.name)),
                       ),
                       title: Text(m.name),
                       subtitle: Text(memberRelationLabel(m.relation)),
@@ -208,5 +208,11 @@ class MemberSwitcherBar extends ConsumerWidget {
         );
       },
     );
+  }
+
+  String _memberInitial(String? name) {
+    final trimmed = name?.trim();
+    if (trimmed == null || trimmed.isEmpty) return '家';
+    return trimmed.characters.first;
   }
 }

@@ -45,18 +45,21 @@ class AppTheme {
       scaffoldBackgroundColor: colorScheme.surface,
       textTheme: textTheme.copyWith(
         displaySmall: textTheme.displaySmall?.copyWith(
-          fontWeight: FontWeight.w800,
-        ),
-        headlineSmall: textTheme.headlineSmall?.copyWith(
-          fontWeight: FontWeight.w800,
-        ),
-        titleLarge: textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w800,
-        ),
-        titleMedium: textTheme.titleMedium?.copyWith(
           fontWeight: FontWeight.w700,
         ),
-        bodyMedium: textTheme.bodyMedium?.copyWith(height: 1.35),
+        headlineSmall: textTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        titleLarge: textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        titleMedium: textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+        titleSmall: textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+        bodyMedium: textTheme.bodyMedium?.copyWith(height: 1.42),
       ),
       appBarTheme: AppBarTheme(
         centerTitle: false,
@@ -66,7 +69,7 @@ class AppTheme {
         foregroundColor: colorScheme.onSurface,
         titleTextStyle: textTheme.titleLarge?.copyWith(
           color: colorScheme.onSurface,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
         ),
       ),
       cardTheme: CardThemeData(
@@ -156,7 +159,7 @@ class AppTheme {
         ),
         indicatorColor: colorScheme.primaryContainer,
         labelTextStyle: WidgetStatePropertyAll(
-          textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
+          textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(

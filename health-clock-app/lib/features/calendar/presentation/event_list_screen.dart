@@ -250,7 +250,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineSmall
-                                ?.copyWith(fontSize: 24),
+                                ?.copyWith(fontSize: 22),
                           ),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
@@ -310,9 +310,9 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
           children: [
             Expanded(
               child: Text(
-                '未来 7 天照护节奏',
+                '未来 7 天健康事项',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                     ),
               ),
             ),
@@ -430,7 +430,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
   String _moodLabel(_CareMood mood) {
     return switch (mood) {
       _CareMood.calm => '状态轻松',
-      _CareMood.steady => '照护稳定',
+      _CareMood.steady => '状态稳定',
       _CareMood.busy => '稍微忙碌',
       _CareMood.alert => '需要关注',
     };
@@ -669,7 +669,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                 fontSize: _view == EventView.week ? 12 : 13,
                 color: inCurrentMonth ? null : Colors.grey,
                 fontWeight:
-                    selected || today ? FontWeight.w700 : FontWeight.w500,
+                    selected || today ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
             if (_view == EventView.week) ...[
@@ -680,7 +680,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                   fontSize: 18,
                   color: inCurrentMonth ? null : Colors.grey,
                   fontWeight:
-                      selected || today ? FontWeight.w700 : FontWeight.w500,
+                      selected || today ? FontWeight.w600 : FontWeight.w500,
                 ),
               ),
             ],
@@ -818,7 +818,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                   style: TextStyle(
                     decoration: isDone ? TextDecoration.lineThrough : null,
                     color: isDone ? colorScheme.onSurfaceVariant : null,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
