@@ -47,6 +47,8 @@ class EventDetailScreen extends ConsumerWidget {
         const SizedBox(height: 16),
         _row('类型', _typeLabel(event.eventType)),
         _row('时间', timeText),
+        if (_repeatLabel(event.repeatRule) != null)
+          _row('重复', _repeatLabel(event.repeatRule)!),
         _row('状态', _statusLabel(event.status)),
         if (event.description != null && event.description!.isNotEmpty)
           _row('描述', event.description!),
@@ -162,6 +164,18 @@ class EventDetailScreen extends ConsumerWidget {
       'custom': '自定义',
     };
     return m[type] ?? type;
+  }
+
+  String? _repeatLabel(Map<String, dynamic>? repeatRule) {
+    final frequency = repeatRule?['frequency'] as String?;
+    final interval = (repeatRule?['interval'] as num?)?.toInt() ?? 1;
+    if (frequency == null || interval != 1) return null;
+    const labels = {
+      'daily': '每天',
+      'weekly': '每周',
+      'monthly': '每月',
+    };
+    return labels[frequency];
   }
 
   String _statusLabel(String s) =>

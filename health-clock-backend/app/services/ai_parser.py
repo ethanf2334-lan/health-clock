@@ -49,6 +49,18 @@ class AIParserService:
 2. event_type 只能是 follow_up/revisit/checkup/medication/monitoring/custom。
 3. scheduled_at 必须是 ISO8601，时区 +08:00。
 4. 不确定时，提高 needs_confirmation=true，降低 confidence。
+5. 必须严格按“当前时间”计算相对日期：
+   - “N天后”= 当前时间 + N 天。
+   - “N周后 / N个星期后”= 当前时间 + N*7 天。
+   - “N个月后”= 当前日期月份 + N，若目标月份没有对应日期则取该月最后一天。
+   - 中文数字要等同阿拉伯数字，例如“两周后”= 14 天后，“三个月后”= 3 个月后。
+   - 用户没有说明具体几点时，使用当前时间的小时和分钟，并设置 needs_confirmation=true。
+6. 示例：如果当前时间是 2026-04-26T10:30:00+08:00，“两周后复查”应输出 2026-05-10T10:30:00+08:00。
+7. 重复提醒必须输出 repeat_rule：
+   - “每天/每日”输出 {{"frequency":"daily","interval":1}}。
+   - “每周/每星期”输出 {{"frequency":"weekly","interval":1}}。
+   - “每月”输出 {{"frequency":"monthly","interval":1}}。
+   - 例如“每天晚上8点提醒妈妈吃药”，scheduled_at 应为下一次晚上 20:00，repeat_rule 为 daily。
 
 当前时间：{now}
 成员：{member_name}
@@ -73,7 +85,7 @@ class AIParserService:
         result = llm.invoke(messages)
         payload = parser.parse(result.content)
 
-        return ParsedEvent(
+        llm_event = ParsedEvent(
             member_name=member_name,
             event_title=payload["event_title"],
             event_type=payload["event_type"],
@@ -84,6 +96,24 @@ class AIParserService:
             confidence=float(payload["confidence"]),
             needs_confirmation=bool(payload["needs_confirmation"]),
         )
+        rule_repeat = self._extract_repeat_rule(text)
+        rule_time = self._extract_time_of_day_datetime(text, now, repeat_rule=rule_repeat)
+        if rule_repeat is not None or rule_time is not None:
+            updates = {"needs_confirmation": True}
+            if rule_repeat is not None:
+                updates["repeat_rule"] = rule_repeat
+            if rule_time is not None:
+                updates["scheduled_at"] = rule_time
+            return llm_event.model_copy(update=updates)
+        rule_time = self._extract_explicit_relative_datetime(text, now)
+        if rule_time is not None:
+            return llm_event.model_copy(
+                update={
+                    "scheduled_at": rule_time,
+                    "needs_confirmation": True,
+                }
+            )
+        return llm_event
 
     def _parse_with_rule(self, text: str, member_name: str | None, now: datetime) -> ParsedEvent:
         lowered = text.strip()
@@ -123,13 +153,25 @@ class AIParserService:
         return "custom"
 
     def _extract_datetime(self, text: str, now: datetime) -> datetime:
-        match = re.search(r"(\d+)\s*(天|周|个月|月|年)后", text)
+        explicit = self._extract_explicit_relative_datetime(text, now)
+        if explicit is not None:
+            return explicit
+
+        time_of_day = self._extract_time_of_day_datetime(
+            text,
+            now,
+            repeat_rule=self._extract_repeat_rule(text),
+        )
+        if time_of_day is not None:
+            return time_of_day
+
+        match = re.search(r"(\d+)\s*(天|周|星期|个星期|个月|月|年)后", text)
         if match:
             value = int(match.group(1))
             unit = match.group(2)
             if unit == "天":
                 return now + timedelta(days=value)
-            if unit == "周":
+            if unit in {"周", "星期", "个星期"}:
                 return now + timedelta(weeks=value)
             if unit in {"个月", "月"}:
                 return now + timedelta(days=value * 30)
@@ -151,18 +193,137 @@ class AIParserService:
 
         return now + timedelta(days=1)
 
+    def _extract_explicit_relative_datetime(self, text: str, now: datetime) -> datetime | None:
+        match = re.search(r"([0-9一二两三四五六七八九十]+)\s*(天|周|星期|个星期|个月|月|年)后", text)
+        if not match:
+            return None
+
+        value = self._parse_chinese_number(match.group(1))
+        if value is None:
+            return None
+
+        unit = match.group(2)
+        if unit == "天":
+            return now + timedelta(days=value)
+        if unit in {"周", "星期", "个星期"}:
+            return now + timedelta(weeks=value)
+        if unit in {"个月", "月"}:
+            return self._add_months(now, value)
+        if unit == "年":
+            return self._add_months(now, value * 12)
+        return None
+
+    def _extract_time_of_day_datetime(
+        self,
+        text: str,
+        now: datetime,
+        repeat_rule: dict | None = None,
+    ) -> datetime | None:
+        pattern = r"(凌晨|早上|上午|中午|下午|晚上|晚间|夜里)?\s*([0-9一二两三四五六七八九十]{1,3})\s*(点|时|:|：)\s*(半|[0-9一二两三四五六七八九十]{1,3}分?)?"
+        match = re.search(pattern, text)
+        if not match:
+            return None
+
+        period = match.group(1) or ""
+        hour = self._parse_chinese_number(match.group(2))
+        minute_raw = match.group(4)
+        if hour is None:
+            return None
+
+        minute = 0
+        if minute_raw:
+            if minute_raw == "半":
+                minute = 30
+            else:
+                minute_text = minute_raw.removesuffix("分")
+                parsed_minute = self._parse_chinese_number(minute_text)
+                if parsed_minute is None:
+                    return None
+                minute = parsed_minute
+
+        if period in {"下午", "晚上", "晚间", "夜里"} and hour < 12:
+            hour += 12
+        if period == "中午" and hour < 11:
+            hour += 12
+        if hour > 23 or minute > 59:
+            return None
+
+        scheduled = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if repeat_rule and repeat_rule.get("frequency") == "weekly":
+            week_match = re.search(r"每周([一二三四五六日天])", text)
+            if week_match:
+                week_map = {"一": 0, "二": 1, "三": 2, "四": 3, "五": 4, "六": 5, "日": 6, "天": 6}
+                target_weekday = week_map[week_match.group(1)]
+                delta_days = (target_weekday - scheduled.weekday()) % 7
+                scheduled = scheduled + timedelta(days=delta_days)
+
+        if scheduled <= now:
+            if repeat_rule and repeat_rule.get("frequency") == "weekly":
+                scheduled += timedelta(days=7)
+            elif repeat_rule and repeat_rule.get("frequency") == "monthly":
+                scheduled = self._add_months(scheduled, 1)
+            else:
+                scheduled += timedelta(days=1)
+        return scheduled
+
+    def _parse_chinese_number(self, value: str) -> int | None:
+        if value.isdigit():
+            return int(value)
+
+        digits = {
+            "一": 1,
+            "二": 2,
+            "两": 2,
+            "三": 3,
+            "四": 4,
+            "五": 5,
+            "六": 6,
+            "七": 7,
+            "八": 8,
+            "九": 9,
+        }
+        if value in digits:
+            return digits[value]
+        if value == "十":
+            return 10
+        if value.startswith("十") and len(value) == 2:
+            return 10 + digits.get(value[1], 0)
+        if value.endswith("十") and len(value) == 2:
+            return digits.get(value[0], 0) * 10
+        if "十" in value and len(value) == 3:
+            high, low = value.split("十", 1)
+            return digits.get(high, 0) * 10 + digits.get(low, 0)
+        return None
+
+    def _add_months(self, dt: datetime, months: int) -> datetime:
+        month_index = dt.month - 1 + months
+        year = dt.year + month_index // 12
+        month = month_index % 12 + 1
+        day = min(dt.day, self._days_in_month(year, month))
+        return dt.replace(year=year, month=month, day=day)
+
+    def _days_in_month(self, year: int, month: int) -> int:
+        if month == 12:
+            next_month = datetime(year + 1, 1, 1, tzinfo=self.timezone)
+        else:
+            next_month = datetime(year, month + 1, 1, tzinfo=self.timezone)
+        this_month = datetime(year, month, 1, tzinfo=self.timezone)
+        return (next_month - this_month).days
+
     def _extract_repeat_rule(self, text: str) -> dict | None:
-        if "每天" in text:
+        if any(k in text for k in ["每天", "每日"]):
             return {"frequency": "daily", "interval": 1}
-        if "每周" in text:
+        if any(k in text for k in ["每周", "每星期"]):
             return {"frequency": "weekly", "interval": 1}
         if "每月" in text:
             return {"frequency": "monthly", "interval": 1}
         return None
 
     def _extract_title(self, text: str, event_type: str) -> str:
-        cleaned = re.sub(r"\d+\s*(天|周|个月|月|年)后", "", text).strip()
+        cleaned = re.sub(r"[0-9一二两三四五六七八九十]+\s*(天|周|星期|个星期|个月|月|年)后", "", text).strip()
         cleaned = re.sub(r"(明天|后天|下周[一二三四五六日天])", "", cleaned).strip()
+        cleaned = re.sub(r"(每天|每日|每周[一二三四五六日天]?|每星期[一二三四五六日天]?|每月)", "", cleaned).strip()
+        cleaned = re.sub(r"(凌晨|早上|上午|中午|下午|晚上|晚间|夜里)?\s*[0-9一二两三四五六七八九十]{1,3}\s*(点|时|:|：)\s*(半|[0-9一二两三四五六七八九十]{1,3}分?)?", "", cleaned).strip()
         if cleaned:
             return cleaned[:50]
 

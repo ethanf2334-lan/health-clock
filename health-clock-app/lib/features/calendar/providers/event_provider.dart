@@ -80,8 +80,31 @@ class EventList extends _$EventList {
   }
 
   Future<void> completeEvent(String id) async {
-    await ref.read(eventRepositoryProvider).completeEvent(id);
-    await refresh();
+    final previous = state;
+    final current = state.valueOrNull;
+    if (current != null) {
+      state = AsyncValue.data(
+        _filter.status == 'pending'
+            ? current.where((event) => event.id != id).toList()
+            : current
+                .map(
+                  (event) => event.id == id
+                      ? event.copyWith(
+                          status: 'completed',
+                          completedAt: DateTime.now(),
+                        )
+                      : event,
+                )
+                .toList(),
+      );
+    }
+
+    try {
+      await ref.read(eventRepositoryProvider).completeEvent(id);
+    } catch (error, stackTrace) {
+      state = previous;
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
 
   Future<void> deleteEvent(String id) async {

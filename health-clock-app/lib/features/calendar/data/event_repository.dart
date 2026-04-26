@@ -77,7 +77,7 @@ class EventRepository {
       'title': event.title,
       if (event.description != null) 'description': event.description,
       'event_type': event.eventType,
-      'scheduled_at': event.scheduledAt.toIso8601String(),
+      'scheduled_at': event.scheduledAt.toUtc().toIso8601String(),
       'is_all_day': event.isAllDay,
       if (event.repeatRule != null) 'repeat_rule': event.repeatRule,
       if (event.notifyOffsets != null) 'notify_offsets': event.notifyOffsets,

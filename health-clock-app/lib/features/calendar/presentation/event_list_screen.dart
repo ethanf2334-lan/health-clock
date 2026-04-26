@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../shared/models/health_event.dart';
+import '../../ai_input/presentation/ai_quick_create_panel.dart';
 import '../../members/providers/current_member_provider.dart';
 import '../providers/event_provider.dart';
 
@@ -94,6 +95,10 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('加载失败：$e')),
           ),
+        ),
+        AIQuickCreatePanel(
+          compact: true,
+          onCreated: (_) => _applyFilter(),
         ),
       ],
     );
@@ -437,27 +442,30 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
 
   Widget _buildList(List<HealthEvent> events) {
     if (events.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.event_note, size: 72, color: Colors.grey[400]),
-            const SizedBox(height: 12),
-            Text('暂无提醒', style: TextStyle(color: Colors.grey[600])),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => context.push('/events/new'),
-              icon: const Icon(Icons.add),
-              label: const Text('手动创建提醒'),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxHeight < 160) {
+            return Center(
+              child: Text('暂无提醒', style: TextStyle(color: Colors.grey[600])),
+            );
+          }
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.event_note, size: 56, color: Colors.grey[400]),
+                const SizedBox(height: 10),
+                Text('暂无提醒', style: TextStyle(color: Colors.grey[600])),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () => context.push('/events/new'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('手动创建提醒'),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/ai-input'),
-              icon: const Icon(Icons.auto_awesome),
-              label: const Text('AI 创建提醒'),
-            ),
-          ],
-        ),
+          );
+        },
       );
     }
 
@@ -502,6 +510,12 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
   Widget _buildTile(HealthEvent e) {
     final time = DateFormat('HH:mm').format(e.scheduledAt.toLocal());
     final isDone = e.status == 'completed';
+    final repeat = _repeatLabel(e.repeatRule);
+    final meta = [
+      e.isAllDay ? '全天' : time,
+      _typeLabel(e.eventType),
+      if (repeat != null) repeat,
+    ].join('  ·  ');
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: ListTile(
@@ -514,24 +528,35 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        subtitle: Text(
-          e.isAllDay
-              ? '全天  ·  ${_typeLabel(e.eventType)}'
-              : '$time  ·  ${_typeLabel(e.eventType)}',
-        ),
+        subtitle: Text(meta),
         trailing: isDone
             ? const Icon(Icons.check_circle, color: Colors.green)
             : IconButton(
                 tooltip: '标记完成',
                 icon: const Icon(Icons.check_circle_outline),
                 onPressed: () async {
-                  await ref
-                      .read(eventListProvider.notifier)
-                      .completeEvent(e.id);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('已标记完成')),
-                    );
+                  try {
+                    await ref
+                        .read(eventListProvider.notifier)
+                        .completeEvent(e.id);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          const SnackBar(
+                            duration: Duration(milliseconds: 900),
+                            content: Text('已标记完成'),
+                          ),
+                        );
+                    }
+                  } catch (error) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          SnackBar(content: Text('操作失败：$error')),
+                        );
+                    }
                   }
                 },
               ),
@@ -584,6 +609,18 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
       'custom': '自定义',
     };
     return m[type] ?? type;
+  }
+
+  String? _repeatLabel(Map<String, dynamic>? repeatRule) {
+    final frequency = repeatRule?['frequency'] as String?;
+    final interval = (repeatRule?['interval'] as num?)?.toInt() ?? 1;
+    if (frequency == null || interval != 1) return null;
+    const labels = {
+      'daily': '每天',
+      'weekly': '每周',
+      'monthly': '每月',
+    };
+    return labels[frequency];
   }
 
   void _moveCalendar(int direction) {

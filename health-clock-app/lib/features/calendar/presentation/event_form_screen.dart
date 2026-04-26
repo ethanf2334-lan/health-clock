@@ -229,6 +229,11 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
           eventType: _eventType,
           scheduledAt: _scheduledAt,
           isAllDay: _isAllDay,
+          repeatRule: widget.prefill?['repeat_rule'] as Map<String, dynamic>?,
+          notifyOffsets: (widget.prefill?['notify_offsets'] as List?)
+              ?.whereType<num>()
+              .map((n) => n.toInt())
+              .toList(),
           sourceType: (widget.prefill?['source_type'] as String?) ??
               ((widget.prefill != null) ? 'ai_text' : 'manual'),
           sourceText: widget.prefill?['source_text'] as String?,
@@ -239,11 +244,11 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
 
       // 尝试调度本地通知（失败不影响主流程）
       try {
-        await NotificationService().scheduleNotification(
+        await NotificationService().scheduleEventNotification(
           id: event.id.hashCode & 0x7FFFFFFF,
           title: event.title,
-          body: '健康时钟提醒',
           scheduledDate: event.scheduledAt.toLocal(),
+          repeatRule: event.repeatRule,
           payload: 'event:${event.id}',
         );
       } catch (_) {}

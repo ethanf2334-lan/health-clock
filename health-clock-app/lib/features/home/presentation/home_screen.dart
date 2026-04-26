@@ -176,6 +176,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (_index == 0) {
       return [
         IconButton(
+          tooltip: '手动创建',
+          icon: const Icon(Icons.add),
+          onPressed: () => context.push('/events/new'),
+        ),
+        IconButton(
           tooltip: '记录指标',
           icon: const Icon(Icons.favorite_outline),
           onPressed: () => context.push('/metrics'),
@@ -201,24 +206,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget? _buildFab(BuildContext context) {
     if (_index == 0) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton.small(
-            heroTag: 'fab_manual',
-            tooltip: '手动创建',
-            onPressed: () => context.push('/events/new'),
-            child: const Icon(Icons.add),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            heroTag: 'fab_ai',
-            onPressed: () => context.push('/ai-input'),
-            icon: const Icon(Icons.auto_awesome),
-            label: const Text('AI 创建'),
-          ),
-        ],
-      );
+      return null;
     }
     if (_index == 2) {
       return FloatingActionButton.extended(

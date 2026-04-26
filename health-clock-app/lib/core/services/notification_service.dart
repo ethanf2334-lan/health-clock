@@ -86,6 +86,76 @@ class NotificationService {
     );
   }
 
+  /// 根据提醒重复规则调度通知。未设置重复规则时调度单次通知。
+  Future<void> scheduleEventNotification({
+    required int id,
+    required String title,
+    required DateTime scheduledDate,
+    Map<String, dynamic>? repeatRule,
+    String? payload,
+  }) async {
+    final frequency = repeatRule?['frequency'] as String?;
+    final interval = (repeatRule?['interval'] as num?)?.toInt() ?? 1;
+
+    if (frequency == null || interval != 1) {
+      await scheduleNotification(
+        id: id,
+        title: title,
+        body: '健康时钟提醒',
+        scheduledDate: scheduledDate,
+        payload: payload,
+      );
+      return;
+    }
+
+    DateTimeComponents? components;
+    switch (frequency) {
+      case 'daily':
+        components = DateTimeComponents.time;
+        break;
+      case 'weekly':
+        components = DateTimeComponents.dayOfWeekAndTime;
+        break;
+      case 'monthly':
+        components = DateTimeComponents.dayOfMonthAndTime;
+        break;
+      default:
+        components = null;
+    }
+
+    if (components == null) {
+      await scheduleNotification(
+        id: id,
+        title: title,
+        body: '健康时钟提醒',
+        scheduledDate: scheduledDate,
+        payload: payload,
+      );
+      return;
+    }
+
+    const notificationDetails = NotificationDetails(
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    );
+
+    await _notifications.zonedSchedule(
+      id,
+      title,
+      '健康时钟提醒',
+      tz.TZDateTime.from(scheduledDate, tz.local),
+      notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: components,
+      payload: payload,
+    );
+  }
+
   /// 取消通知
   Future<void> cancelNotification(int id) async {
     await _notifications.cancel(id);
