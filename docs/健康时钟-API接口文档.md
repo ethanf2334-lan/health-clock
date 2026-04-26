@@ -77,6 +77,8 @@ POST /auth/apple
 
 后端会验证 Apple `identity_token`，同步 Supabase 用户，并签发 Supabase 兼容 JWT。
 
+Apple 登录会使用稳定的内部邮箱（`apple_xxx@apple.health-clock.local`）在 Supabase 中绑定用户，避免 Apple 只在首次授权返回真实邮箱导致后续无法匹配同一用户。该内部邮箱仅用于服务端身份映射，前端展示时会隐藏并使用友好账号名称。
+
 **请求体:**
 ```json
 {

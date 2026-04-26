@@ -171,14 +171,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       )
                     : const Text('使用 Apple 登录'),
               ),
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: () {
-                  ref.read(authProvider.notifier).enterGuestMode();
-                },
-                icon: const Icon(Icons.info_outline),
-                label: const Text('仅本地预览（不调用后端）'),
-              ),
             ],
           ),
         ),

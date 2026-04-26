@@ -77,7 +77,18 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 
 运行时传入环境变量：
 ```bash
-flutter run --dart-define=SUPABASE_URL=xxx --dart-define=SUPABASE_ANON_KEY=xxx
+flutter run \
+  --dart-define=API_BASE_URL=http://localhost:8000/api/v1 \
+  --dart-define=SUPABASE_URL=xxx \
+  --dart-define=SUPABASE_ANON_KEY=xxx
+```
+
+也可以使用项目脚本启动：
+```bash
+./run-app.sh <device-id>
+
+# 真机连接 Mac 后端时，使用 Mac 局域网 IP
+API_BASE_URL=http://<Mac局域网IP>:8000/api/v1 ./run-app.sh <device-id>
 ```
 
 ## 开发命令
@@ -103,6 +114,7 @@ flutter test
 3. 在 Signing & Capabilities 中确认 Sign in with Apple 已启用
 4. 确认通知、麦克风、语音识别权限说明已配置
 5. 后端 `.env` 配置 `APPLE_CLIENT_ID=<iOS Bundle ID>`
+6. Apple 登录的 `apple_xxx@apple.health-clock.local` 为服务端内部绑定邮箱，客户端不会作为账号名展示
 
 ## 下一步
 

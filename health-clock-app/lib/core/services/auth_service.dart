@@ -79,6 +79,7 @@ class _StoredAuth {
 
 @Riverpod(keepAlive: true)
 class Auth extends _$Auth {
+  static const _internalAppleEmailDomain = '@apple.health-clock.local';
   static const _tokenKey = 'auth.accessToken';
   static const _expiresAtKey = 'auth.expiresAt';
   static const _userIdKey = 'auth.userId';
@@ -133,7 +134,7 @@ class Auth extends _$Auth {
           status: AuthStatus.authenticated,
           userId: user['id'] as String?,
           phone: user['phone'] as String?,
-          email: user['email'] as String?,
+          email: _publicEmail(user['email'] as String?),
           accessToken: token,
           expiresAt: expiresAt,
         ),
@@ -189,7 +190,7 @@ class Auth extends _$Auth {
           status: AuthStatus.authenticated,
           userId: user['id'] as String?,
           phone: user['phone'] as String?,
-          email: user['email'] as String?,
+          email: _publicEmail(user['email'] as String?),
           accessToken: token,
           expiresAt: expiresAt,
         ),
@@ -230,7 +231,7 @@ class Auth extends _$Auth {
           status: AuthStatus.authenticated,
           userId: user['id'] as String? ?? state.userId,
           phone: user['phone'] as String? ?? state.phone,
-          email: user['email'] as String? ?? state.email,
+          email: _publicEmail(user['email'] as String?) ?? state.email,
           accessToken: newToken,
           expiresAt: expiresAt,
         ),
@@ -304,7 +305,7 @@ class Auth extends _$Auth {
       accessToken: token,
       expiresAt: expiresAt,
       phone: prefs.getString(_phoneKey),
-      email: prefs.getString(_emailKey),
+      email: _publicEmail(prefs.getString(_emailKey)),
     );
   }
 
@@ -347,5 +348,11 @@ class Auth extends _$Auth {
       return data['message'] as String;
     }
     return e.message ?? fallback;
+  }
+
+  String? _publicEmail(String? email) {
+    if (email == null || email.isEmpty) return null;
+    if (email.endsWith(_internalAppleEmailDomain)) return null;
+    return email;
   }
 }

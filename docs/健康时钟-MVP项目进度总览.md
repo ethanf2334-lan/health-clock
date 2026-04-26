@@ -248,6 +248,7 @@ Flutter → 后端 /auth/verify-sms-code → 阿里云 CheckSmsVerifyCode → Su
 2. **首版上线前配置确认**：
    - Apple Developer 中开启 Sign in with Apple
    - 后端 `.env` 配置 `APPLE_CLIENT_ID`（通常为 iOS Bundle ID）
+   - Apple 登录返回的内部邮箱仅用于服务端绑定，前端个人中心隐藏该邮箱并显示友好名称
    - 真机验证语音识别权限与听写体验
 
 3. **可选增强**：
@@ -269,6 +270,9 @@ open -a Simulator
 # Flutter（带 Supabase 配置）
 cd health-clock-app
 ./run-app.sh 39365EA4-B750-4412-9552-57C7545456D1
+
+# 真机连接 Mac 后端时可覆盖 API 地址
+API_BASE_URL=http://<Mac局域网IP>:8000/api/v1 ./run-app.sh <device-id>
 ```
 
 **所有必要的 .env 项均已配置**（Supabase / 阿里云 / R2 / AI / OCR），无需修改 `.env` 即可启动。

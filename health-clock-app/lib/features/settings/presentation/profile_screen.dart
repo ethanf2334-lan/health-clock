@@ -11,9 +11,9 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
     final isGuest = auth.status == AuthStatus.guest;
+    final email = _publicEmail(auth.email);
 
-    final displayName =
-        isGuest ? '测试用户' : (auth.phone ?? auth.email ?? (auth.userId ?? '用户'));
+    final displayName = isGuest ? '测试用户' : (auth.phone ?? email ?? 'Apple 用户');
 
     return ListView(
       children: [
@@ -112,5 +112,11 @@ class ProfileScreen extends ConsumerWidget {
         const SizedBox(height: 24),
       ],
     );
+  }
+
+  String? _publicEmail(String? email) {
+    if (email == null || email.isEmpty) return null;
+    if (email.endsWith('@apple.health-clock.local')) return null;
+    return email;
   }
 }
