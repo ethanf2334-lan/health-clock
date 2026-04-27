@@ -229,7 +229,7 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
           eventType: _eventType,
           scheduledAt: _scheduledAt,
           isAllDay: _isAllDay,
-          repeatRule: widget.prefill?['repeat_rule'] as Map<String, dynamic>?,
+          repeatRule: _parseStringMap(widget.prefill?['repeat_rule']),
           notifyOffsets: (widget.prefill?['notify_offsets'] as List?)
               ?.whereType<num>()
               .map((n) => n.toInt())
@@ -266,5 +266,12 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Map<String, dynamic>? _parseStringMap(dynamic value) {
+    if (value == null) return null;
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return null;
   }
 }

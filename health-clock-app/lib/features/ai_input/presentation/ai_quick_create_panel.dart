@@ -456,7 +456,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     final needsConfirmation = event['needs_confirmation'] == true;
     final title = (event['event_title'] ?? '健康提醒').toString();
     final type = _typeLabel((event['event_type'] ?? 'custom').toString());
-    final repeat = _repeatLabel(event['repeat_rule'] as Map<String, dynamic>?);
+    final repeat = _repeatLabel(_parseStringMap(event['repeat_rule']));
     final time = scheduledAt == null
         ? '待确认'
         : DateFormat('M月d日 HH:mm').format(scheduledAt);
@@ -558,8 +558,12 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
       final result = await ref
           .read(aIParseResultProvider.notifier)
           .parseText(text, memberId: _memberId);
+      final parsedEvent = _parseStringMap(result['parsed_event']);
+      if (parsedEvent == null) {
+        throw const FormatException('AI 没有返回可用的提醒草稿');
+      }
       final event = {
-        ...(result['parsed_event'] as Map<String, dynamic>),
+        ...parsedEvent,
         '_source_text': text,
         '_source_type': fromVoice ? 'ai_voice' : 'ai_text',
       };
@@ -674,7 +678,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
               eventType: (event['event_type'] ?? 'custom').toString(),
               scheduledAt: scheduledAt,
               isAllDay: (event['is_all_day'] as bool?) ?? false,
-              repeatRule: event['repeat_rule'] as Map<String, dynamic>?,
+              repeatRule: _parseStringMap(event['repeat_rule']),
               notifyOffsets: _parseNotifyOffsets(event['notify_offsets']),
               sourceType: (event['_source_type'] as String?) ?? 'ai_text',
               sourceText: event['_source_text'] as String?,
@@ -756,6 +760,13 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
   List<int>? _parseNotifyOffsets(dynamic value) {
     if (value is! List) return null;
     return value.whereType<num>().map((n) => n.toInt()).toList();
+  }
+
+  Map<String, dynamic>? _parseStringMap(dynamic value) {
+    if (value == null) return null;
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return null;
   }
 
   String _typeLabel(String type) {
