@@ -21,6 +21,9 @@ import '../../features/members/presentation/member_list_screen.dart';
 import '../../features/members/presentation/member_profile_screen.dart';
 import '../../features/notifications/presentation/notification_permission_screen.dart';
 import '../../features/settings/presentation/about_screen.dart';
+import '../../features/settings/presentation/account_center_screen.dart';
+import '../../features/settings/presentation/general_settings_screen.dart';
+import '../../features/settings/presentation/legal_document_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -34,11 +37,12 @@ GoRouter appRouter(AppRouterRef ref) {
     navigatorKey: appNavigatorKey,
     initialLocation: '/login',
     redirect: (context, state) {
-      final loggingIn = state.matchedLocation == '/login';
+      final loc = state.matchedLocation;
+      final isPublic = loc == '/login' || loc.startsWith('/legal/');
       final authed = auth.status == AuthStatus.authenticated ||
           auth.status == AuthStatus.guest;
-      if (!authed && !loggingIn) return '/login';
-      if (authed && loggingIn) return '/home';
+      if (!authed && !isPublic) return '/login';
+      if (authed && loc == '/login') return '/home';
       return null;
     },
     routes: [
@@ -131,6 +135,32 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/notifications/permission',
         name: 'notifications-permission',
         builder: (context, state) => const NotificationPermissionScreen(),
+      ),
+      GoRoute(
+        path: '/account',
+        name: 'account',
+        builder: (context, state) => const AccountCenterScreen(),
+      ),
+      GoRoute(
+        path: '/settings/general',
+        name: 'settings-general',
+        builder: (context, state) => const GeneralSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/legal/terms',
+        name: 'legal-terms',
+        builder: (context, state) => const LegalDocumentScreen(
+          title: '用户协议',
+          bodyText: LegalTexts.userTerms,
+        ),
+      ),
+      GoRoute(
+        path: '/legal/privacy',
+        name: 'legal-privacy',
+        builder: (context, state) => const LegalDocumentScreen(
+          title: '隐私政策',
+          bodyText: LegalTexts.privacyPolicy,
+        ),
       ),
       GoRoute(
         path: '/about',

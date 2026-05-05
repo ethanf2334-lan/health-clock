@@ -20,7 +20,7 @@ class QuickAction {
   final VoidCallback onTap;
 }
 
-/// 三个并排的快捷操作卡片
+/// 并排展示的快捷操作卡片
 class QuickActionsRow extends StatelessWidget {
   const QuickActionsRow({super.key, required this.actions});
 

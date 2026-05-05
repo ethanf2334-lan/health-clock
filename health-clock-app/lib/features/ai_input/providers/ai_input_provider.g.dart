@@ -6,7 +6,7 @@ part of 'ai_input_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$aIParseResultHash() => r'2858506ab5bf4c3a956a79bf98b9d306c73f8a16';
+String _$aIParseResultHash() => r'b1d26a85ceeca69cdfd79fb1becdc0f0423a8a51';
 
 /// See also [AIParseResult].
 @ProviderFor(AIParseResult)

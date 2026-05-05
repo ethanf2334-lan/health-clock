@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../documents/presentation/document_list_screen.dart';
 import '../../members/presentation/member_form_screen.dart';
 import '../../members/presentation/member_list_screen.dart';
-import '../../members/presentation/member_switcher.dart';
 import '../../members/providers/member_provider.dart';
 import '../../settings/presentation/profile_screen.dart';
 import 'home_calendar_screen.dart';
@@ -141,14 +139,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final body = [
       const HomeCalendarScreen(),
       const _SubPage(child: MemberListScreen(showAppBar: false)),
-      const _SubPage(
-        child: Column(
-          children: [
-            MemberSwitcherBar(),
-            Expanded(child: DocumentListScreen()),
-          ],
-        ),
-      ),
+      const _SubPage(child: DocumentListScreen()),
       const _SubPage(child: ProfileScreen()),
     ];
 
@@ -159,36 +150,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         index: _index,
         onChanged: (i) => setState(() => _index = i),
       ),
-      floatingActionButton: _buildFab(context),
     );
-  }
-
-  Widget? _buildFab(BuildContext context) {
-    if (_index == 1) {
-      return FloatingActionButton.extended(
-        heroTag: 'fab_add_member',
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const MemberFormScreen(),
-          ),
-        ),
-        backgroundColor: AppColors.mintDeep,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.person_add_rounded),
-        label: const Text('添加成员'),
-      );
-    }
-    if (_index == 2) {
-      return FloatingActionButton.extended(
-        heroTag: 'fab_upload_document',
-        onPressed: () => context.push('/documents/new'),
-        backgroundColor: AppColors.mintDeep,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.cloud_upload_rounded),
-        label: const Text('上传文档'),
-      );
-    }
-    return null;
   }
 }
 

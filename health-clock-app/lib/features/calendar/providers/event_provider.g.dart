@@ -157,7 +157,7 @@ class _EventDetailProviderElement
   String get id => (origin as EventDetailProvider).id;
 }
 
-String _$eventListHash() => r'5e8264c531a09ddb7dbe7483b25bde6515060563';
+String _$eventListHash() => r'3ac0d1fabbece006e5e22f0a5217d6bd80786489';
 
 /// See also [EventList].
 @ProviderFor(EventList)

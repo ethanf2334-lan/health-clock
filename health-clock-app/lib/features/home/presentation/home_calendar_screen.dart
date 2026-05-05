@@ -130,14 +130,6 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
                         iconBg: AppColors.careBlueSoft,
                         onTap: () => context.push('/metrics'),
                       ),
-                      QuickAction(
-                        title: '上传文档',
-                        subtitle: '报告、病历等',
-                        icon: Icons.description_rounded,
-                        iconColor: AppColors.careBlue,
-                        iconBg: AppColors.careBlueSoft,
-                        onTap: () => context.push('/documents/new'),
-                      ),
                     ],
                   ),
                   HomeSectionHeader(
