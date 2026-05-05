@@ -18,6 +18,8 @@ class AppTheme {
       onPrimaryContainer: const Color(0xFF123C35),
       secondary: AppColors.careBlue,
       tertiary: AppColors.warmAmber,
+      onSurface: AppColors.textPrimary,
+      onSurfaceVariant: AppColors.textSecondary,
     );
     return _base(colorScheme);
   }

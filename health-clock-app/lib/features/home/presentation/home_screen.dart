@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../calendar/presentation/event_list_screen.dart';
+import '../../../app/theme/app_colors.dart';
 import '../../documents/presentation/document_list_screen.dart';
 import '../../members/presentation/member_form_screen.dart';
 import '../../members/presentation/member_list_screen.dart';
 import '../../members/presentation/member_switcher.dart';
 import '../../members/providers/member_provider.dart';
 import '../../settings/presentation/profile_screen.dart';
+import 'home_calendar_screen.dart';
+import 'widgets/home_bottom_nav.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -21,12 +23,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _index = 0;
   bool _onboardingShown = false;
 
-  final _titles = const ['健康日历', '家庭成员', '健康档案', '我的'];
-
   @override
   void initState() {
     super.initState();
-    // 首帧渲染完毕后检测是否需要引导
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkOnboarding());
   }
 
@@ -46,6 +45,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context: context,
       isDismissible: false,
       enableDrag: false,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (_) => Padding(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
         child: Column(
@@ -55,7 +58,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.lightOutline,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -64,25 +67,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(18),
+                color: AppColors.mintSoft,
+                borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(
-                Icons.health_and_safety,
+              child: const Icon(
+                Icons.health_and_safety_rounded,
                 size: 40,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                color: AppColors.mintDeep,
               ),
             ),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               '欢迎使用健康时钟',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
             ),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               '先添加您的健康档案，\n之后可以为家庭成员分别管理提醒和数据。',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600], height: 1.6),
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                height: 1.6,
+              ),
             ),
             const SizedBox(height: 28),
             SizedBox(
@@ -95,13 +105,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       builder: (_) => const MemberFormScreen(),
                     ),
                   );
-                  // 创建完成后刷新成员列表
                   ref.invalidate(memberListProvider);
                 },
-                icon: const Icon(Icons.person_add),
+                icon: const Icon(Icons.person_add_rounded),
                 label: const Text('添加我的档案'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: AppColors.mintDeep,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
@@ -118,122 +132,89 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 监听成员列表：如果之前是空的现在有数据了，不再需要引导
     ref.listen(memberListProvider, (_, next) {
       next.whenData((members) {
         if (members.isNotEmpty) _onboardingShown = true;
       });
     });
+
     final body = [
-      const Column(
-        children: [
-          MemberSwitcherBar(),
-          Expanded(child: EventListScreen()),
-        ],
+      const HomeCalendarScreen(),
+      const _SubPage(child: MemberListScreen(showAppBar: false)),
+      const _SubPage(
+        child: Column(
+          children: [
+            MemberSwitcherBar(),
+            Expanded(child: DocumentListScreen()),
+          ],
+        ),
       ),
-      const MemberListScreen(showAppBar: false),
-      const Column(
-        children: [
-          MemberSwitcherBar(),
-          Expanded(child: DocumentListScreen()),
-        ],
-      ),
-      const ProfileScreen(),
+      const _SubPage(child: ProfileScreen()),
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[_index]),
-        actions: _buildActions(context),
-      ),
+      backgroundColor: AppColors.bgGradientStart,
       body: IndexedStack(index: _index, children: body),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.calendar_today_outlined),
-            selectedIcon: Icon(Icons.calendar_today),
-            label: '日历',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            selectedIcon: Icon(Icons.people),
-            label: '成员',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.folder_outlined),
-            selectedIcon: Icon(Icons.folder),
-            label: '文档',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: '我的',
-          ),
-        ],
+      bottomNavigationBar: HomeBottomNav(
+        index: _index,
+        onChanged: (i) => setState(() => _index = i),
       ),
       floatingActionButton: _buildFab(context),
     );
   }
 
-  List<Widget>? _buildActions(BuildContext context) {
-    if (_index == 0) {
-      return [
-        IconButton(
-          tooltip: '手动创建',
-          icon: const Icon(Icons.add_alert_outlined),
-          onPressed: () => context.push('/events/new'),
-        ),
-        IconButton(
-          tooltip: '记录指标',
-          icon: const Icon(Icons.favorite_outline),
-          onPressed: () => context.push('/metrics'),
-        ),
-        IconButton(
-          tooltip: '上传文档',
-          icon: const Icon(Icons.cloud_upload_outlined),
-          onPressed: () => context.push('/documents/new'),
-        ),
-      ];
-    }
-    if (_index == 2) {
-      return [
-        IconButton(
-          tooltip: '上传文档',
-          icon: const Icon(Icons.cloud_upload_outlined),
-          onPressed: () => context.push('/documents/new'),
-        ),
-      ];
-    }
+  Widget? _buildFab(BuildContext context) {
     if (_index == 1) {
-      return [
-        IconButton(
-          tooltip: '添加成员',
-          icon: const Icon(Icons.person_add_alt_outlined),
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const MemberFormScreen(),
-            ),
+      return FloatingActionButton.extended(
+        heroTag: 'fab_add_member',
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const MemberFormScreen(),
           ),
         ),
-      ];
-    }
-    return null;
-  }
-
-  Widget? _buildFab(BuildContext context) {
-    if (_index == 0) {
-      return null;
+        backgroundColor: AppColors.mintDeep,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.person_add_rounded),
+        label: const Text('添加成员'),
+      );
     }
     if (_index == 2) {
       return FloatingActionButton.extended(
         heroTag: 'fab_upload_document',
         onPressed: () => context.push('/documents/new'),
-        icon: const Icon(Icons.cloud_upload_outlined),
+        backgroundColor: AppColors.mintDeep,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.cloud_upload_rounded),
         label: const Text('上传文档'),
       );
     }
     return null;
+  }
+}
+
+/// 子页面包装：保留浅薄荷绿渐变 + AppBar
+class _SubPage extends StatelessWidget {
+  const _SubPage({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.bgGradientStart,
+            AppColors.bgGradientEnd,
+          ],
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: child,
+      ),
+    );
   }
 }
