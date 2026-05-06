@@ -19,7 +19,11 @@ class HomeBottomNav extends StatelessWidget {
       Icons.calendar_today_outlined,
     ),
     _NavItem('家庭成员', Icons.people_alt_rounded, Icons.people_alt_outlined),
-    _NavItem('健康档案', Icons.assignment_rounded, Icons.assignment_outlined),
+    _NavItem(
+      '健康档案',
+      Icons.add_box_rounded,
+      Icons.medical_services_outlined,
+    ),
     _NavItem('我的', Icons.person_rounded, Icons.person_outline_rounded),
   ];
 
@@ -27,7 +31,7 @@ class HomeBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewPadding = MediaQuery.of(context).viewPadding.bottom;
     // 比之前再减少约 10pt 的底部空间
-    final bottomPadding = viewPadding > 0 ? 8.0 + viewPadding * 0.18 : 6.0;
+    final bottomPadding = viewPadding > 0 ? 7.0 + viewPadding * 0.18 : 6.0;
 
     return Material(
       color: AppColors.cardWhite,
@@ -42,7 +46,7 @@ class HomeBottomNav extends StatelessWidget {
           ),
         ),
         // 整体上下 padding 更紧凑；左右留出空白让 4 个 tab 居中、彼此靠近
-        padding: EdgeInsets.fromLTRB(36, 4, 36, bottomPadding),
+        padding: EdgeInsets.fromLTRB(36, 3, 36, bottomPadding),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(_items.length, (i) {
@@ -60,13 +64,29 @@ class HomeBottomNav extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      selected ? item.activeIcon : item.icon,
-                      color: selected
-                          ? AppColors.mintDeep
-                          : AppColors.textTertiary,
-                      size: 22,
-                    ),
+                    if (selected && i == 2)
+                      Container(
+                        width: 28,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0BA84A),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.add_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      )
+                    else
+                      Icon(
+                        selected ? item.activeIcon : item.icon,
+                        color: selected
+                            ? AppColors.mintDeep
+                            : AppColors.textTertiary,
+                        size: 23,
+                      ),
                     const SizedBox(height: 3),
                     Text(
                       item.label,

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../shared/models/document.dart';
+import '../../../app/theme/app_colors.dart';
 import '../../members/presentation/member_picker_field.dart';
 import '../../members/providers/current_member_provider.dart';
 import '../data/document_repository.dart';
@@ -24,7 +25,9 @@ const _categories = [
 ];
 
 class DocumentUploadScreen extends ConsumerStatefulWidget {
-  const DocumentUploadScreen({super.key});
+  const DocumentUploadScreen({super.key, this.source});
+
+  final String? source;
 
   @override
   ConsumerState<DocumentUploadScreen> createState() =>
@@ -41,12 +44,15 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
   DateTime? _docDate;
   bool _uploading = false;
   String _status = '';
+  bool _autoPickerStarted = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       setState(() => _memberId = ref.read(currentMemberIdProvider));
+      _autoOpenSystemPickerIfNeeded();
     });
   }
 
@@ -78,6 +84,12 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
         _mimeType = mime;
       });
     }
+  }
+
+  void _autoOpenSystemPickerIfNeeded() {
+    if (_autoPickerStarted || widget.source != 'gallery') return;
+    _autoPickerStarted = true;
+    _pickAndSubmit(isFile: false);
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -158,6 +170,19 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
 
       if (!mounted) return;
       if (ocrResult != null) {
+        ocrResult = {
+          ...ocrResult,
+          'file_name': fileName,
+          'file_size': fileSize,
+          'mime_type': _mimeType,
+          'uploaded_at': DateTime.now().toIso8601String(),
+          'source_label': _sourceLabel(),
+          'document_title': _documentTitle(),
+          'document_category': _category,
+          if (_hospitalController.text.trim().isNotEmpty)
+            'hospital_name': _hospitalController.text.trim(),
+          if (_docDate != null) 'document_date': _formatDate(_docDate!),
+        };
         await Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => OcrReviewScreen(
@@ -190,6 +215,11 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
         setState(() => _memberId = next);
       }
     });
+    final source = widget.source ?? 'file';
+    if (source == 'camera') return _buildCameraUpload(context);
+    if (source == 'gallery') return _buildPickerGrid(context, isFile: false);
+    if (source == 'file') return _buildPickerGrid(context, isFile: true);
+
     return Scaffold(
       appBar: AppBar(title: const Text('上传文档')),
       body: ListView(
@@ -304,6 +334,361 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
     );
   }
 
+  Widget _buildCameraUpload(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _UploadTopBar(
+              title: '拍照上传',
+              trailing: IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.help_outline_rounded, size: 29),
+              ),
+            ),
+            Expanded(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0xFF4B4538),
+                            Color(0xFF7A6B55),
+                          ],
+                        ),
+                      ),
+                      child: CustomPaint(painter: _DeskPainter()),
+                    ),
+                  ),
+                  Positioned(
+                    top: 24,
+                    left: 0,
+                    right: 0,
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 22,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.50),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Text(
+                            '请将报告放入框内',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          '支持自动裁边与文字识别',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    top: 150,
+                    left: 28,
+                    right: 28,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          height: 440,
+                          padding: const EdgeInsets.fromLTRB(34, 28, 34, 26),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7FAF7),
+                            borderRadius: BorderRadius.circular(5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.22),
+                                blurRadius: 22,
+                                offset: const Offset(0, 12),
+                              ),
+                            ],
+                          ),
+                          child: const _ReportMockup(),
+                        ),
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _ScanFramePainter(),
+                          ),
+                        ),
+                        Positioned(
+                          top: -36,
+                          right: -12,
+                          child: Container(
+                            padding: const EdgeInsets.fromLTRB(14, 9, 16, 9),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(999),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.10),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  color: AppColors.mintDeep,
+                                ),
+                                SizedBox(width: 7),
+                                Text(
+                                  '已检测到报告',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Positioned(
+                    left: 36,
+                    right: 36,
+                    bottom: 180,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _CameraTool(icon: Icons.crop_rounded, label: '自动裁边'),
+                        _CameraTool(
+                          icon: Icons.file_copy_outlined,
+                          label: '多页拍摄',
+                        ),
+                        _CameraTool(
+                          icon: Icons.document_scanner,
+                          label: '识别报告',
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(28, 26, 28, 82),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(26),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const _GalleryThumb(),
+                              InkWell(
+                                onTap: _captureAndSubmit,
+                                customBorder: const CircleBorder(),
+                                child: Container(
+                                  width: 84,
+                                  height: 84,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppColors.mintDeep,
+                                      width: 4,
+                                    ),
+                                  ),
+                                  child: Container(
+                                    margin: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: AppColors.mintDeep,
+                                        width: 2,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.08),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.cameraswitch_rounded,
+                                  size: 32,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.verified_user_outlined,
+                                size: 17,
+                                color: AppColors.mintDeep,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                '拍摄清晰完整的报告照片，可自动生成档案与提醒候选项',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPickerGrid(BuildContext context, {required bool isFile}) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _UploadTopBar(
+              title: isFile ? '选择文件' : '从相册选择',
+              trailing: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  '取消',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                child: _SystemPickerPrompt(
+                  isFile: isFile,
+                  uploading: _uploading,
+                  status: _status,
+                  onPick: () => _pickAndSubmit(isFile: isFile),
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 34),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 14,
+                    offset: const Offset(0, -6),
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: FilledButton.icon(
+                  onPressed:
+                      _uploading ? null : () => _pickAndSubmit(isFile: isFile),
+                  icon: Icon(
+                    isFile
+                        ? Icons.folder_open_rounded
+                        : Icons.photo_library_rounded,
+                  ),
+                  label: Text(
+                    isFile ? '打开系统文件选择器' : '打开系统相册',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF08A84F),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _captureAndSubmit() async {
+    await _pickImage(ImageSource.camera);
+    if (_file != null) await _submit();
+  }
+
+  Future<void> _pickAndSubmit({required bool isFile}) async {
+    if (isFile) {
+      await _pickFromFile();
+    } else {
+      await _pickImage(ImageSource.gallery);
+    }
+    if (_file != null) await _submit();
+  }
+
+  String _sourceLabel() {
+    switch (widget.source) {
+      case 'camera':
+        return '拍照上传';
+      case 'gallery':
+        return '相册选择';
+      case 'file':
+        return '本机存储';
+      default:
+        return '上传';
+    }
+  }
+
   String _documentTitle() {
     final input = _titleController.text.trim();
     if (input.isNotEmpty) return input;
@@ -327,5 +712,337 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
       (item) => item['value'] == value,
       orElse: () => const {'value': 'other', 'label': '其他'},
     )['label']!;
+  }
+}
+
+class _UploadTopBar extends StatelessWidget {
+  const _UploadTopBar({required this.title, required this.trailing});
+
+  final String title;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 64,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.chevron_left_rounded, size: 34),
+            ),
+          ),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          Align(alignment: Alignment.centerRight, child: trailing),
+        ],
+      ),
+    );
+  }
+}
+
+class _SystemPickerPrompt extends StatelessWidget {
+  const _SystemPickerPrompt({
+    required this.isFile,
+    required this.uploading,
+    required this.status,
+    required this.onPick,
+  });
+
+  final bool isFile;
+  final bool uploading;
+  final String status;
+  final VoidCallback onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(22, 28, 22, 28),
+        decoration: BoxDecoration(
+          color: AppColors.mintBg.withValues(alpha: 0.36),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.mintSoft),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 86,
+              height: 86,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.mintDeep.withValues(alpha: 0.08),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Icon(
+                isFile
+                    ? Icons.folder_open_rounded
+                    : Icons.photo_library_rounded,
+                color: AppColors.mintDeep,
+                size: 44,
+              ),
+            ),
+            const SizedBox(height: 22),
+            Text(
+              isFile ? '从系统文件中选择健康资料' : '从系统相册中选择健康资料',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 21,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              isFile
+                  ? '支持 PDF、JPG、PNG 等文件。选择后将立即上传并进行 OCR 识别。'
+                  : '将打开 iOS 系统相册。选中照片后会立即上传并进行 OCR 识别。',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.45,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            if (uploading) ...[
+              const SizedBox(height: 24),
+              const LinearProgressIndicator(
+                color: AppColors.mintDeep,
+                backgroundColor: AppColors.mintSoft,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                status,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+            const SizedBox(height: 26),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: FilledButton.icon(
+                onPressed: uploading ? null : onPick,
+                icon: Icon(
+                  isFile
+                      ? Icons.folder_open_rounded
+                      : Icons.photo_library_rounded,
+                ),
+                label: Text(
+                  isFile ? '选择文件' : '打开系统相册',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF08A84F),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniDocumentLines extends StatelessWidget {
+  const _MiniDocumentLines();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(6, (index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Container(
+            height: 5,
+            width: index.isEven ? double.infinity : 70,
+            decoration: BoxDecoration(
+              color: index == 0 ? AppColors.mintDeep : AppColors.lightOutline,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _ReportMockup extends StatelessWidget {
+  const _ReportMockup();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text(
+          '健康体检报告',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 20),
+        const _MiniDocumentLines(),
+        const SizedBox(height: 18),
+        Expanded(
+          child: Row(
+            children: [
+              const Expanded(child: _MiniDocumentLines()),
+              const SizedBox(width: 18),
+              SizedBox(
+                width: 80,
+                child: CustomPaint(painter: _BarChartPainter()),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        const _MiniDocumentLines(),
+      ],
+    );
+  }
+}
+
+class _DeskPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.white.withValues(alpha: 0.05);
+    canvas.drawCircle(Offset(size.width * 0.10, 20), 70, paint);
+    canvas.drawCircle(Offset(size.width * 0.92, 20), 55, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _ScanFramePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF66F3A6)
+      ..strokeWidth = 4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    const len = 48.0;
+    const r = 12.0;
+    canvas.drawLine(const Offset(0, r), const Offset(0, len), paint);
+    canvas.drawLine(const Offset(r, 0), const Offset(len, 0), paint);
+    canvas.drawLine(Offset(size.width, r), Offset(size.width, len), paint);
+    canvas.drawLine(
+      Offset(size.width - r, 0),
+      Offset(size.width - len, 0),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(0, size.height - r),
+      Offset(0, size.height - len),
+      paint,
+    );
+    canvas.drawLine(Offset(r, size.height), Offset(len, size.height), paint);
+    canvas.drawLine(
+      Offset(size.width, size.height - r),
+      Offset(size.width, size.height - len),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width - r, size.height),
+      Offset(size.width - len, size.height),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _BarChartPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = AppColors.mintDeep.withValues(alpha: 0.65);
+    for (var i = 0; i < 3; i++) {
+      final h = size.height * (0.35 + i * 0.14);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(10 + i * 23, size.height - h, 12, h),
+          const Radius.circular(2),
+        ),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _CameraTool extends StatelessWidget {
+  const _CameraTool({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.mintDeep, size: 20),
+          const SizedBox(width: 7),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.mintDeep,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GalleryThumb extends StatelessWidget {
+  const _GalleryThumb();
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white, width: 3),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF9CCDF6), Color(0xFF597EAD)],
+        ),
+      ),
+    );
   }
 }

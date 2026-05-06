@@ -1,19 +1,27 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../app/theme/app_colors.dart';
 import '../../../shared/models/document.dart';
 import '../../members/providers/current_member_provider.dart';
 import '../../members/providers/member_provider.dart';
+import '../data/document_repository.dart';
 import '../providers/document_provider.dart';
+import 'ocr_review_screen.dart';
 import 'widgets/document_list_tile_card.dart';
 import 'widgets/documents_filter_bar.dart';
 import 'widgets/documents_header.dart';
+import 'widgets/documents_health_metrics_grid.dart';
 import 'widgets/documents_overview_card.dart';
 import 'widgets/documents_subheader.dart';
-import 'widgets/documents_upload_actions.dart';
+import 'widgets/documents_upload_popover.dart';
 
 enum _SortMode { recent, oldest, hospital }
 
@@ -27,6 +35,7 @@ class DocumentListScreen extends ConsumerStatefulWidget {
 class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
   String _filter = 'all';
   _SortMode _sort = _SortMode.recent;
+  bool _quickUploading = false;
 
   @override
   void initState() {
@@ -68,12 +77,12 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
     final overview = _overviewStats(allDocs);
 
     return ListView(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 10),
       children: [
         DocumentsHeader(
           title: '健康档案',
           subtitle: '共整理 ${allDocs.length} 份健康文档',
-          onUpload: () => context.push('/documents/new'),
+          onUpload: _showUploadPopover,
         ),
         DocumentsSubheader(counts: counts),
         DocumentsOverviewCard(
@@ -83,6 +92,7 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
           pendingReview: overview.pendingReview,
           candidateReminders: overview.candidateReminders,
         ),
+        const DocumentsHealthMetricsGrid(),
         DocumentsFilterBar(
           filters: const [
             DocFilterItem(label: '全部', value: 'all'),
@@ -127,14 +137,213 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
               onLongPress: () => _showDocOptions(d),
             ),
           ),
-        const SizedBox(height: 4),
-        DocumentsUploadActions(
-          onCamera: () => context.push('/documents/new?source=camera'),
-          onGallery: () => context.push('/documents/new?source=gallery'),
-          onFile: () => context.push('/documents/new?source=file'),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.verified_user_outlined,
+                size: 14,
+                color: AppColors.textTertiary,
+              ),
+              SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  '支持 PDF、JPG/PNG、Word、Excel 等格式，单个文件不超过 50MB',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    color: AppColors.textTertiary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
+  }
+
+  void _showUploadPopover() {
+    showGeneralDialog<void>(
+      context: context,
+      barrierColor: Colors.transparent,
+      barrierDismissible: true,
+      barrierLabel: '关闭上传菜单',
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (dialogContext, _, __) {
+        void openSource(String source) {
+          Navigator.of(dialogContext).pop();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) context.push('/documents/new?source=$source');
+          });
+        }
+
+        return DocumentsUploadPopover(
+          onCamera: () => openSource('camera'),
+          onGallery: () {
+            Navigator.of(dialogContext).pop();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _pickGalleryAndUpload();
+            });
+          },
+          onFile: () {
+            Navigator.of(dialogContext).pop();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _pickFileAndUpload();
+            });
+          },
+        );
+      },
+      transitionBuilder: (_, animation, __, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
+            alignment: Alignment.topRight,
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickGalleryAndUpload() async {
+    if (_quickUploading) return;
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 88,
+    );
+    if (picked == null) return;
+    await _uploadPickedFile(
+      file: File(picked.path),
+      mimeType: 'image/jpeg',
+      sourceLabel: '相册选择',
+    );
+  }
+
+  Future<void> _pickFileAndUpload() async {
+    if (_quickUploading) return;
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+    );
+    final path = picked?.files.single.path;
+    if (path == null) return;
+    await _uploadPickedFile(
+      file: File(path),
+      mimeType: _mimeTypeForPath(path),
+      sourceLabel: '本机存储',
+    );
+  }
+
+  Future<void> _uploadPickedFile({
+    required File file,
+    required String mimeType,
+    required String sourceLabel,
+  }) async {
+    final memberId = ref.read(currentMemberIdProvider);
+    if (memberId == null || memberId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请先选择成员')),
+      );
+      return;
+    }
+
+    setState(() => _quickUploading = true);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(content: Text('正在上传并识别，请稍候…')),
+      );
+
+    try {
+      final repo = ref.read(documentRepositoryProvider);
+      final fileSize = await file.length();
+      final fileName = _displayUploadFileName(file.path);
+      final now = DateTime.now();
+
+      final sig = await repo.getUploadSignature(
+        UploadSignatureRequest(
+          memberId: memberId,
+          fileName: fileName,
+          fileSize: fileSize,
+          mimeType: mimeType,
+        ),
+      );
+      await repo.putFileToSignedUrl(sig.uploadUrl, file, mimeType);
+
+      final doc = await repo.createDocument(
+        DocumentCreate(
+          memberId: memberId,
+          fileName: fileName,
+          fileSize: fileSize,
+          mimeType: mimeType,
+          category: 'checkup_report',
+          title: '相册图片 ${DateFormat('yyyy/MM/dd').format(now)}',
+          documentDate: now,
+          fileUrl: sig.fileUrl,
+          storageBucket: 'health-clock-files',
+          storageKey: sig.objectKey,
+        ),
+      );
+
+      final ocrResult = await repo.processOcr(doc.id);
+      final enriched = {
+        ...ocrResult,
+        'file_name': fileName,
+        'file_size': fileSize,
+        'mime_type': mimeType,
+        'uploaded_at': now.toIso8601String(),
+        'source_label': sourceLabel,
+        'document_title': doc.title ?? fileName,
+        'document_category': doc.category,
+        if (doc.documentDate != null)
+          'document_date': DateFormat('yyyy-MM-dd').format(doc.documentDate!),
+      };
+
+      await ref.read(documentListProvider.notifier).refresh();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => OcrReviewScreen(
+            memberId: memberId,
+            ocrResult: enriched,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('上传识别失败：$e')));
+    } finally {
+      if (mounted) setState(() => _quickUploading = false);
+    }
+  }
+
+  String _displayUploadFileName(String path) {
+    final fileName = p.basename(path);
+    if (!fileName.toLowerCase().startsWith('image_picker_')) return fileName;
+    final ext = p.extension(fileName).isEmpty ? '.jpg' : p.extension(fileName);
+    return '相册图片$ext';
+  }
+
+  String _mimeTypeForPath(String path) {
+    final ext = p.extension(path).toLowerCase();
+    if (ext == '.pdf') return 'application/pdf';
+    if (ext == '.png') return 'image/png';
+    return 'image/jpeg';
   }
 
   Widget _buildSectionHeader() {
@@ -301,16 +510,15 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
     return list;
   }
 
-  DateTime _docDate(HealthDocument d) =>
-      d.documentDate ?? d.createdAt;
+  DateTime _docDate(HealthDocument d) => d.documentDate ?? d.createdAt;
 
   _OverviewStats _overviewStats(List<HealthDocument> docs) {
     final now = DateTime.now();
     final monthStart = DateTime(now.year, now.month);
     final newThisMonth =
         docs.where((d) => d.createdAt.toLocal().isAfter(monthStart)).length;
-    final pending = docs.where((d) => d.ocrText == null || d.ocrText!.isEmpty)
-        .length;
+    final pending =
+        docs.where((d) => d.ocrText == null || d.ocrText!.isEmpty).length;
     final candidate = docs
         .where((d) => d.aiSummary != null && d.aiSummary!.isNotEmpty)
         .length;
@@ -535,9 +743,7 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
                 );
                 if (ok == true) {
                   try {
-                    await ref
-                        .read(documentListProvider.notifier)
-                        .delete(d.id);
+                    await ref.read(documentListProvider.notifier).delete(d.id);
                   } catch (e) {
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(

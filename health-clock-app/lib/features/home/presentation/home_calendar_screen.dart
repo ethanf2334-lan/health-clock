@@ -12,6 +12,8 @@ import 'widgets/ai_input_bar.dart';
 import 'widgets/date_strip.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_section_header.dart';
+import 'widgets/manual_reminder_sheet.dart';
+import 'widgets/metric_record_sheet.dart';
 import 'widgets/quick_actions_row.dart';
 import 'widgets/reminder_card.dart';
 import 'widgets/today_status_card.dart';
@@ -120,7 +122,7 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
                         icon: Icons.add_rounded,
                         iconColor: Colors.white,
                         iconBg: AppColors.mintDeep,
-                        onTap: () => context.push('/events/new'),
+                        onTap: _openManualReminderPanel,
                       ),
                       QuickAction(
                         title: '记录指标',
@@ -128,7 +130,7 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
                         icon: Icons.monitor_heart_rounded,
                         iconColor: AppColors.careBlue,
                         iconBg: AppColors.careBlueSoft,
-                        onTap: () => context.push('/metrics'),
+                        onTap: _openMetricRecordPanel,
                       ),
                     ],
                   ),
@@ -277,10 +279,8 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
         label = '${date.month}/${date.day}';
       }
 
-      final dotColors = dayEvents
-          .take(3)
-          .map((e) => _eventTypeColor(e.eventType))
-          .toList();
+      final dotColors =
+          dayEvents.take(3).map((e) => _eventTypeColor(e.eventType)).toList();
 
       items.add(
         DateStripItem(
@@ -425,7 +425,8 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
   void _openAIPanel() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.42),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -435,13 +436,70 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(ctx).viewInsets.bottom,
           ),
-          child: SizedBox(
-            height: MediaQuery.of(ctx).size.height * 0.7,
-            child: AIQuickCreatePanel(
-              onCreated: (_) {
-                Navigator.pop(ctx);
-                _applyFilter();
-              },
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: SizedBox(
+              height: MediaQuery.of(ctx).size.height * 0.68,
+              child: AIQuickCreatePanel(
+                onCreated: (_) {
+                  Navigator.pop(ctx);
+                  _applyFilter();
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openManualReminderPanel() {
+    showModalBottomSheet<HealthEvent>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.42),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: SizedBox(
+              height: MediaQuery.of(ctx).size.height * 0.73,
+              child: ManualReminderSheet(
+                onCreated: (_) => _applyFilter(),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openMetricRecordPanel() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.42),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: SizedBox(
+              height: MediaQuery.of(ctx).size.height * 0.73,
+              child: const MetricRecordSheet(),
             ),
           ),
         );

@@ -21,7 +21,7 @@ class DocumentsOverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+      margin: const EdgeInsets.fromLTRB(16, 2, 16, 12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -31,7 +31,7 @@ class DocumentsOverviewCard extends StatelessWidget {
             AppColors.statusGradientEnd,
           ],
         ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: AppColors.mintSoft.withValues(alpha: 0.6),
         ),
@@ -46,50 +46,60 @@ class DocumentsOverviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 14, 12, 14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          SizedBox(
+            height: 116,
+            child: Stack(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLabel(),
-                      const SizedBox(height: 8),
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.mintDeep,
-                          height: 1.25,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          color: AppColors.textSecondary,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
+                const Positioned(
+                  right: 8,
+                  top: 6,
+                  child: SizedBox(
+                    width: 126,
+                    height: 102,
+                    child: _DocsIllustration(),
                   ),
                 ),
-                const SizedBox(width: 8),
-                const SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: _DocsIllustration(),
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 14, 122, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildLabel(),
+                        const SizedBox(height: 8),
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.mintDeep,
+                            height: 1.18,
+                            letterSpacing: 0,
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
             child: Row(
               children: [
                 Expanded(
@@ -101,7 +111,7 @@ class DocumentsOverviewCard extends StatelessWidget {
                     value: newCount,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 7),
                 Expanded(
                   child: _StatCard(
                     icon: Icons.find_in_page_rounded,
@@ -111,12 +121,12 @@ class DocumentsOverviewCard extends StatelessWidget {
                     value: pendingReview,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 7),
                 Expanded(
                   child: _StatCard(
                     icon: Icons.notifications_active_rounded,
-                    iconColor: AppColors.warmAmber,
-                    iconBg: AppColors.amberSoft,
+                    iconColor: AppColors.mintDeep,
+                    iconBg: AppColors.mintBg,
                     label: '可生成提醒',
                     value: candidateReminders,
                   ),
@@ -130,20 +140,13 @@ class DocumentsOverviewCard extends StatelessWidget {
   }
 
   Widget _buildLabel() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: const Text(
-        '档案概览',
-        style: TextStyle(
-          fontSize: 11,
-          color: AppColors.mintDeep,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.3,
-        ),
+    return const Text(
+      '档案概览',
+      style: TextStyle(
+        fontSize: 14,
+        color: AppColors.textPrimary,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 0,
       ),
     );
   }
@@ -167,25 +170,27 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+      padding: const EdgeInsets.fromLTRB(9, 9, 8, 9),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.lightOutline.withValues(alpha: 0.55),
+        ),
       ),
       child: Row(
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 31,
+            height: 31,
             decoration: BoxDecoration(
               color: iconBg,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(9),
             ),
             alignment: Alignment.center,
-            child: Icon(icon, color: iconColor, size: 16),
+            child: Icon(icon, color: iconColor, size: 18),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,17 +201,17 @@ class _StatCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 10.5,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '$value',
                   style: const TextStyle(
-                    fontSize: 17,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: AppColors.mintDeep,
                     height: 1.0,
                   ),
                 ),

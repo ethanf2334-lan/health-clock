@@ -21,7 +21,7 @@ class DocumentsFilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: Row(
         children: [
           Expanded(
@@ -35,7 +35,7 @@ class DocumentsFilterBar extends StatelessWidget {
                       selected: f.value == selected,
                       onTap: () => onSelected(f.value),
                     ),
-                    if (f != filters.last) const SizedBox(width: 6),
+                    if (f != filters.last) const SizedBox(width: 5),
                   ],
                 ],
               ),
@@ -73,23 +73,23 @@ class _FilterChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: selected
               ? AppColors.mintBg
-              : AppColors.cardWhite.withValues(alpha: 0.7),
+              : const Color(0xFFF5F6F5).withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected
-                ? AppColors.mintDeep.withValues(alpha: 0.4)
-                : AppColors.lightOutline,
+                ? AppColors.mintDeep.withValues(alpha: 0.55)
+                : Colors.transparent,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12.5,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
             color: selected ? AppColors.mintDeep : AppColors.textSecondary,
           ),
         ),
@@ -110,9 +110,9 @@ class _SortButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.cardWhite.withValues(alpha: 0.7),
+          color: AppColors.cardWhite.withValues(alpha: 0.86),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: AppColors.lightOutline),
         ),
@@ -124,18 +124,18 @@ class _SortButton extends StatelessWidget {
               size: 14,
               color: AppColors.textSecondary,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 3),
             Text(
               label,
               style: const TextStyle(
                 fontSize: 12.5,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w800,
                 color: AppColors.textSecondary,
               ),
             ),
             const Icon(
               Icons.keyboard_arrow_down_rounded,
-              size: 14,
+              size: 13,
               color: AppColors.textSecondary,
             ),
           ],

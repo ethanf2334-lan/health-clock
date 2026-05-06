@@ -16,19 +16,20 @@ class DocumentsSubheader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Row(
         children: [
           _MemberPill(),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
               child: Row(
                 children: [
                   for (final c in counts) ...[
                     _CategoryCount(count: c),
-                    if (c != counts.last) const SizedBox(width: 12),
+                    if (c != counts.last) const SizedBox(width: 8),
                   ],
                 ],
               ),
@@ -80,7 +81,7 @@ class _MemberPill extends ConsumerWidget {
         onTap: () => _showPicker(context, ref),
         borderRadius: BorderRadius.circular(999),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(12, 5, 6, 5),
+          padding: const EdgeInsets.fromLTRB(11, 5, 6, 5),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: AppColors.lightOutline),
@@ -91,19 +92,20 @@ class _MemberPill extends ConsumerWidget {
               const Text(
                 '当前成员 ',
                 style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
               ),
               Text(
                 name,
                 style: const TextStyle(
                   fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w900,
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 5),
               MemberAvatar(name: name, relation: relation, size: 24),
               const Icon(
                 Icons.keyboard_arrow_down_rounded,
@@ -208,26 +210,27 @@ class _CategoryCount extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 6,
-          height: 6,
+          width: 5,
+          height: 5,
           decoration: BoxDecoration(
             color: count.color,
             shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 5),
+        const SizedBox(width: 4),
         Text(
           count.label,
           style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(width: 3),
+        const SizedBox(width: 2),
         Text(
           '${count.count}',
           style: const TextStyle(
-            fontSize: 12.5,
+            fontSize: 12,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
           ),

@@ -113,7 +113,9 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/documents/new',
         name: 'documents-new',
-        builder: (context, state) => const DocumentUploadScreen(),
+        builder: (context, state) => DocumentUploadScreen(
+          source: state.uri.queryParameters['source'],
+        ),
       ),
       GoRoute(
         path: '/documents/:id',

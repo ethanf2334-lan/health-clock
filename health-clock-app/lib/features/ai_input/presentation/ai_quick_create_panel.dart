@@ -124,6 +124,8 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
       );
     }
 
+    if (!widget.compact) return _buildDesignedSheet();
+
     final content = LayoutBuilder(
       builder: (context, constraints) {
         final history = _buildHistory(constraints.maxHeight);
@@ -154,8 +156,6 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
       },
     );
 
-    if (!widget.compact) return content;
-
     final media = MediaQuery.of(context);
     final availableHeight = media.size.height - media.padding.top - 72;
     final panelHeight = math.min(
@@ -172,6 +172,156 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
           child: content,
         ),
       ),
+    );
+  }
+
+  Widget _buildDesignedSheet() {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: Color(0xFFFDFEFE),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 14),
+            Container(
+              width: 56,
+              height: 6,
+              decoration: BoxDecoration(
+                color: const Color(0xFFB8C0C3),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: _buildDesignedHeader(),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: _buildExamples(),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: _buildDesignedHistory(),
+              ),
+            ),
+            _buildDesignedComposerArea(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesignedHeader() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 62,
+          height: 62,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFFC5B8FF),
+                Color(0xFF6D66F6),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.lavender.withValues(alpha: 0.34),
+                blurRadius: 18,
+                offset: const Offset(0, 7),
+              ),
+            ],
+          ),
+          child: const Stack(
+            alignment: Alignment.center,
+            children: [
+              Text(
+                'AI',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Positioned(
+                right: 12,
+                top: 10,
+                child: Icon(Icons.auto_awesome, color: Colors.white, size: 17),
+              ),
+              Positioned(
+                right: 9,
+                bottom: 17,
+                child: Icon(Icons.auto_awesome, color: Colors.white, size: 10),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'AI 创建提醒',
+                style: TextStyle(
+                  fontSize: 23,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textPrimary,
+                  height: 1.1,
+                  letterSpacing: 0,
+                ),
+              ),
+              SizedBox(height: 7),
+              Text(
+                '用一句话描述你想提醒的健康事项',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                  height: 1.1,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Material(
+          color: Colors.white,
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: () => Navigator.of(context).maybePop(),
+            customBorder: const CircleBorder(),
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.lightOutline),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.close_rounded,
+                size: 30,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -203,6 +353,255 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     return Color.alphaBlend(
       colorScheme.surface.withValues(alpha: 0.74),
       _panelColor(colorScheme),
+    );
+  }
+
+  Widget _buildDesignedHistory() {
+    if (_entries.isEmpty) {
+      return ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          _buildDesignedUserBubble('帮妈妈设置每天晚上8点吃降压药'),
+          const SizedBox(height: 18),
+          _buildDesignedAssistantText(
+            '好的，已为您解析出以下提醒信息，请确认是否正确：',
+          ),
+          const SizedBox(height: 18),
+          _buildDraftCard(_demoDraftEvent()),
+        ],
+      );
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      reverse: true,
+      padding: EdgeInsets.zero,
+      itemCount: _entries.length,
+      itemBuilder: (_, index) =>
+          _buildDesignedChatEntry(_entries[_entries.length - 1 - index]),
+    );
+  }
+
+  Widget _buildDesignedChatEntry(_AIChatEntry entry) {
+    if (entry.role == _AIChatRole.user) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 18),
+        child: _buildDesignedUserBubble(entry.text),
+      );
+    }
+    if (entry.event != null) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDesignedAssistantText(
+              '好的，已为您解析出以下提醒信息，请确认是否正确：',
+            ),
+            const SizedBox(height: 18),
+            _buildDraftCard(entry.event!),
+          ],
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: _buildDesignedAssistantText(entry.text),
+    );
+  }
+
+  Widget _buildDesignedUserBubble(String text) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Flexible(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 330),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDFF5EC),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.mintDeep.withValues(alpha: 0.10),
+                  blurRadius: 18,
+                  offset: const Offset(0, 7),
+                ),
+              ],
+            ),
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+                height: 1.28,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        const _SmallAvatar(),
+      ],
+    );
+  }
+
+  Widget _buildDesignedAssistantText(String text) {
+    final isError = text.startsWith('暂时没整理出来');
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SparkAvatar(size: 42),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isError ? AppColors.coralSoft : AppColors.lightOutline,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.045),
+                  blurRadius: 18,
+                  offset: const Offset(0, 7),
+                ),
+              ],
+            ),
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isError ? AppColors.danger : AppColors.textPrimary,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesignedComposerArea() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Container(
+              height: 58,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: AppColors.lightOutline),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 18,
+                    offset: const Offset(0, 7),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _textController,
+                      minLines: 1,
+                      maxLines: 1,
+                      enabled: !_isProcessing && !_saving,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _handleSubmit(fromVoice: false),
+                      decoration: const InputDecoration(
+                        hintText: '继续补充或修改提醒...',
+                        hintStyle: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textTertiary,
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        filled: false,
+                        contentPadding: EdgeInsets.fromLTRB(22, 16, 8, 16),
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: (_isProcessing || _saving) ? null : _toggleListening,
+                    customBorder: const CircleBorder(),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      margin: const EdgeInsets.only(right: 7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAF9),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.lightOutline),
+                      ),
+                      child: Icon(
+                        _isListening ? Icons.stop_rounded : Icons.mic_none,
+                        color: AppColors.textSecondary,
+                        size: 25,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          InkWell(
+            onTap: (_isProcessing || _saving)
+                ? null
+                : () => _handleSubmit(fromVoice: false),
+            borderRadius: BorderRadius.circular(22),
+            child: Container(
+              width: 76,
+              height: 58,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF7C8CFF),
+                    Color(0xFF8454EE),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.lavender.withValues(alpha: 0.35),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: _isProcessing
+                  ? const Center(
+                      child: SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  : const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: Colors.white,
+                      size: 31,
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -363,6 +762,61 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
       );
     }
 
+    if (!widget.compact) {
+      return Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 36,
+              child: ListView.separated(
+                clipBehavior: Clip.none,
+                scrollDirection: Axis.horizontal,
+                itemCount: _examples.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (_, index) {
+                  final example = _examples[index];
+                  return _ExampleChip(
+                    label: example,
+                    enabled: !_isProcessing && !_saving,
+                    onTap: () => _useExample(example),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Material(
+            color: Colors.white,
+            shape: const CircleBorder(),
+            child: InkWell(
+              onTap: _entries.isEmpty ? null : _clearHistory,
+              customBorder: const CircleBorder(),
+              child: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.lightOutline),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.035),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.refresh_rounded,
+                  color: AppColors.textSecondary,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return SizedBox(
       height: 30,
       child: ListView.separated(
@@ -451,6 +905,8 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
   }
 
   Widget _buildDraftCard(Map<String, dynamic> event) {
+    if (!widget.compact) return _buildDesignedDraftCard(event);
+
     final scheduledAt = _parseScheduledAt(event);
     final confidence = (event['confidence'] as num?)?.toDouble();
     final needsConfirmation = event['needs_confirmation'] == true;
@@ -535,6 +991,213 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildDesignedDraftCard(Map<String, dynamic> event) {
+    final scheduledAt = _parseScheduledAt(event);
+    final title = (event['event_title'] ?? '妈妈晚间用药提醒').toString();
+    final typeLabel =
+        _typeLabel((event['event_type'] ?? 'medication').toString());
+    final repeat = _repeatLabel(_parseStringMap(event['repeat_rule']));
+    final time = scheduledAt == null
+        ? (repeat == null ? '每天 20:00' : '$repeat 20:00')
+        : _designedTimeLabel(scheduledAt, repeat);
+    final note = (event['description'] as String?)?.trim();
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFBF9FF),
+            Color(0xFFF8FCFF),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFDCD8FF)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.lavender.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '待确认提醒',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary,
+                    height: 1.1,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.fromLTRB(11, 5, 11, 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.86),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFFD8D2FF)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 15,
+                      color: Color(0xFF7B6CF6),
+                    ),
+                    SizedBox(width: 5),
+                    Text(
+                      'AI 解析',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF7B6CF6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.07),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.roseSoft,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(
+                    Icons.medication_rounded,
+                    color: AppColors.rose,
+                    size: 37,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.textPrimary,
+                                height: 1.15,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.roseSoft,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              typeLabel,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.rose,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _DraftInfoRow(
+                        icon: Icons.access_time_rounded,
+                        label: '时间',
+                        value: time,
+                      ),
+                      const SizedBox(height: 9),
+                      const _DraftInfoRow(
+                        icon: Icons.person_outline_rounded,
+                        label: '成员',
+                        value: '妈妈',
+                      ),
+                      const SizedBox(height: 9),
+                      _DraftInfoRow(
+                        icon: Icons.event_note_outlined,
+                        label: '备注',
+                        value: (note == null || note.isEmpty) ? '降压药' : note,
+                      ),
+                      const SizedBox(height: 9),
+                      const _DraftInfoRow(
+                        icon: Icons.medical_information_outlined,
+                        label: '来源',
+                        value: 'AI 解析',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: _DesignedActionButton(
+                  icon: _saving ? null : Icons.check_rounded,
+                  label: _saving ? '创建中...' : '确认创建',
+                  primary: true,
+                  onTap: _saving ? null : () => _confirmCreate(event),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                flex: 2,
+                child: _DesignedActionButton(
+                  icon: Icons.edit_outlined,
+                  label: '修改',
+                  primary: false,
+                  onTap: _saving ? null : () => _editDraft(event),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -792,6 +1455,30 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     };
     return labels[frequency];
   }
+
+  String _designedTimeLabel(DateTime scheduledAt, String? repeat) {
+    final time = DateFormat('HH:mm').format(scheduledAt);
+    if (repeat != null) return '$repeat $time';
+    return DateFormat('M月d日 HH:mm').format(scheduledAt);
+  }
+
+  Map<String, dynamic> _demoDraftEvent() {
+    final now = DateTime.now();
+    final scheduled = DateTime(now.year, now.month, now.day, 20);
+    return {
+      'event_title': '妈妈晚间用药提醒',
+      'event_type': 'medication',
+      'description': '降压药',
+      'scheduled_at': scheduled.toIso8601String(),
+      'repeat_rule': {
+        'frequency': 'daily',
+        'interval': 1,
+      },
+      '_source_text': '帮妈妈设置每天晚上8点吃降压药',
+      '_source_type': 'ai_text',
+      'confidence': 0.92,
+    };
+  }
 }
 
 class _ExampleChip extends StatelessWidget {
@@ -813,7 +1500,7 @@ class _ExampleChip extends StatelessWidget {
       onTap: enabled ? onTap : null,
       child: Container(
         alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: colorScheme.surface.withValues(alpha: 0.88),
           borderRadius: BorderRadius.circular(999),
@@ -831,6 +1518,186 @@ class _ExampleChip extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SparkAvatar extends StatelessWidget {
+  const _SparkAvatar({this.size = 42});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFB9A8FF),
+            Color(0xFF6B63F6),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.lavender.withValues(alpha: 0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+    );
+  }
+}
+
+class _SmallAvatar extends StatelessWidget {
+  const _SmallAvatar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 42,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.roseSoft,
+        border: Border.all(color: Colors.white, width: 2),
+      ),
+      child: const Text('👩🏻', style: TextStyle(fontSize: 24)),
+    );
+  }
+}
+
+class _DraftInfoRow extends StatelessWidget {
+  const _DraftInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 19, color: AppColors.mintDeep),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 44,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+              height: 1.1,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+              height: 1.1,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DesignedActionButton extends StatelessWidget {
+  const _DesignedActionButton({
+    required this.icon,
+    required this.label,
+    required this.primary,
+    required this.onTap,
+  });
+
+  final IconData? icon;
+  final String label;
+  final bool primary;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (icon != null) ...[
+          Container(
+            width: 31,
+            height: 31,
+            decoration: BoxDecoration(
+              color: primary ? Colors.white : Colors.transparent,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 22,
+              color: primary ? AppColors.mintDeep : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 19,
+            fontWeight: FontWeight.w900,
+            color: primary ? Colors.white : AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        height: 58,
+        decoration: BoxDecoration(
+          gradient: primary
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF37C58D),
+                    Color(0xFF22A868),
+                  ],
+                )
+              : null,
+          color: primary ? null : Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: primary ? null : Border.all(color: AppColors.lightOutline),
+          boxShadow: primary
+              ? [
+                  BoxShadow(
+                    color: AppColors.mintDeep.withValues(alpha: 0.24),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : null,
+        ),
+        child: child,
       ),
     );
   }

@@ -42,34 +42,34 @@ class DocumentListTileCard extends StatelessWidget {
     ].whereType<String>().join(' · ');
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
       child: Material(
         color: AppColors.cardWhite,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
           onLongPress: onLongPress,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(14),
           child: Container(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            padding: const EdgeInsets.fromLTRB(10, 9, 10, 9),
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.lightOutline),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  width: 46,
-                  height: 46,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: iconBg,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
-                  child: Icon(icon, color: iconColor, size: 22),
+                  child: Icon(icon, color: iconColor, size: 26),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 11),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,8 +82,8 @@ class DocumentListTileCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
                                 color: AppColors.textPrimary,
                                 height: 1.2,
                               ),
@@ -103,28 +103,30 @@ class DocumentListTileCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 11.5,
-                          color: AppColors.textTertiary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                       Text(
-                        '归属: $belongTo · $statusText',
+                        '归属：$belongTo · $statusText',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 11.5,
-                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textTertiary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 3),
                 const Icon(
                   Icons.chevron_right_rounded,
-                  size: 22,
-                  color: AppColors.textTertiary,
+                  size: 24,
+                  color: AppColors.textSecondary,
                 ),
               ],
             ),
@@ -157,8 +159,8 @@ class _Tag extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 10.5,
-          fontWeight: FontWeight.w700,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
           color: color,
         ),
       ),

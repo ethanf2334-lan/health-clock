@@ -17,7 +17,7 @@ class DocumentsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 16, 12),
+      padding: const EdgeInsets.fromLTRB(20, 8, 16, 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -28,14 +28,14 @@ class DocumentsHeader extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
                     color: AppColors.textPrimary,
-                    height: 1.2,
-                    letterSpacing: -0.4,
+                    height: 1.12,
+                    letterSpacing: 0,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 _buildSubtitle(),
               ],
             ),
@@ -51,28 +51,35 @@ class DocumentsHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
+                  horizontal: 13,
+                  vertical: 9,
                 ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: AppColors.lightOutline),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.035),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.file_upload_outlined,
-                      size: 16,
-                      color: AppColors.mintDeep,
+                      Icons.upload_rounded,
+                      size: 19,
+                      color: Color(0xFF0BA84A),
                     ),
-                    SizedBox(width: 4),
+                    SizedBox(width: 5),
                     Text(
                       '上传',
                       style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.mintDeep,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -115,6 +122,7 @@ class DocumentsHeader extends StatelessWidget {
             style: const TextStyle(
               color: AppColors.mintDeep,
               fontWeight: FontWeight.w800,
+              fontSize: 15,
             ),
           ),
           if (after.isNotEmpty) TextSpan(text: after),
