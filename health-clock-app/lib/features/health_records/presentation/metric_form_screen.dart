@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../shared/models/metric_record.dart';
+import '../../../shared/widgets/app_cupertino_pickers.dart';
 import '../../members/presentation/member_picker_field.dart';
 import '../../members/providers/current_member_provider.dart';
 import '../providers/metric_provider.dart';
@@ -157,22 +158,15 @@ class _MetricFormScreenState extends ConsumerState<MetricFormScreen> {
   }
 
   Future<void> _pickDateTime() async {
-    final d = await showDatePicker(
+    final dateTime = await AppCupertinoPickers.dateTime(
       context: context,
-      initialDate: _recordedAt,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
+      initialDateTime: _recordedAt,
+      minimumDate: DateTime(2020),
+      maximumDate: DateTime.now().add(const Duration(days: 1)),
+      title: '选择记录时间',
     );
-    if (d == null) return;
-    if (!mounted) return;
-    final t = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_recordedAt),
-    );
-    if (t == null) return;
-    setState(() {
-      _recordedAt = DateTime(d.year, d.month, d.day, t.hour, t.minute);
-    });
+    if (dateTime == null) return;
+    setState(() => _recordedAt = dateTime);
   }
 
   Future<void> _save() async {

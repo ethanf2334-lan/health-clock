@@ -106,7 +106,7 @@ class _UploadPanel extends StatelessWidget {
                     '上传健康资料',
                     style: TextStyle(
                       fontSize: 14.5,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -157,7 +157,7 @@ class _UploadPanel extends StatelessWidget {
                   '取消',
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -231,7 +231,7 @@ class _UploadMenuItem extends StatelessWidget {
                       title,
                       style: const TextStyle(
                         fontSize: 15.5,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                         height: 1.1,
                       ),

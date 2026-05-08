@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element, unused_import
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,18 +7,22 @@ import 'package:intl/intl.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../app/theme/app_styles.dart';
 import '../../../shared/models/health_event.dart';
 import '../../../shared/widgets/app_empty_state.dart';
 import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/app_status_chip.dart';
 import '../../../shared/widgets/app_surface_card.dart';
-import '../../ai_input/presentation/ai_quick_create_panel.dart';
+import '../../home/presentation/widgets/reminder_card.dart';
+import '../../home/presentation/widgets/view_switch_bar.dart';
 import '../../members/providers/current_member_provider.dart';
 import '../providers/event_provider.dart';
 
 enum EventRange { today, week, month, all }
 
 enum EventView { list, week, month }
+
+enum EventStatusFilter { pending, completed, all }
 
 class EventListScreen extends ConsumerStatefulWidget {
   const EventListScreen({super.key});
@@ -26,8 +32,9 @@ class EventListScreen extends ConsumerStatefulWidget {
 }
 
 class _EventListScreenState extends ConsumerState<EventListScreen> {
-  EventRange _range = EventRange.week;
+  EventRange _range = EventRange.all;
   EventView _view = EventView.list;
+  EventStatusFilter _statusFilter = EventStatusFilter.pending;
   bool _showCompleted = false;
   DateTime _focusedDate = DateTime.now();
   DateTime _selectedDate = DateTime.now();
@@ -39,29 +46,13 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
   }
 
   void _applyFilter() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
     DateTime? start;
     DateTime? end;
 
     switch (_view) {
       case EventView.list:
-        start = today;
-        switch (_range) {
-          case EventRange.today:
-            end = today.add(const Duration(days: 1));
-            break;
-          case EventRange.week:
-            end = today.add(const Duration(days: 7));
-            break;
-          case EventRange.month:
-            end = today.add(const Duration(days: 30));
-            break;
-          case EventRange.all:
-            start = null;
-            end = null;
-            break;
-        }
+        start = null;
+        end = null;
         break;
       case EventView.week:
         start = _startOfWeek(_focusedDate);
@@ -79,7 +70,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
             memberId: memberId,
             startDate: start,
             endDate: end,
-            status: _showCompleted ? null : 'pending',
+            status: _statusQuery,
           ),
         );
   }
@@ -89,24 +80,120 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
     ref.listen(currentMemberIdProvider, (_, __) => _applyFilter());
     final eventsAsync = ref.watch(eventListProvider);
 
-    return Column(
-      children: [
-        _buildViewBar(),
-        if (_view == EventView.list) _buildRangeBar(),
-        Expanded(
-          child: eventsAsync.when(
-            data: (events) => _view == EventView.list
-                ? _buildList(events)
-                : _buildCalendar(events),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('加载失败：$e')),
-          ),
+    return ColoredBox(
+      color: Colors.white,
+      child: Column(
+        children: [
+          const SizedBox(height: AppStyles.spacingM),
+          _buildStatusFilterBar(),
+          Expanded(child: _buildContent(eventsAsync)),
+        ],
+      ),
+    );
+  }
+
+  String? get _statusQuery => switch (_statusFilter) {
+        EventStatusFilter.pending => 'pending',
+        EventStatusFilter.completed => 'completed',
+        EventStatusFilter.all => null,
+      };
+
+  String get _viewKey => switch (_view) {
+        EventView.week => 'cal_week',
+        EventView.month => 'cal_month',
+        EventView.list => 'list',
+      };
+
+  String get _rangeKey => switch (_range) {
+        EventRange.today => 'today',
+        EventRange.month => 'month',
+        EventRange.all => 'all',
+        EventRange.week => 'week',
+      };
+
+  String get _periodTitle {
+    if (_view == EventView.week) {
+      final start = _startOfWeek(_focusedDate);
+      final end = start.add(const Duration(days: 6));
+      return '${DateFormat('M月d日', 'zh_CN').format(start)} - ${DateFormat('M月d日', 'zh_CN').format(end)}';
+    }
+    return DateFormat('yyyy年M月', 'zh_CN').format(_focusedDate);
+  }
+
+  Widget _buildContent(AsyncValue<List<HealthEvent>> eventsAsync) {
+    final events = eventsAsync.valueOrNull;
+    if (events != null) {
+      return _buildList(events);
+    }
+    return eventsAsync.when(
+      data: _buildList,
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Text(
+          '加载失败，请稍后重试',
+          style: AppStyles.footnote.copyWith(color: AppColors.textSecondary),
         ),
-        AIQuickCreatePanel(
-          compact: true,
-          onCreated: (_) => _applyFilter(),
+      ),
+    );
+  }
+
+  Widget _buildStatusFilterBar() {
+    const items = [
+      (label: '待办', value: EventStatusFilter.pending),
+      (label: '已完成', value: EventStatusFilter.completed),
+      (label: '全部', value: EventStatusFilter.all),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.screenMargin,
+        0,
+        AppStyles.screenMargin,
+        AppStyles.spacingS,
+      ),
+      child: Container(
+        height: AppStyles.minTouchTarget,
+        padding: const EdgeInsets.all(AppStyles.spacingXs),
+        decoration: BoxDecoration(
+          color: AppColors.cardWhite,
+          borderRadius: BorderRadius.circular(AppStyles.radiusFull),
+          border: Border.all(color: AppColors.lightOutline),
+          boxShadow: AppStyles.subtleShadow,
         ),
-      ],
+        child: Row(
+          children: [
+            for (final item in items)
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    setState(() => _statusFilter = item.value);
+                    _applyFilter();
+                  },
+                  borderRadius: BorderRadius.circular(AppStyles.radiusFull),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _statusFilter == item.value
+                          ? AppColors.mintBgLight
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(AppStyles.radiusFull),
+                    ),
+                    child: Text(
+                      item.label,
+                      style: AppStyles.caption1.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: _statusFilter == item.value
+                            ? AppColors.mintDeep
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -367,7 +454,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                                         dayColor.withValues(alpha: 0.80),
                                         colorScheme.onSurface,
                                       ),
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                     ),
@@ -377,7 +464,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                             fontWeight: _isSameDay(day, today)
-                                ? FontWeight.w900
+                                ? FontWeight.w600
                                 : FontWeight.w600,
                           ),
                     ),
@@ -714,38 +801,15 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
 
   Widget _buildList(List<HealthEvent> events) {
     if (events.isEmpty) {
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxHeight < 160) {
-            return ListView(
-              padding: const EdgeInsets.only(bottom: 80),
-              children: [
-                _buildCareSummary(AsyncValue.data(events)),
-                const AppEmptyState(
-                  icon: Icons.event_note_outlined,
-                  title: '暂无提醒',
-                  compact: true,
-                ),
-              ],
-            );
-          }
-          return ListView(
-            padding: const EdgeInsets.only(bottom: 80),
-            children: [
-              _buildCareSummary(AsyncValue.data(events)),
-              AppEmptyState(
-                icon: Icons.event_note_outlined,
-                title: '暂无提醒',
-                message: '可以手动创建，或者用底部 AI 输入一句话生成提醒。',
-                action: FilledButton.icon(
-                  onPressed: () => context.push('/events/new'),
-                  icon: const Icon(Icons.add_alert_outlined),
-                  label: const Text('手动创建'),
-                ),
-              ),
-            ],
-          );
-        },
+      return RefreshIndicator(
+        onRefresh: () => ref.read(eventListProvider.notifier).refresh(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(0, AppStyles.spacingM, 0, 96),
+          children: const [
+            _EmptyReminderCard(),
+          ],
+        ),
       );
     }
 
@@ -760,25 +824,39 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
     return RefreshIndicator(
       onRefresh: () => ref.read(eventListProvider.notifier).refresh(),
       child: ListView.builder(
-        padding: const EdgeInsets.only(bottom: 80),
-        itemCount: keys.length + 1,
+        padding: const EdgeInsets.only(bottom: 96),
+        itemCount: keys.length,
         itemBuilder: (_, idx) {
-          if (idx == 0) {
-            return _buildCareSummary(AsyncValue.data(events));
-          }
-          final keyIndex = idx - 1;
-          final k = keys[keyIndex];
+          final k = keys[idx];
           final list = grouped[k]!;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AppSectionHeader(
-                title: k,
-                trailing: Text(
-                  '${list.length} 条',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppStyles.screenMargin,
+                  AppStyles.spacingS,
+                  AppStyles.screenMargin,
+                  AppStyles.spacingS,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        k,
+                        style: AppStyles.sectionTitle.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
                       ),
+                    ),
+                    Text(
+                      '${list.length} 条',
+                      style: AppStyles.footnote.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               ...list.map(_buildTile),
@@ -790,112 +868,103 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
   }
 
   Widget _buildTile(HealthEvent e) {
-    final time = DateFormat('HH:mm').format(e.scheduledAt.toLocal());
-    final isDone = e.status == 'completed';
-    final repeat = _repeatLabel(e.repeatRule);
-    final meta = [
-      e.isAllDay ? '全天' : time,
-      _typeLabel(e.eventType),
-      if (repeat != null) repeat,
-    ].join('  ·  ');
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AppSurfaceCard(
-      onTap: () => context.push('/events/${e.id}'),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _typeIcon(e.eventType, isDone),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  e.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    decoration: isDone ? TextDecoration.lineThrough : null,
-                    color: isDone ? colorScheme.onSurfaceVariant : null,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  meta,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          isDone
-              ? const AppStatusChip(
-                  label: '已完成',
-                  icon: Icons.check,
-                  color: AppColors.success,
-                  compact: true,
-                )
-              : IconButton.filledTonal(
-                  tooltip: '标记完成',
-                  icon: const Icon(Icons.check),
-                  onPressed: () async {
-                    try {
-                      await ref
-                          .read(eventListProvider.notifier)
-                          .completeEvent(e.id);
-                      if (mounted) {
-                        ScaffoldMessenger.of(context)
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            const SnackBar(
-                              duration: Duration(milliseconds: 900),
-                              content: Text('已标记完成'),
-                            ),
-                          );
-                      }
-                    } catch (error) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context)
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            SnackBar(content: Text('操作失败：$error')),
-                          );
-                      }
-                    }
-                  },
-                ),
-        ],
+    return Dismissible(
+      key: ValueKey('event-list-${e.id}'),
+      direction: e.status == 'completed'
+          ? DismissDirection.none
+          : DismissDirection.endToStart,
+      background: _buildCompleteDismissBackground(),
+      confirmDismiss: (_) async {
+        await _completeEvent(e);
+        return false;
+      },
+      child: ReminderCard(
+        data: _toCardData(e),
+        onTap: () => context.push('/events/${e.id}'),
+        onComplete: e.status == 'completed' ? null : () => _completeEvent(e),
       ),
     );
   }
 
-  Widget _typeIcon(String type, bool done) {
-    IconData icon;
-    switch (type) {
-      case 'follow_up':
-        icon = Icons.refresh;
-        break;
-      case 'revisit':
-        icon = Icons.local_hospital;
-        break;
-      case 'checkup':
-        icon = Icons.fact_check;
-        break;
-      case 'medication':
-        icon = Icons.medication;
-        break;
-      case 'monitoring':
-        icon = Icons.monitor_heart;
-        break;
-      default:
-        icon = Icons.event;
+  ReminderCardData _toCardData(HealthEvent e) {
+    final color = _eventTypeColor(e.eventType);
+    final local = e.scheduledAt.toLocal();
+    final now = DateTime.now();
+    final isOverdue = e.status == 'pending' && local.isBefore(now);
+    final repeat = _repeatLabel(e.repeatRule);
+    final source = [
+      e.isAllDay ? '全天' : DateFormat('HH:mm').format(local),
+      if (repeat != null) repeat,
+      e.description?.trim().isNotEmpty == true ? e.description!.trim() : null,
+    ].whereType<String>().join(' · ');
+
+    return ReminderCardData(
+      title: e.title,
+      source: source.isEmpty ? _typeLabel(e.eventType) : source,
+      tag: e.status == 'completed' ? '已完成' : _typeLabel(e.eventType),
+      timeText: isOverdue ? '已逾期' : DateFormat('M/d').format(local),
+      icon: _eventTypeIcon(e.eventType),
+      iconColor: e.status == 'completed' ? AppColors.textTertiary : color,
+      iconBg: e.status == 'completed'
+          ? AppColors.lightSurface
+          : color.withValues(alpha: 0.14),
+      tagColor: e.status == 'completed' ? AppColors.success : color,
+      tagBg: e.status == 'completed'
+          ? AppColors.mintBgLight
+          : color.withValues(alpha: 0.12),
+      timeColor: isOverdue ? AppColors.danger : AppColors.textSecondary,
+      isOverdue: isOverdue,
+    );
+  }
+
+  Widget _buildCompleteDismissBackground() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.screenMargin,
+        0,
+        AppStyles.screenMargin,
+        AppStyles.spacingS,
+      ),
+      child: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: AppStyles.spacingM),
+        decoration: BoxDecoration(
+          color: AppColors.mintDeep,
+          borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        ),
+        child: const Icon(
+          Icons.check_circle_rounded,
+          color: Colors.white,
+          size: 28,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _completeEvent(HealthEvent event) async {
+    try {
+      await ref.read(eventListProvider.notifier).completeEvent(event.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            duration: const Duration(milliseconds: 1000),
+            content: Text('已完成：${event.title}'),
+          ),
+        );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('标记完成失败，请稍后重试')),
+        );
     }
+  }
+
+  Widget _typeIcon(String type, bool done) {
+    final icon = _eventTypeIcon(type);
     final color = _eventTypeColor(type);
     return CircleAvatar(
       backgroundColor: done ? Colors.grey[300] : color.withValues(alpha: 0.18),
@@ -904,6 +973,23 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
         color: done ? Colors.grey[600] : color,
       ),
     );
+  }
+
+  IconData _eventTypeIcon(String type) {
+    switch (type) {
+      case 'follow_up':
+        return Icons.refresh;
+      case 'revisit':
+        return Icons.local_hospital;
+      case 'checkup':
+        return Icons.fact_check;
+      case 'medication':
+        return Icons.medication;
+      case 'monitoring':
+        return Icons.monitor_heart;
+      default:
+        return Icons.event;
+    }
   }
 
   Color _eventTypeColor(String type) {
@@ -972,6 +1058,61 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
 }
 
 enum _CareMood { calm, steady, busy, alert }
+
+class _EmptyReminderCard extends StatelessWidget {
+  const _EmptyReminderCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppStyles.screenMargin),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppStyles.cardPadding,
+          vertical: AppStyles.spacingXl,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.cardWhite,
+          borderRadius: BorderRadius.circular(AppStyles.radiusL),
+          border: Border.all(color: AppColors.lightOutline),
+          boxShadow: AppStyles.cardShadow,
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                color: AppColors.mintBgLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.event_note_outlined,
+                color: AppColors.textTertiary,
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: AppStyles.spacingM),
+            Text(
+              '暂无提醒',
+              style: AppStyles.sectionTitle.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: AppStyles.spacingXs),
+            Text(
+              '可以手动创建，或返回健康日历用 AI 输入一句话生成提醒。',
+              textAlign: TextAlign.center,
+              style: AppStyles.footnote.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _CareMoodOrb extends StatelessWidget {
   const _CareMoodOrb({

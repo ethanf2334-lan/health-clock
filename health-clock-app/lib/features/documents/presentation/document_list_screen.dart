@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_styles.dart';
 import '../../../shared/models/document.dart';
 import '../../members/providers/current_member_provider.dart';
 import '../../members/providers/member_provider.dart';
@@ -356,7 +357,7 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
               '文档列表',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
                 letterSpacing: -0.2,
               ),
@@ -401,6 +402,7 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
           color: AppColors.cardWhite,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: AppColors.lightOutline),
+          boxShadow: AppStyles.cardShadow,
         ),
         child: const Center(
           child: Column(
@@ -666,7 +668,7 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
                   '排序方式',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),

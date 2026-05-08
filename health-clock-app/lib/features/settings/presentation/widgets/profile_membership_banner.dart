@@ -55,7 +55,7 @@ class ProfileMembershipBanner extends StatelessWidget {
                   '健康时钟会员',
                   style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -85,7 +85,7 @@ class ProfileMembershipBanner extends StatelessWidget {
               children: [
                 Text(
                   '查看权益',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5),
                 ),
                 Icon(Icons.chevron_right_rounded, size: 18),
               ],

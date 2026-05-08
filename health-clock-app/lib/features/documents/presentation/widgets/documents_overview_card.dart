@@ -37,9 +37,9 @@ class DocumentsOverviewCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.mintDeep.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
+            color: AppColors.mintDeep.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -73,7 +73,7 @@ class DocumentsOverviewCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 17,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.mintDeep,
                             height: 1.18,
                             letterSpacing: 0,
@@ -145,7 +145,7 @@ class DocumentsOverviewCard extends StatelessWidget {
       style: TextStyle(
         fontSize: 14,
         color: AppColors.textPrimary,
-        fontWeight: FontWeight.w900,
+        fontWeight: FontWeight.w600,
         letterSpacing: 0,
       ),
     );
@@ -202,7 +202,7 @@ class _StatCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 10.5,
                     color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -210,7 +210,7 @@ class _StatCard extends StatelessWidget {
                   '$value',
                   style: const TextStyle(
                     fontSize: 22,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.mintDeep,
                     height: 1.0,
                   ),

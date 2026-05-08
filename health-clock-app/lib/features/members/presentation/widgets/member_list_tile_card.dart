@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_styles.dart';
 import 'member_avatar.dart';
 
 /// 全部成员列表中的卡片
@@ -35,7 +36,7 @@ class MemberListTileCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Material(
-        color: AppColors.cardWhite,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(18),
         child: InkWell(
           onTap: onTap,
@@ -44,8 +45,10 @@ class MemberListTileCard extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
             decoration: BoxDecoration(
+              color: AppColors.cardWhite,
               border: Border.all(color: AppColors.lightOutline),
               borderRadius: BorderRadius.circular(18),
+              boxShadow: AppStyles.cardShadow,
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -69,7 +72,7 @@ class MemberListTileCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 15,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
                             ),
@@ -142,10 +145,11 @@ class MemberListTileCard extends StatelessWidget {
             text: highlight,
             style: const TextStyle(
               color: AppColors.careBlue,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          if (parts.length > 1) TextSpan(text: parts.sublist(1).join(highlight)),
+          if (parts.length > 1)
+            TextSpan(text: parts.sublist(1).join(highlight)),
         ],
       ),
     );
@@ -175,7 +179,7 @@ class _Tag extends StatelessWidget {
         label,
         style: TextStyle(
           fontSize: 10,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: color,
         ),
       ),

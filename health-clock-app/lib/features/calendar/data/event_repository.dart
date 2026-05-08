@@ -55,7 +55,16 @@ class EventRepository {
       '/events',
       queryParameters: queryParams,
     );
-    final data = response.data['data'] as List;
+    final body = response.data as Map<String, dynamic>;
+    if (body['code'] != 0) {
+      throw Exception(body['message'] ?? '提醒加载失败');
+    }
+
+    final data = body['data'];
+    if (data is! List) {
+      throw Exception('提醒数据格式异常');
+    }
+
     return data
         .map(
           (j) =>

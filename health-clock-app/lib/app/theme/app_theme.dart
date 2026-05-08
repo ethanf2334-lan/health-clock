@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
-import 'app_spacing.dart';
+import 'app_styles.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
@@ -46,22 +46,37 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
       textTheme: textTheme.copyWith(
-        displaySmall: textTheme.displaySmall?.copyWith(
-          fontWeight: FontWeight.w700,
+        displayLarge: AppStyles.screenTitle.copyWith(
+          color: colorScheme.onSurface,
         ),
-        headlineSmall: textTheme.headlineSmall?.copyWith(
-          fontWeight: FontWeight.w700,
+        displayMedium: AppStyles.screenTitle.copyWith(
+          color: colorScheme.onSurface,
         ),
-        titleLarge: textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w700,
+        displaySmall: AppStyles.screenTitle.copyWith(
+          color: colorScheme.onSurface,
         ),
-        titleMedium: textTheme.titleMedium?.copyWith(
+        headlineMedium: AppStyles.sheetTitle.copyWith(
+          color: colorScheme.onSurface,
+        ),
+        titleLarge: AppStyles.headline.copyWith(
+          color: colorScheme.onSurface,
+        ),
+        titleMedium: AppStyles.subhead.copyWith(
+          color: colorScheme.onSurface,
+        ),
+        titleSmall: AppStyles.footnote.copyWith(
+          color: colorScheme.onSurface,
           fontWeight: FontWeight.w600,
         ),
-        titleSmall: textTheme.titleSmall?.copyWith(
+        bodyLarge: AppStyles.body.copyWith(color: colorScheme.onSurface),
+        bodyMedium: AppStyles.subhead.copyWith(color: colorScheme.onSurface),
+        bodySmall: AppStyles.footnote.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+        labelMedium: AppStyles.caption1.copyWith(
+          color: colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.w600,
         ),
-        bodyMedium: textTheme.bodyMedium?.copyWith(height: 1.42),
       ),
       appBarTheme: AppBarTheme(
         centerTitle: false,
@@ -69,9 +84,8 @@ class AppTheme {
         scrolledUnderElevation: 0,
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
-        titleTextStyle: textTheme.titleLarge?.copyWith(
+        titleTextStyle: AppStyles.headline.copyWith(
           color: colorScheme.onSurface,
-          fontWeight: FontWeight.w700,
         ),
       ),
       cardTheme: CardThemeData(
@@ -79,7 +93,7 @@ class AppTheme {
         color: colorScheme.surface,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          borderRadius: BorderRadius.circular(AppStyles.radiusL),
           side: BorderSide(color: colorScheme.outlineVariant),
         ),
       ),
@@ -87,9 +101,10 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
-          minimumSize: const Size(double.infinity, 48),
+          minimumSize:
+              const Size(double.infinity, AppStyles.primaryButtonHeight),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.radius),
+            borderRadius: BorderRadius.circular(AppStyles.radiusM),
           ),
         ),
       ),
@@ -97,18 +112,20 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
-          minimumSize: const Size(48, 44),
+          minimumSize:
+              const Size(AppStyles.minTouchTarget, AppStyles.minTouchTarget),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.radius),
+            borderRadius: BorderRadius.circular(AppStyles.radiusM),
           ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(48, 44),
+          minimumSize:
+              const Size(AppStyles.minTouchTarget, AppStyles.minTouchTarget),
           side: BorderSide(color: colorScheme.outlineVariant),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.radius),
+            borderRadius: BorderRadius.circular(AppStyles.radiusM),
           ),
         ),
       ),
@@ -123,15 +140,15 @@ class AppTheme {
         labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
         hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
+          horizontal: AppStyles.spacingM,
+          vertical: AppStyles.spacingM,
         ),
       ),
       chipTheme: ChipThemeData(
         side: BorderSide(color: colorScheme.outlineVariant),
         backgroundColor: colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppStyles.radiusFull),
         ),
         labelStyle: TextStyle(color: colorScheme.onSurface),
         selectedColor: AppColors.mintSoft,
@@ -144,14 +161,24 @@ class AppTheme {
           ),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radius),
+              borderRadius: BorderRadius.circular(AppStyles.radiusM),
             ),
           ),
         ),
       ),
       listTileTheme: ListTileThemeData(
         iconColor: colorScheme.onSurfaceVariant,
-        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        minTileHeight: AppStyles.listRowHeight,
+        dense: true,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: AppStyles.spacingM),
+        titleTextStyle: AppStyles.subhead.copyWith(
+          color: colorScheme.onSurface,
+          fontWeight: FontWeight.w600,
+        ),
+        subtitleTextStyle: AppStyles.footnote.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         elevation: 0,
@@ -169,14 +196,27 @@ class AppTheme {
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          borderRadius: BorderRadius.circular(AppStyles.radiusL),
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: colorScheme.surface,
         modalBackgroundColor: colorScheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: colorScheme.surface,
+        titleTextStyle: AppStyles.sheetTitle.copyWith(
+          color: colorScheme.onSurface,
+        ),
+        contentTextStyle: AppStyles.subhead.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppStyles.radiusXl),
         ),
       ),
     );
@@ -184,7 +224,7 @@ class AppTheme {
 
   static OutlineInputBorder _inputBorder(Color color, {double width = 1}) {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppSpacing.radius),
+      borderRadius: BorderRadius.circular(AppStyles.radiusM),
       borderSide: BorderSide(color: color, width: width),
     );
   }

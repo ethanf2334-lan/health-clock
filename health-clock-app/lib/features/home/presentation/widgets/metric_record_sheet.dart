@@ -4,11 +4,27 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_styles.dart';
 import '../../../../shared/models/metric_record.dart';
+import '../../../../shared/widgets/app_cupertino_pickers.dart';
+import '../../../health_records/data/metric_repository.dart';
 import '../../../health_records/providers/metric_provider.dart';
 import '../../../members/presentation/widgets/member_avatar.dart';
 import '../../../members/providers/current_member_provider.dart';
 import '../../../members/providers/member_provider.dart';
+
+final _metricRecentRecordsProvider = FutureProvider.autoDispose
+    .family<List<MetricRecord>, _MetricRecentQuery>((ref, query) async {
+  if (query.memberId == null || query.memberId!.isEmpty) {
+    return const <MetricRecord>[];
+  }
+  final records = await ref.read(metricRepositoryProvider).listMetrics(
+        memberId: query.memberId,
+        metricType: query.metricType,
+      );
+  records.sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+  return records.take(3).toList();
+});
 
 class MetricRecordSheet extends ConsumerStatefulWidget {
   const MetricRecordSheet({super.key, this.onSaved});
@@ -121,16 +137,17 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
     return DecoratedBox(
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
       ),
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
-            20,
-            12,
-            20,
-            18 + MediaQuery.of(context).padding.bottom * 0.18,
+            AppStyles.spacingM,
+            AppStyles.spacingS,
+            AppStyles.spacingM,
+            AppStyles.spacingM + MediaQuery.of(context).padding.bottom * 0.18,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,18 +155,18 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
               Center(
                 child: Container(
                   width: 56,
-                  height: 6,
+                  height: AppStyles.spacingXs,
                   decoration: BoxDecoration(
                     color: const Color(0xFFB8C0C3),
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppStyles.radiusFull),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppStyles.spacingS),
               _buildHeader(),
-              const SizedBox(height: 22),
+              const SizedBox(height: AppStyles.spacingS),
               _buildMetricTabs(),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppStyles.spacingS),
               _LabeledRow(
                 icon: Icons.person_outline_rounded,
                 label: '成员',
@@ -160,9 +177,8 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
                       Expanded(
                         child: Text(
                           memberName,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
+                          style: AppStyles.subhead.copyWith(
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
                         ),
@@ -172,21 +188,21 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
                         relation: memberRelation,
                         size: 28,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppStyles.spacingS),
                       const Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: AppColors.textSecondary,
-                        size: 23,
+                        size: 20,
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppStyles.spacingS),
               ..._buildValueFields(),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppStyles.spacingS),
               _buildDateTimeRows(),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppStyles.spacingS),
               _LabeledRow(
                 icon: Icons.notes_rounded,
                 label: '备注（选填）',
@@ -198,9 +214,9 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
                   suffixIcon: null,
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppStyles.spacingS),
               _buildRecentCard(),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppStyles.spacingS),
               _buildActions(),
             ],
           ),
@@ -212,33 +228,27 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
   Widget _buildHeader() {
     return Row(
       children: [
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 '记录健康指标',
-                style: TextStyle(
-                  fontSize: 25,
-                  fontWeight: FontWeight.w900,
+                style: AppStyles.headline.copyWith(
                   color: AppColors.textPrimary,
-                  height: 1.1,
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: AppStyles.spacingXs),
               Text(
                 '快速记录并持续观察健康变化',
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w600,
+                style: AppStyles.footnote.copyWith(
                   color: AppColors.textSecondary,
-                  height: 1.1,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppStyles.spacingS),
         Material(
           color: Colors.white,
           shape: const CircleBorder(),
@@ -246,23 +256,23 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
             onTap: () => Navigator.of(context).maybePop(),
             customBorder: const CircleBorder(),
             child: Container(
-              width: 50,
-              height: 50,
+              width: AppStyles.minTouchTarget,
+              height: AppStyles.minTouchTarget,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.lightOutline),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    blurRadius: 16,
+                    offset: const Offset(0, AppStyles.spacingXs),
                   ),
                 ],
               ),
               child: const Icon(
                 Icons.close_rounded,
                 color: AppColors.textSecondary,
-                size: 30,
+                size: 24,
               ),
             ),
           ),
@@ -272,19 +282,22 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
   }
 
   Widget _buildMetricTabs() {
-    return Row(
-      children: [
-        for (final metric in _metrics) ...[
-          Expanded(
-            child: _MetricTab(
-              metric: metric,
-              selected: metric.type == _metricType,
-              onTap: () => setState(() => _metricType = metric.type),
-            ),
-          ),
-          if (metric != _metrics.last) const SizedBox(width: 8),
-        ],
-      ],
+    return SizedBox(
+      height: 62,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: _metrics.length,
+        separatorBuilder: (_, __) => const SizedBox(width: AppStyles.spacingS),
+        itemBuilder: (context, index) {
+          final metric = _metrics[index];
+          return _MetricTab(
+            metric: metric,
+            selected: metric.type == _metricType,
+            onTap: () => setState(() => _metricType = metric.type),
+          );
+        },
+      ),
     );
   }
 
@@ -301,7 +314,7 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
             onChanged: (_) => setState(() {}),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppStyles.spacingS),
         _LabeledRow(
           dot: true,
           label: '舒张压 (mmHg)',
@@ -312,7 +325,7 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
             onChanged: (_) => setState(() {}),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppStyles.spacingS),
         _LabeledRow(
           icon: Icons.favorite_border_rounded,
           label: '心率 (次/分)',
@@ -353,9 +366,8 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
                 Expanded(
                   child: Text(
                     DateFormat('yyyy/MM/dd').format(_recordedAt),
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
+                    style: AppStyles.body.copyWith(
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -369,7 +381,7 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppStyles.spacingS),
         _LabeledRow(
           icon: Icons.access_time_rounded,
           label: '时间',
@@ -380,9 +392,8 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
                 Expanded(
                   child: Text(
                     DateFormat('HH:mm').format(_recordedAt),
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
+                    style: AppStyles.body.copyWith(
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -401,68 +412,72 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
   }
 
   Widget _buildRecentCard() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
-      decoration: BoxDecoration(
-        color: AppColors.mintBg.withValues(alpha: 0.56),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.lightOutline),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.52),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: const Icon(
-              Icons.show_chart_rounded,
-              color: AppColors.mintDeep,
-              size: 33,
-            ),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '最近记录  126/76  →  132/82  →  128/78，趋势平稳',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    height: 1.2,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  '07/10 08:15        07/11 08:20        今天 08:30',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textTertiary,
-                    height: 1.1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Icon(
-            Icons.chevron_right_rounded,
-            color: AppColors.textSecondary,
-            size: 27,
-          ),
-        ],
+    final memberId = _memberId ?? ref.read(currentMemberIdProvider);
+    final recentAsync = ref.watch(
+      _metricRecentRecordsProvider(
+        _MetricRecentQuery(memberId, _metricType),
       ),
     );
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppStyles.radiusL),
+      child: InkWell(
+        onTap: () => _openMetricHistory(memberId),
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        child: Container(
+          padding: const EdgeInsets.all(AppStyles.spacingS),
+          decoration: BoxDecoration(
+            color: AppColors.mintBg.withValues(alpha: 0.56),
+            borderRadius: BorderRadius.circular(AppStyles.radiusL),
+            border: Border.all(color: AppColors.lightOutline),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.52),
+                  borderRadius: BorderRadius.circular(AppStyles.radiusM),
+                ),
+                child: const Icon(
+                  Icons.show_chart_rounded,
+                  color: AppColors.mintDeep,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: AppStyles.spacingS),
+              Expanded(
+                child: recentAsync.when(
+                  data: (records) => _RecentMetricContent(
+                    records: records,
+                    metricType: _metricType,
+                  ),
+                  loading: () => const _RecentMetricLoading(),
+                  error: (_, __) => const _RecentMetricEmpty(text: '最近记录加载失败'),
+                ),
+              ),
+              const SizedBox(width: AppStyles.spacingS),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textSecondary,
+                size: 24,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openMetricHistory(String? memberId) {
+    if (memberId != null && memberId.isNotEmpty) {
+      ref.read(currentMemberIdProvider.notifier).state = memberId;
+    }
+    final router = GoRouter.of(context);
+    Navigator.of(context).pop();
+    router.push('/metrics?type=$_metricType');
   }
 
   Widget _buildActions() {
@@ -470,9 +485,9 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
       children: [
         InkWell(
           onTap: _saving ? null : _save,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(AppStyles.radiusM),
           child: Container(
-            height: 64,
+            height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -483,12 +498,12 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
                   Color(0xFF16995C),
                 ],
               ),
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(AppStyles.radiusM),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.mintDeep.withValues(alpha: 0.22),
                   blurRadius: 16,
-                  offset: const Offset(0, 8),
+                  offset: const Offset(0, AppStyles.spacingS),
                 ),
               ],
             ),
@@ -496,8 +511,8 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 31,
-                  height: 31,
+                  width: 28,
+                  height: 28,
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
@@ -505,52 +520,15 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
                   child: const Icon(
                     Icons.check_rounded,
                     color: AppColors.mintDeep,
-                    size: 22,
+                    size: 18,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppStyles.spacingS),
                 Text(
                   _saving ? '保存中...' : '保存记录',
-                  style: const TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w900,
+                  style: AppStyles.subhead.copyWith(
+                    fontWeight: FontWeight.w600,
                     color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        InkWell(
-          onTap: () {
-            Navigator.of(context).pop();
-            context.push('/metrics');
-          },
-          borderRadius: BorderRadius.circular(24),
-          child: Container(
-            height: 58,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.lightOutline),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.show_chart_rounded,
-                  color: AppColors.mintDeep,
-                  size: 25,
-                ),
-                SizedBox(width: 10),
-                Text(
-                  '查看趋势',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.mintDeep,
                   ),
                 ),
               ],
@@ -562,11 +540,12 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
   }
 
   Future<void> _pickDate() async {
-    final date = await showDatePicker(
+    final date = await AppCupertinoPickers.date(
       context: context,
       initialDate: _recordedAt,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
+      minimumDate: DateTime(2020),
+      maximumDate: DateTime.now().add(const Duration(days: 1)),
+      title: '选择记录日期',
     );
     if (date == null) return;
     setState(() {
@@ -581,9 +560,10 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
   }
 
   Future<void> _pickTime() async {
-    final time = await showTimePicker(
+    final time = await AppCupertinoPickers.time(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(_recordedAt),
+      initialDateTime: _recordedAt,
+      title: '选择记录时间',
     );
     if (time == null) return;
     setState(() {
@@ -603,21 +583,30 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
       ),
       builder: (context) => SafeArea(
         child: membersAsync.when(
           data: (members) => ListView(
             shrinkWrap: true,
-            padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
+            padding: const EdgeInsets.fromLTRB(
+              0,
+              AppStyles.spacingS,
+              0,
+              AppStyles.spacingM,
+            ),
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 8, 20, 12),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppStyles.spacingM,
+                  AppStyles.spacingS,
+                  AppStyles.spacingM,
+                  AppStyles.spacingM,
+                ),
                 child: Text(
                   '选择成员',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
+                  style: AppStyles.headline.copyWith(
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -630,7 +619,9 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
                   ),
                   title: Text(
                     member.name,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: AppStyles.subhead.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   trailing: _memberId == member.id
                       ? const Icon(
@@ -647,11 +638,11 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
             ],
           ),
           loading: () => const Padding(
-            padding: EdgeInsets.all(40),
+            padding: EdgeInsets.all(AppStyles.spacingXxl),
             child: Center(child: CircularProgressIndicator()),
           ),
           error: (e, _) => Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppStyles.spacingM),
             child: Text('加载失败：$e'),
           ),
         ),
@@ -706,6 +697,11 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
             ),
           );
       if (!mounted) return;
+      ref.invalidate(
+        _metricRecentRecordsProvider(
+          _MetricRecentQuery(memberId, _metricType),
+        ),
+      );
       widget.onSaved?.call();
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -748,6 +744,160 @@ class _MetricRecordSheetState extends ConsumerState<MetricRecordSheet> {
   }
 }
 
+class _RecentMetricContent extends StatelessWidget {
+  const _RecentMetricContent({
+    required this.records,
+    required this.metricType,
+  });
+
+  final List<MetricRecord> records;
+  final String metricType;
+
+  @override
+  Widget build(BuildContext context) {
+    if (records.isEmpty) return const _RecentMetricEmpty(text: '暂无最近记录');
+
+    final ordered = [...records]
+      ..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+    final values = ordered.map(_displayValue).join('  ←  ');
+    final times = ordered.map((r) => _timeText(r.recordedAt)).join('      ');
+    final trend = ordered.length >= 2 ? '，${_trendText(ordered)}' : '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '最近记录  $values$trend',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppStyles.subhead.copyWith(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: AppStyles.spacingXs),
+        Text(
+          times,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppStyles.footnote.copyWith(
+            color: AppColors.textTertiary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _displayValue(MetricRecord record) {
+    if (record.metricType == 'blood_pressure' && record.valueExtra != null) {
+      final diastolic = record.valueExtra!['diastolic'];
+      if (diastolic != null) {
+        return '${_cleanNum(record.value)}/${_cleanNum(diastolic)}';
+      }
+    }
+    return _cleanNum(record.value);
+  }
+
+  String _trendText(List<MetricRecord> ordered) {
+    final latest = ordered.first.value;
+    final earliest = ordered.last.value;
+    final diff = latest - earliest;
+    final threshold = _trendThreshold(metricType);
+    if (diff.abs() <= threshold) return '趋势平稳';
+    return diff > 0 ? '趋势上升' : '趋势下降';
+  }
+
+  double _trendThreshold(String type) {
+    switch (type) {
+      case 'blood_pressure':
+        return 5;
+      case 'blood_sugar':
+        return 0.5;
+      case 'weight':
+        return 0.5;
+      case 'heart_rate':
+        return 5;
+      case 'temperature':
+        return 0.3;
+      case 'blood_oxygen':
+        return 1;
+      default:
+        return 0.5;
+    }
+  }
+
+  String _timeText(DateTime time) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final day = DateTime(time.year, time.month, time.day);
+    final clock = DateFormat('HH:mm').format(time);
+    if (day == today) return '今天 $clock';
+    if (day == yesterday) return '昨天 $clock';
+    return DateFormat('M/d HH:mm').format(time);
+  }
+
+  String _cleanNum(Object value) {
+    final number = value is num ? value.toDouble() : double.tryParse('$value');
+    if (number == null) return '$value';
+    if (number % 1 == 0) return number.toInt().toString();
+    return number.toStringAsFixed(1);
+  }
+}
+
+class _RecentMetricLoading extends StatelessWidget {
+  const _RecentMetricLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      '正在读取最近记录...',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: AppStyles.subhead.copyWith(
+        fontWeight: FontWeight.w600,
+        color: AppColors.textSecondary,
+      ),
+    );
+  }
+}
+
+class _RecentMetricEmpty extends StatelessWidget {
+  const _RecentMetricEmpty({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: AppStyles.subhead.copyWith(
+        fontWeight: FontWeight.w600,
+        color: AppColors.textSecondary,
+      ),
+    );
+  }
+}
+
+class _MetricRecentQuery {
+  const _MetricRecentQuery(this.memberId, this.metricType);
+
+  final String? memberId;
+  final String metricType;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _MetricRecentQuery &&
+          other.memberId == memberId &&
+          other.metricType == metricType;
+
+  @override
+  int get hashCode => Object.hash(memberId, metricType);
+}
+
 class _MetricOption {
   const _MetricOption(
     this.type,
@@ -781,50 +931,53 @@ class _MetricTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: 76,
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.mintBg.withValues(alpha: 0.55)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
+      borderRadius: BorderRadius.circular(AppStyles.radiusM),
+      child: SizedBox(
+        width: 66,
+        child: Container(
+          height: 62,
+          decoration: BoxDecoration(
             color: selected
-                ? AppColors.mintDeep.withValues(alpha: 0.35)
-                : AppColors.lightOutline,
+                ? AppColors.mintBg.withValues(alpha: 0.55)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(AppStyles.radiusM),
+            border: Border.all(
+              color: selected
+                  ? AppColors.mintDeep.withValues(alpha: 0.35)
+                  : AppColors.lightOutline,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.025),
+                blurRadius: 16,
+                offset: const Offset(0, AppStyles.spacingXs),
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.025),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: metric.bg,
-                shape: BoxShape.circle,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: metric.bg,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(metric.icon, color: metric.color, size: 22),
               ),
-              child: Icon(metric.icon, color: metric.color, size: 24),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              metric.label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color:
-                    selected ? AppColors.textPrimary : AppColors.textSecondary,
+              const SizedBox(height: 3),
+              Text(
+                metric.label,
+                style: AppStyles.caption1.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: selected
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -850,13 +1003,13 @@ class _LabeledRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SizedBox(
-          width: 190,
+          width: 136,
           child: Row(
             children: [
               if (dot)
                 Container(
-                  width: 10,
-                  height: 10,
+                  width: 8,
+                  height: 8,
                   decoration: const BoxDecoration(
                     color: AppColors.mintDeep,
                     shape: BoxShape.circle,
@@ -866,17 +1019,16 @@ class _LabeledRow extends StatelessWidget {
                 Icon(
                   icon ?? Icons.circle,
                   color: AppColors.mintDeep,
-                  size: 23,
+                  size: 16,
                 ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppStyles.spacingS),
               Expanded(
                 child: Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                  style: AppStyles.subhead.copyWith(
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -884,7 +1036,7 @@ class _LabeledRow extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppStyles.spacingS),
         Expanded(child: child),
       ],
     );
@@ -901,15 +1053,15 @@ class _InputShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppStyles.radiusM),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppStyles.radiusM),
         child: Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: AppStyles.spacingS),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppStyles.radiusM),
             border: Border.all(color: AppColors.lightOutline),
           ),
           child: child,
@@ -937,19 +1089,18 @@ class _TextInputShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 48,
+      height: 40,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppStyles.radiusM),
         border: Border.all(color: AppColors.lightOutline),
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
         onChanged: onChanged,
-        style: const TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
+        style: AppStyles.subhead.copyWith(
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
         decoration: InputDecoration(
@@ -958,7 +1109,12 @@ class _TextInputShell extends StatelessWidget {
           border: InputBorder.none,
           focusedBorder: InputBorder.none,
           enabledBorder: InputBorder.none,
-          contentPadding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+          contentPadding: const EdgeInsets.fromLTRB(
+            AppStyles.spacingS,
+            AppStyles.spacingS,
+            AppStyles.spacingS,
+            AppStyles.spacingS,
+          ),
           suffixIcon: suffixIcon,
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_styles.dart';
 import '../../../shared/models/health_event.dart';
 import '../../../shared/models/member.dart';
 import '../../calendar/providers/event_provider.dart';
@@ -87,7 +88,7 @@ class MemberListScreen extends ConsumerWidget {
               '还没有添加成员',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -221,7 +222,7 @@ class MemberListScreen extends ConsumerWidget {
               title,
               style: const TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
                 letterSpacing: -0.2,
               ),
@@ -312,20 +313,25 @@ class MemberListScreen extends ConsumerWidget {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
       ),
       builder: (ctx) => SafeArea(
         child: ListView(
           shrinkWrap: true,
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: AppStyles.spacingS),
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 8, 20, 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppStyles.spacingM,
+                AppStyles.spacingS,
+                AppStyles.spacingM,
+                AppStyles.spacingS,
+              ),
               child: Text(
                 '管理家庭成员',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+                style: AppStyles.subhead.copyWith(
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -374,7 +380,8 @@ class MemberListScreen extends ConsumerWidget {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(

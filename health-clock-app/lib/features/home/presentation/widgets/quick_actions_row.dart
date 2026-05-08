@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_styles.dart';
 
 class QuickAction {
   const QuickAction({
@@ -29,14 +30,19 @@ class QuickActionsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.screenMargin,
+        0,
+        AppStyles.screenMargin,
+        AppStyles.spacingS,
+      ),
       child: Row(
         children: actions
             .map(
               (a) => Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(
-                    right: a == actions.last ? 0 : 10,
+                    right: a == actions.last ? 0 : AppStyles.spacingS,
                   ),
                   child: _QuickActionCard(action: a),
                 ),
@@ -56,61 +62,63 @@ class _QuickActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.cardWhite,
-      borderRadius: BorderRadius.circular(18),
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppStyles.radiusL),
       child: InkWell(
         onTap: action.onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.lightOutline),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: action.iconBg,
-                  shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        child: ConstrainedBox(
+          constraints:
+              const BoxConstraints(minHeight: AppStyles.minTouchTarget),
+          child: Container(
+            padding: const EdgeInsets.all(AppStyles.spacingM),
+            decoration: BoxDecoration(
+              color: AppColors.cardWhite,
+              border: Border.all(color: AppColors.lightOutline),
+              borderRadius: BorderRadius.circular(AppStyles.radiusL),
+              boxShadow: AppStyles.cardShadow,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: AppStyles.iconContainerM,
+                  height: AppStyles.iconContainerM,
+                  decoration: BoxDecoration(
+                    color: action.iconBg,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(action.icon, color: action.iconColor, size: 20),
                 ),
-                alignment: Alignment.center,
-                child: Icon(action.icon, color: action.iconColor, size: 18),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      action.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        height: 1.2,
+                const SizedBox(width: AppStyles.spacingS),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        action.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppStyles.footnote.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      action.subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textTertiary,
-                        height: 1.2,
+                      const SizedBox(height: AppStyles.spacingXs),
+                      Text(
+                        action.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppStyles.caption1.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

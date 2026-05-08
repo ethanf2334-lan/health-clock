@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_styles.dart';
 import '../../members/presentation/widgets/member_avatar.dart';
 import 'candidate_event_list.dart';
 
@@ -54,7 +55,7 @@ class OcrReviewScreen extends ConsumerWidget {
         child: Column(
           children: [
             SizedBox(
-              height: 58,
+              height: AppStyles.listRowHeight,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -62,14 +63,14 @@ class OcrReviewScreen extends ConsumerWidget {
                     alignment: Alignment.centerLeft,
                     child: IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.chevron_left_rounded, size: 34),
+                      icon: const Icon(Icons.chevron_left_rounded, size: 28),
                     ),
                   ),
                   const Text(
                     'OCR 识别',
                     style: TextStyle(
-                      fontSize: 23,
-                      fontWeight: FontWeight.w900,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -82,7 +83,7 @@ class OcrReviewScreen extends ConsumerWidget {
                         '完成',
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.textTertiary,
                         ),
                       ),
@@ -150,7 +151,7 @@ class OcrReviewScreen extends ConsumerWidget {
                         style: TextStyle(
                           color: Color(0xFF0BA84A),
                           fontSize: 16,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -172,7 +173,7 @@ class OcrReviewScreen extends ConsumerWidget {
                           '确认并生成档案',
                           style: TextStyle(
                             fontSize: 16.5,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -568,7 +569,7 @@ class _OcrProgressCard extends StatelessWidget {
                       '识别完成',
                       style: TextStyle(
                         fontSize: 22,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w600,
                         color: Color(0xFF0B8F45),
                       ),
                     ),
@@ -624,7 +625,7 @@ class _StepNode extends StatelessWidget {
                   number ?? '',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
         ),
@@ -636,7 +637,7 @@ class _StepNode extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),
@@ -692,7 +693,7 @@ class _OcrFileCard extends StatelessWidget {
             ),
             child: const Column(
               children: [
-                Text('健康体检报告', style: TextStyle(fontWeight: FontWeight.w900)),
+                Text('健康体检报告', style: TextStyle(fontWeight: FontWeight.w600)),
                 SizedBox(height: 18),
                 Expanded(child: _TinyReportCover()),
               ],
@@ -713,7 +714,7 @@ class _OcrFileCard extends StatelessWidget {
                       '识别状态：',
                       style: TextStyle(
                         color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     Flexible(
@@ -731,7 +732,7 @@ class _OcrFileCard extends StatelessWidget {
                           maxLines: 1,
                           style: const TextStyle(
                             color: AppColors.mintDeep,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -774,7 +775,7 @@ class _FileMeta extends StatelessWidget {
             label,
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
           ),
           Expanded(
@@ -782,7 +783,7 @@ class _FileMeta extends StatelessWidget {
               value,
               style: const TextStyle(
                 color: AppColors.textPrimary,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -824,7 +825,7 @@ class _SectionHeader extends StatelessWidget {
             title,
             style: const TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),
@@ -834,7 +835,7 @@ class _SectionHeader extends StatelessWidget {
             trailing!,
             style: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
           ),
@@ -911,7 +912,7 @@ class _ResultCell extends StatelessWidget {
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -929,7 +930,7 @@ class _ResultCell extends StatelessWidget {
               textAlign: TextAlign.right,
               style: const TextStyle(
                 fontSize: 13.5,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -966,7 +967,7 @@ class _AiSummaryCard extends StatelessWidget {
                 style: TextStyle(
                   color: AppColors.lavender,
                   fontSize: 18,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -1068,7 +1069,7 @@ class _MetricMiniCard extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -1078,7 +1079,7 @@ class _MetricMiniCard extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
+            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600),
           ),
           Text(
             unit,
@@ -1092,7 +1093,7 @@ class _MetricMiniCard extends StatelessWidget {
             style: TextStyle(
               color: color,
               fontSize: 11,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -1125,7 +1126,7 @@ class _ReminderCandidates extends StatelessWidget {
               '暂无提醒候选项',
               style: TextStyle(
                 color: AppColors.textSecondary,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
               ),
             ),
           )
@@ -1210,7 +1211,7 @@ class _CandidateTile extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -1234,7 +1235,7 @@ class _CandidateTile extends StatelessWidget {
               tag,
               style: TextStyle(
                 color: selected ? AppColors.mintDeep : AppColors.lavender,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),

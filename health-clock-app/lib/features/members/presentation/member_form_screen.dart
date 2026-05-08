@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_styles.dart';
 import '../../../shared/models/member.dart';
+import '../../../shared/widgets/app_cupertino_pickers.dart';
 import '../data/member_repository.dart';
 import '../providers/current_member_provider.dart';
 import '../providers/member_provider.dart';
+import 'widgets/member_avatar.dart';
 
 class MemberFormScreen extends ConsumerStatefulWidget {
   final Member? member;
@@ -32,7 +35,6 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
 
   static const _green = Color(0xFF14A85A);
   static const _greenDeep = Color(0xFF138956);
-  static const _pageBg = Color(0xFFF6FBF8);
 
   @override
   void initState() {
@@ -58,21 +60,10 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
-      backgroundColor: _pageBg,
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF8FCFA),
-              Color(0xFFF3FAF6),
-              Colors.white,
-            ],
-            stops: [0, .48, 1],
-          ),
-        ),
+        color: Colors.white,
         child: SafeArea(
           bottom: false,
           child: Form(
@@ -83,19 +74,20 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
                 SliverToBoxAdapter(child: _buildTopBar(context)),
                 SliverToBoxAdapter(child: _buildHero()),
                 SliverPadding(
-                  padding: EdgeInsets.fromLTRB(18, 6, 18, 16 + bottomInset),
+                  padding: EdgeInsets.fromLTRB(
+                    AppStyles.spacingM,
+                    0,
+                    AppStyles.spacingM,
+                    AppStyles.spacingM + bottomInset,
+                  ),
                   sliver: SliverList.list(
                     children: [
                       _buildFormCard(),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: AppStyles.spacingS),
                       _buildCurrentMemberCard(),
-                      const SizedBox(height: 14),
-                      _buildTipCard(),
-                      const SizedBox(height: 22),
+                      const SizedBox(height: AppStyles.spacingS),
                       _buildPrimaryButton(),
-                      const SizedBox(height: 12),
-                      _buildCancelButton(),
-                      const SizedBox(height: 26),
+                      const SizedBox(height: AppStyles.spacingM),
                     ],
                   ),
                 ),
@@ -113,7 +105,12 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
         widget.member == null ? '为家人建立独立的健康提醒与健康档案' : '更新成员健康档案与提醒信息';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.spacingM,
+        AppStyles.spacingS,
+        AppStyles.spacingM,
+        0,
+      ),
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -123,11 +120,14 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(
                 Icons.chevron_left_rounded,
-                size: 34,
+                size: 28,
                 color: AppColors.textPrimary,
               ),
               style: IconButton.styleFrom(
-                minimumSize: const Size(42, 42),
+                minimumSize: const Size(
+                  AppStyles.minTouchTarget,
+                  AppStyles.minTouchTarget,
+                ),
                 padding: EdgeInsets.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
@@ -138,23 +138,17 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 27,
-                  height: 1.15,
-                  fontWeight: FontWeight.w900,
+                style: AppStyles.screenTitle.copyWith(
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 9),
+              const SizedBox(height: AppStyles.spacingXs),
               Text(
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 14.5,
-                  height: 1.2,
+                style: AppStyles.caption1.copyWith(
                   color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
@@ -166,39 +160,39 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
 
   Widget _buildHero() {
     return SizedBox(
-      height: 250,
+      height: 112,
       child: Stack(
         alignment: Alignment.center,
         children: [
           Positioned(
             left: 34,
             right: 24,
-            bottom: 30,
+            bottom: 10,
             child: SizedBox(
-              height: 112,
+              height: 52,
               child: CustomPaint(painter: _FamilyBackdropPainter()),
             ),
           ),
           Positioned(
-            top: 34,
+            top: 8,
             child: Stack(
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  width: 156,
-                  height: 156,
+                  width: 84,
+                  height: 84,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: .08),
-                        blurRadius: 22,
-                        offset: const Offset(0, 10),
+                        blurRadius: 14,
+                        offset: const Offset(0, AppStyles.spacingS),
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.all(9),
+                  padding: const EdgeInsets.all(7),
                   child: Container(
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
@@ -208,31 +202,37 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
                         colors: [Color(0xFFE8F4FF), Color(0xFFD4ECFF)],
                       ),
                     ),
-                    child: const _DefaultPortrait(),
+                    child: MemberAvatar(
+                      name: _nameController.text.trim().isEmpty
+                          ? '成员'
+                          : _nameController.text.trim(),
+                      relation: _relation,
+                      size: 70,
+                    ),
                   ),
                 ),
                 Positioned(
                   right: -4,
-                  bottom: 14,
+                  bottom: 8,
                   child: Container(
-                    width: 52,
-                    height: 52,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: const Color(0xFF42B87B),
-                      border: Border.all(color: Colors.white, width: 5),
+                      border: Border.all(color: Colors.white, width: 3),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: .12),
-                          blurRadius: 12,
-                          offset: const Offset(0, 5),
+                          blurRadius: 10,
+                          offset: const Offset(0, AppStyles.spacingXs),
                         ),
                       ],
                     ),
                     child: const Icon(
                       Icons.photo_camera_rounded,
                       color: Colors.white,
-                      size: 25,
+                      size: 16,
                     ),
                   ),
                 ),
@@ -258,7 +258,7 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
           ),
           const _ThinDivider(),
           _relationRow(),
-          const _ThinDivider(horizontal: 18),
+          const _ThinDivider(horizontal: AppStyles.spacingM),
           _genderRow(),
           const _ThinDivider(),
           _dateRow(),
@@ -273,7 +273,11 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
             ],
           ),
           const _ThinDivider(),
-          _notesRow(),
+          _textRow(
+            label: '备注（选填）',
+            controller: _notesController,
+            hint: '请输入备注信息',
+          ),
         ],
       ),
     );
@@ -288,16 +292,21 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
     String? Function(String?)? validator,
   }) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 17, 24, 17),
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.spacingM,
+        AppStyles.spacingS,
+        AppStyles.spacingM,
+        AppStyles.spacingS,
+      ),
       child: Row(
         children: [
           SizedBox(
-            width: 132,
+            width: 116,
             child: Text(
               label,
               style: const TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -310,7 +319,7 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
               inputFormatters: inputFormatters,
               validator: validator,
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 15,
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
@@ -342,39 +351,53 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
     ];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.spacingM,
+        AppStyles.spacingS,
+        AppStyles.spacingM,
+        AppStyles.spacingS,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(
-            width: 82,
+            width: 64,
             child: Padding(
-              padding: EdgeInsets.only(top: 9),
+              padding: EdgeInsets.only(top: 7),
               child: Text(
                 '关系',
                 style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
             ),
           ),
           Expanded(
-            child: Wrap(
-              spacing: 13,
-              runSpacing: 13,
-              children: [
-                for (final item in items)
-                  _ChoicePill(
-                    label: item.$2,
-                    selected: _relation == item.$1,
-                    color: item.$1 == 'child'
-                        ? const Color(0xFFFF982F)
-                        : _greenDeep,
-                    onTap: () => setState(() => _relation = item.$1),
-                  ),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final itemWidth =
+                    (constraints.maxWidth - AppStyles.spacingS * 2) / 3;
+                return Wrap(
+                  spacing: AppStyles.spacingS,
+                  runSpacing: AppStyles.spacingS,
+                  children: [
+                    for (final item in items)
+                      SizedBox(
+                        width: itemWidth,
+                        child: _ChoicePill(
+                          label: item.$2,
+                          selected: _relation == item.$1,
+                          color: item.$1 == 'child'
+                              ? const Color(0xFFFF982F)
+                              : _greenDeep,
+                          onTap: () => setState(() => _relation = item.$1),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -384,15 +407,20 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
 
   Widget _genderRow() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.spacingM,
+        AppStyles.spacingS,
+        AppStyles.spacingM,
+        AppStyles.spacingS,
+      ),
       child: Row(
         children: [
           const Expanded(
             child: Text(
               '性别',
               style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -414,15 +442,20 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
     return InkWell(
       onTap: _pickBirthDate,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 17, 22, 17),
+        padding: const EdgeInsets.fromLTRB(
+          AppStyles.spacingM,
+          AppStyles.spacingS,
+          AppStyles.spacingM,
+          AppStyles.spacingS,
+        ),
         child: Row(
           children: [
             const Expanded(
               child: Text(
                 '出生日期或年龄',
                 style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -434,7 +467,7 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.right,
                 style: TextStyle(
-                  fontSize: 17,
+                  fontSize: 15,
                   fontWeight: FontWeight.w500,
                   color: _birthDate == null
                       ? AppColors.textTertiary
@@ -446,7 +479,7 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
             const Icon(
               Icons.chevron_right_rounded,
               color: AppColors.textTertiary,
-              size: 28,
+              size: 20,
             ),
           ],
         ),
@@ -454,101 +487,22 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
     );
   }
 
-  Widget _notesRow() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 17, 24, 20),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(
-                width: 132,
-                child: Text(
-                  '备注（选填）',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: _notesController,
-                  textAlign: TextAlign.right,
-                  minLines: 1,
-                  maxLines: 3,
-                  maxLength: 100,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: '请输入备注信息',
-                    hintStyle: TextStyle(
-                      color: AppColors.textTertiary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    border: InputBorder.none,
-                    isCollapsed: true,
-                    counterText: '',
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: AnimatedBuilder(
-              animation: _notesController,
-              builder: (context, _) => Text(
-                '${_notesController.text.characters.length}/100',
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textTertiary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCurrentMemberCard() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 18, 20),
-      decoration: _cardDecoration(radius: 18),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppStyles.spacingM,
+        vertical: AppStyles.spacingS,
+      ),
+      decoration: _cardDecoration(radius: AppStyles.radiusL),
       child: Row(
         children: [
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '设为当前成员',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 7),
-                Text(
-                  '开启后，将在首页优先展示该成员数据',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.35,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+          Expanded(
+            child: Text(
+              '设为当前成员',
+              style: AppStyles.subhead.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
           Transform.scale(
@@ -566,68 +520,12 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
     );
   }
 
-  Widget _buildTipCard() {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 96),
-      padding: const EdgeInsets.fromLTRB(22, 18, 20, 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [Color(0xFFE8FAF2), Color(0xFFF5FCF8)],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: .04),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.verified_user_rounded, color: _greenDeep, size: 25),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '温馨提示',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w900,
-                    color: _greenDeep,
-                  ),
-                ),
-                SizedBox(height: 9),
-                Text(
-                  '每位家庭成员将拥有独立的健康提醒、健康档案和健康指标，我们会为您和家人的健康数据严格保密。',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    height: 1.55,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 8),
-          _TipIllustration(),
-        ],
-      ),
-    );
-  }
-
   Widget _buildPrimaryButton() {
     return SizedBox(
-      height: 62,
+      height: 44,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(31),
+          borderRadius: BorderRadius.circular(AppStyles.radiusM),
           gradient: const LinearGradient(
             colors: [Color(0xFF43C181), Color(0xFF13A85A)],
           ),
@@ -635,7 +533,7 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
             BoxShadow(
               color: _green.withValues(alpha: .22),
               blurRadius: 18,
-              offset: const Offset(0, 8),
+              offset: const Offset(0, AppStyles.spacingS),
             ),
           ],
         ),
@@ -647,7 +545,7 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
             shadowColor: Colors.transparent,
             disabledBackgroundColor: Colors.transparent,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(31),
+              borderRadius: BorderRadius.circular(AppStyles.radiusM),
             ),
           ),
           child: _isLoading
@@ -661,34 +559,11 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
                 )
               : Text(
                   widget.member == null ? '保存添加' : '保存修改',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
+                  style: AppStyles.subhead.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCancelButton() {
-    return SizedBox(
-      height: 58,
-      child: OutlinedButton(
-        onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: _greenDeep,
-          side: BorderSide(color: Colors.black.withValues(alpha: .05)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(29),
-          ),
-          elevation: 0,
-          shadowColor: Colors.black.withValues(alpha: .08),
-        ),
-        child: const Text(
-          '取消',
-          style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
         ),
       ),
     );
@@ -710,14 +585,12 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
   }
 
   Future<void> _pickBirthDate() async {
-    final date = await showDatePicker(
+    final date = await AppCupertinoPickers.date(
       context: context,
       initialDate: _birthDate ?? DateTime(1990),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      helpText: '选择出生日期',
-      cancelText: '取消',
-      confirmText: '确定',
+      minimumDate: DateTime(1900),
+      maximumDate: DateTime.now(),
+      title: '选择出生日期',
     );
     if (date != null && mounted) {
       setState(() => _birthDate = date);
@@ -814,9 +687,9 @@ class _ChoicePill extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        height: 36,
-        constraints: const BoxConstraints(minWidth: 78),
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+        height: 32,
+        constraints: const BoxConstraints(minWidth: 64),
+        padding: const EdgeInsets.symmetric(horizontal: AppStyles.spacingM),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color:
@@ -838,8 +711,8 @@ class _ChoicePill extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
             color: selected ? color : AppColors.textSecondary,
           ),
         ),
@@ -857,8 +730,8 @@ class _SegmentedGender extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 230,
-      height: 46,
+      width: 200,
+      height: 40,
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -913,222 +786,13 @@ class _GenderButton extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
               color:
                   selected ? const Color(0xFF148956) : AppColors.textSecondary,
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _DefaultPortrait extends StatelessWidget {
-  const _DefaultPortrait();
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Positioned(
-          top: 22,
-          child: Container(
-            width: 76,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFF3A3A3D),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(42),
-                topRight: Radius.circular(42),
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(18),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 45,
-          child: Container(
-            width: 70,
-            height: 74,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFC2A3),
-              borderRadius: BorderRadius.circular(35),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  left: 17,
-                  top: 27,
-                  child: _FaceDot(),
-                ),
-                Positioned(
-                  right: 17,
-                  top: 27,
-                  child: _FaceDot(),
-                ),
-                const Positioned(
-                  left: 31,
-                  top: 36,
-                  child: SizedBox(
-                    width: 8,
-                    height: 14,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Color(0xFFE89275),
-                        borderRadius: BorderRadius.all(Radius.circular(8)),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 24,
-                  right: 24,
-                  bottom: 16,
-                  child: Container(
-                    height: 7,
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: const Color(0xFFDB745D).withValues(alpha: .85),
-                          width: 2,
-                        ),
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          top: 31,
-          left: 36,
-          right: 18,
-          child: Container(
-            height: 34,
-            decoration: const BoxDecoration(
-              color: Color(0xFF2F3033),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(40),
-                topRight: Radius.circular(28),
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(8),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: -6,
-          child: Container(
-            width: 104,
-            height: 54,
-            decoration: const BoxDecoration(
-              color: Color(0xFF5DADE9),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(44),
-                topRight: Radius.circular(44),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FaceDot extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 8,
-      height: 11,
-      decoration: BoxDecoration(
-        color: const Color(0xFF303136),
-        borderRadius: BorderRadius.circular(8),
-      ),
-    );
-  }
-}
-
-class _TipIllustration extends StatelessWidget {
-  const _TipIllustration();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 82,
-      height: 72,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            right: 5,
-            bottom: 2,
-            child: Container(
-              width: 54,
-              height: 62,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE9FFF3),
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(color: const Color(0xFF8CDAB3), width: 3),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 27,
-                    height: 5,
-                    color: const Color(0xFFBBDCCA),
-                  ),
-                  const SizedBox(height: 7),
-                  Container(
-                    width: 31,
-                    height: 5,
-                    color: const Color(0xFFD2E8DC),
-                  ),
-                  const SizedBox(height: 7),
-                  Container(
-                    width: 25,
-                    height: 5,
-                    color: const Color(0xFFD2E8DC),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: const Color(0xFF4CC082),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.white, width: 3),
-              ),
-              child: const Icon(
-                Icons.check_rounded,
-                color: Colors.white,
-                size: 22,
-              ),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            bottom: 15,
-            child: Icon(
-              Icons.eco_rounded,
-              color: const Color(0xFF8CDAB3).withValues(alpha: .85),
-              size: 28,
-            ),
-          ),
-        ],
       ),
     );
   }

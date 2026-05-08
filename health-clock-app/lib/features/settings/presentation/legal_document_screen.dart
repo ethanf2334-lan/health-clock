@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_spacing.dart';
+import '../../../app/theme/app_styles.dart';
 
 class LegalTexts {
   LegalTexts._();
@@ -20,7 +21,6 @@ class LegalTexts {
       '4. 您的权利：您可在应用内管理成员与文档；如需删除账号相关数据，可通过帮助与反馈联系我们。';
 }
 
-/// 静态法律文案页（MVP）
 class LegalDocumentScreen extends StatelessWidget {
   const LegalDocumentScreen({
     super.key,
@@ -34,20 +34,139 @@ class LegalDocumentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgGradientStart,
-      appBar: AppBar(
-        title: Text(title),
-        backgroundColor: AppColors.bgGradientStart,
-        scrolledUnderElevation: 0,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        bottom: false,
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            AppStyles.screenMargin,
+            AppStyles.spacingS,
+            AppStyles.screenMargin,
+            AppStyles.spacingL + MediaQuery.of(context).padding.bottom,
+          ),
+          children: [
+            _LegalHeader(
+              title: title,
+              onBack: () {
+                if (context.canPop()) context.pop();
+              },
+            ),
+            const SizedBox(height: AppStyles.spacingM),
+            _LegalCard(title: title, bodyText: bodyText),
+          ],
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+    );
+  }
+}
+
+class _LegalHeader extends StatelessWidget {
+  const _LegalHeader({required this.title, required this.onBack});
+
+  final String title;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Material(
+          color: Colors.white,
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: onBack,
+            customBorder: const CircleBorder(),
+            child: SizedBox(
+              width: AppStyles.minTouchTarget,
+              height: AppStyles.minTouchTarget,
+              child: Center(
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.lightOutline),
+                    boxShadow: AppStyles.subtleShadow,
+                  ),
+                  child: const Icon(
+                    Icons.chevron_left_rounded,
+                    color: AppColors.textPrimary,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppStyles.spacingS),
+        Expanded(
+          child: Text(
+            title,
+            style: AppStyles.screenTitle.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LegalCard extends StatelessWidget {
+  const _LegalCard({required this.title, required this.bodyText});
+
+  final String title;
+  final String bodyText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppStyles.cardPadding),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        border: Border.all(color: AppColors.lightOutline),
+        boxShadow: AppStyles.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.mintBg,
+                  borderRadius: BorderRadius.circular(AppStyles.radiusM),
+                ),
+                child: Icon(
+                  title == '隐私政策'
+                      ? Icons.privacy_tip_outlined
+                      : Icons.description_outlined,
+                  color: AppColors.mintDeep,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: AppStyles.spacingS),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppStyles.subhead.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppStyles.spacingM),
           Text(
             bodyText,
-            style: const TextStyle(
-              fontSize: 14,
-              height: 1.6,
+            style: AppStyles.footnote.copyWith(
+              height: 1.62,
               color: AppColors.textSecondary,
             ),
           ),

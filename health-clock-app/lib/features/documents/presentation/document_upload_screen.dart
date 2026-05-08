@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 
-import '../../../shared/models/document.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_styles.dart';
+import '../../../shared/models/document.dart';
+import '../../../shared/widgets/app_cupertino_pickers.dart';
 import '../../members/presentation/member_picker_field.dart';
 import '../../members/providers/current_member_provider.dart';
 import '../data/document_repository.dart';
@@ -265,11 +267,12 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
             ),
             trailing: const Icon(Icons.calendar_today),
             onTap: () async {
-              final d = await showDatePicker(
+              final d = await AppCupertinoPickers.date(
                 context: context,
                 initialDate: _docDate ?? DateTime.now(),
-                firstDate: DateTime(2000),
-                lastDate: DateTime.now().add(const Duration(days: 1)),
+                minimumDate: DateTime(2000),
+                maximumDate: DateTime.now().add(const Duration(days: 1)),
+                title: '选择文档日期',
               );
               if (d != null) setState(() => _docDate = d);
             },
@@ -386,7 +389,7 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 19,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -396,7 +399,7 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 15,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -457,7 +460,7 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
                                   '已检测到报告',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w600,
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
@@ -600,7 +603,7 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
                   '取消',
                   style: TextStyle(
                     fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -644,7 +647,7 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
                     isFile ? '打开系统文件选择器' : '打开系统相册',
                     style: const TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   style: FilledButton.styleFrom(
@@ -724,7 +727,7 @@ class _UploadTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 64,
+      height: 56,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -737,9 +740,7 @@ class _UploadTopBar extends StatelessWidget {
           ),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
+            style: AppStyles.screenTitle.copyWith(
               color: AppColors.textPrimary,
             ),
           ),
@@ -768,10 +769,10 @@ class _SystemPickerPrompt extends StatelessWidget {
     return Center(
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(22, 28, 22, 28),
+        padding: const EdgeInsets.all(AppStyles.spacingL),
         decoration: BoxDecoration(
           color: AppColors.mintBg.withValues(alpha: 0.36),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppStyles.radiusXl),
           border: Border.all(color: AppColors.mintSoft),
         ),
         child: Column(
@@ -782,12 +783,12 @@ class _SystemPickerPrompt extends StatelessWidget {
               height: 86,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppStyles.radiusXl),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.mintDeep.withValues(alpha: 0.08),
                     blurRadius: 18,
-                    offset: const Offset(0, 8),
+                    offset: const Offset(0, AppStyles.spacingS),
                   ),
                 ],
               ),
@@ -799,48 +800,43 @@ class _SystemPickerPrompt extends StatelessWidget {
                 size: 44,
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: AppStyles.spacingL),
             Text(
               isFile ? '从系统文件中选择健康资料' : '从系统相册中选择健康资料',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.w900,
+              style: AppStyles.headline.copyWith(
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppStyles.spacingS),
             Text(
               isFile
                   ? '支持 PDF、JPG、PNG 等文件。选择后将立即上传并进行 OCR 识别。'
                   : '将打开 iOS 系统相册。选中照片后会立即上传并进行 OCR 识别。',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.45,
-                fontWeight: FontWeight.w600,
+              style: AppStyles.footnote.copyWith(
                 color: AppColors.textSecondary,
               ),
             ),
             if (uploading) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: AppStyles.spacingL),
               const LinearProgressIndicator(
                 color: AppColors.mintDeep,
                 backgroundColor: AppColors.mintSoft,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppStyles.spacingS),
               Text(
                 status,
                 style: const TextStyle(
                   color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
-            const SizedBox(height: 26),
+            const SizedBox(height: AppStyles.spacingL),
             SizedBox(
               width: double.infinity,
-              height: 54,
+              height: AppStyles.primaryButtonHeight,
               child: FilledButton.icon(
                 onPressed: uploading ? null : onPick,
                 icon: Icon(
@@ -850,15 +846,14 @@ class _SystemPickerPrompt extends StatelessWidget {
                 ),
                 label: Text(
                   isFile ? '选择文件' : '打开系统相册',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
+                  style: AppStyles.headline.copyWith(
+                    color: Colors.white,
                   ),
                 ),
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFF08A84F),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(AppStyles.radiusM),
                   ),
                 ),
               ),
@@ -903,7 +898,7 @@ class _ReportMockup extends StatelessWidget {
       children: [
         const Text(
           '健康体检报告',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 20),
         const _MiniDocumentLines(),
@@ -1020,7 +1015,7 @@ class _CameraTool extends StatelessWidget {
             style: const TextStyle(
               color: AppColors.mintDeep,
               fontSize: 15,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

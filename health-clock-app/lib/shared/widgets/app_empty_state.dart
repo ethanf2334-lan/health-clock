@@ -47,7 +47,7 @@ class AppEmptyState extends StatelessWidget {
               title,
               textAlign: TextAlign.center,
               style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
               ),
             ),
             if (message != null) ...[

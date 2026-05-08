@@ -30,7 +30,13 @@ class ProfileMenuCard extends StatelessWidget {
     for (var i = 0; i < items.length; i++) {
       out.add(items[i]);
       if (i < items.length - 1) {
-        out.add(const Divider(height: 1, indent: 52, color: AppColors.lightDivider));
+        out.add(
+          const Divider(
+            height: 1,
+            indent: 52,
+            color: AppColors.lightDivider,
+          ),
+        );
       }
     }
     return out;
@@ -79,8 +85,8 @@ class ProfileMenuTile extends StatelessWidget {
           color: titleColor ?? AppColors.textPrimary,
         ),
       ),
-      trailing:
-          trailing ?? const Icon(Icons.chevron_right, color: AppColors.textTertiary),
+      trailing: trailing ??
+          const Icon(Icons.chevron_right, color: AppColors.textTertiary),
       onTap: onTap,
     );
   }

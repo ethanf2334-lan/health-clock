@@ -9,6 +9,7 @@ import '../../features/ai_input/presentation/ai_input_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/calendar/presentation/event_detail_screen.dart';
 import '../../features/calendar/presentation/event_form_screen.dart';
+import '../../features/calendar/presentation/event_list_screen.dart';
 import '../../shared/models/health_event.dart';
 import '../../features/documents/presentation/document_detail_screen.dart';
 import '../../features/documents/presentation/document_list_screen.dart';
@@ -23,6 +24,7 @@ import '../../features/notifications/presentation/notification_permission_screen
 import '../../features/settings/presentation/about_screen.dart';
 import '../../features/settings/presentation/account_center_screen.dart';
 import '../../features/settings/presentation/general_settings_screen.dart';
+import '../../features/settings/presentation/help_feedback_screen.dart';
 import '../../features/settings/presentation/legal_document_screen.dart';
 
 part 'app_router.g.dart';
@@ -54,7 +56,9 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/home',
         name: 'home',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => HomeScreen(
+          initialIndex: _homeTabIndex(state.uri.queryParameters['tab']),
+        ),
       ),
       GoRoute(
         path: '/members',
@@ -76,6 +80,17 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/ai-input',
         name: 'ai-input',
         builder: (context, state) => const AIInputScreen(),
+      ),
+      GoRoute(
+        path: '/events',
+        name: 'events',
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(title: const Text('全部提醒')),
+          body: const SafeArea(
+            top: false,
+            child: EventListScreen(),
+          ),
+        ),
       ),
       GoRoute(
         path: '/events/new',
@@ -126,7 +141,9 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/metrics',
         name: 'metrics',
-        builder: (context, state) => const MetricHistoryScreen(),
+        builder: (context, state) => MetricHistoryScreen(
+          initialType: state.uri.queryParameters['type'],
+        ),
       ),
       GoRoute(
         path: '/metrics/new',
@@ -169,10 +186,30 @@ GoRouter appRouter(AppRouterRef ref) {
         name: 'about',
         builder: (context, state) => const AboutScreen(),
       ),
+      GoRoute(
+        path: '/help-feedback',
+        name: 'help-feedback',
+        builder: (context, state) => const HelpFeedbackScreen(),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       appBar: AppBar(title: const Text('错误')),
       body: Center(child: Text('页面未找到: ${state.uri}')),
     ),
   );
+}
+
+int _homeTabIndex(String? tab) {
+  switch (tab) {
+    case 'members':
+      return 1;
+    case 'documents':
+      return 2;
+    case 'profile':
+    case 'mine':
+      return 3;
+    case 'calendar':
+    default:
+      return 0;
+  }
 }

@@ -4,18 +4,22 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_styles.dart';
 import '../../../shared/models/document.dart';
 import '../../../shared/models/health_event.dart';
 import '../../../shared/models/member.dart';
 import '../../../shared/models/metric_record.dart';
 import '../../calendar/data/event_repository.dart';
 import '../../documents/data/document_repository.dart';
+import '../../documents/presentation/document_quick_upload.dart';
 import '../../health_records/data/metric_repository.dart';
+import '../../home/presentation/widgets/metric_record_sheet.dart';
 import '../data/member_repository.dart';
 import '../providers/current_member_provider.dart';
 import '../providers/member_provider.dart';
 import 'member_form_screen.dart';
 import 'member_labels.dart';
+import 'widgets/member_avatar.dart';
 
 class MemberProfileSummary {
   final Member member;
@@ -62,7 +66,7 @@ class MemberProfileScreen extends ConsumerWidget {
     final currentId = ref.watch(currentMemberIdProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FCF9),
+      backgroundColor: Colors.white,
       body: SafeArea(
         bottom: false,
         child: summaryAsync.when(
@@ -123,7 +127,12 @@ class _ProfileContent extends ConsumerWidget {
       slivers: [
         SliverToBoxAdapter(child: _TopBar(onEdit: onEdit)),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(18, 12, 18, 28),
+          padding: const EdgeInsets.fromLTRB(
+            AppStyles.screenMargin,
+            AppStyles.spacingS,
+            AppStyles.screenMargin,
+            AppStyles.spacingL,
+          ),
           sliver: SliverList.list(
             children: [
               _OverviewCard(
@@ -135,35 +144,33 @@ class _ProfileContent extends ConsumerWidget {
                 onSetCurrent: onSetCurrent,
                 onCreateEvent: () =>
                     _setCurrentAndGo(ref, context, '/events/new'),
-                onUploadDocument: () =>
-                    _setCurrentAndGo(ref, context, '/documents/new'),
-                onRecordMetric: () =>
-                    _setCurrentAndGo(ref, context, '/metrics/new'),
+                onUploadDocument: () => _pickAndUploadDocument(ref, context),
+                onRecordMetric: () => _openMetricRecordPanel(ref, context),
               ),
-              const SizedBox(height: 26),
+              const SizedBox(height: AppStyles.spacingL),
               _SectionHeader(
                 title: '近期提醒',
                 onViewAll: () => _showUnavailable(context, '请在健康日历查看全部提醒'),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppStyles.spacingS),
               _ReminderCard(events: pendingEvents.take(3).toList()),
-              const SizedBox(height: 22),
+              const SizedBox(height: AppStyles.spacingL),
               _SectionHeader(
                 title: '最近文档',
                 onViewAll: () => _setCurrentAndGo(ref, context, '/documents'),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppStyles.spacingS),
               _DocumentCard(documents: documents.take(2).toList()),
-              const SizedBox(height: 22),
+              const SizedBox(height: AppStyles.spacingL),
               _SectionHeader(
                 title: '最近指标',
                 onViewAll: () => _setCurrentAndGo(ref, context, '/metrics'),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppStyles.spacingS),
               _MetricStrip(metrics: metrics.take(3).toList()),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppStyles.spacingM),
               _FullArchiveButton(
-                onTap: () => _setCurrentAndGo(ref, context, '/documents'),
+                onTap: () => _openFullArchive(ref, context),
               ),
             ],
           ),
@@ -175,6 +182,60 @@ class _ProfileContent extends ConsumerWidget {
   void _setCurrentAndGo(WidgetRef ref, BuildContext context, String path) {
     ref.read(currentMemberIdProvider.notifier).state = summary.member.id;
     context.push(path);
+  }
+
+  void _openFullArchive(WidgetRef ref, BuildContext context) {
+    ref.read(currentMemberIdProvider.notifier).state = summary.member.id;
+    context.go('/home?tab=documents');
+  }
+
+  Future<void> _pickAndUploadDocument(
+    WidgetRef ref,
+    BuildContext context,
+  ) async {
+    ref.read(currentMemberIdProvider.notifier).state = summary.member.id;
+    await pickFileAndUploadDocument(
+      context: context,
+      ref: ref,
+      memberId: summary.member.id,
+      onUploaded: () => ref.invalidate(
+        memberProfileSummaryProvider(summary.member.id),
+      ),
+    );
+  }
+
+  void _openMetricRecordPanel(WidgetRef ref, BuildContext context) {
+    ref.read(currentMemberIdProvider.notifier).state = summary.member.id;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.42),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppStyles.radiusXl),
+            ),
+            child: SizedBox(
+              height: MediaQuery.of(ctx).size.height * 0.73,
+              child: MetricRecordSheet(
+                onSaved: () => ref.invalidate(
+                  memberProfileSummaryProvider(summary.member.id),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showUnavailable(BuildContext context, String message) {
@@ -202,7 +263,12 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.screenMargin,
+        AppStyles.spacingS,
+        AppStyles.screenMargin,
+        AppStyles.spacingS,
+      ),
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -219,11 +285,9 @@ class _TopBar extends StatelessWidget {
               ),
             ),
           ),
-          const Text(
+          Text(
             '成员档案',
-            style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.w900,
+            style: AppStyles.headline.copyWith(
               color: AppColors.textPrimary,
             ),
           ),
@@ -273,58 +337,36 @@ class _OverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+      padding: const EdgeInsets.all(AppStyles.cardPadding),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFF4FFFA), Color(0xFFEFFAF4)],
-        ),
-        border: Border.all(color: const Color(0xFFD7EBE2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: .055),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppStyles.radiusXl),
+        color: Colors.white,
+        border: Border.all(color: MemberProfileScreen._line),
+        boxShadow: AppStyles.cardShadow,
       ),
       child: Column(
         children: [
-          Stack(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Positioned(
-                right: -8,
-                top: 0,
-                child: _FamilyArt(),
-              ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _MemberPortrait(member: member),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 118),
-                      child: _MemberTextInfo(
-                        member: member,
-                        isCurrent: isCurrent,
-                        onSetCurrent: onSetCurrent,
-                      ),
-                    ),
-                  ),
-                ],
+              _MemberPortrait(member: member),
+              const SizedBox(width: AppStyles.spacingM),
+              Expanded(
+                child: _MemberTextInfo(
+                  member: member,
+                  isCurrent: isCurrent,
+                  onSetCurrent: onSetCurrent,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppStyles.spacingM),
           _StatsBar(
             reminderCount: reminderCount,
             documentCount: documentCount,
             metricCount: metricCount,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppStyles.spacingS),
           Row(
             children: [
               Expanded(
@@ -334,7 +376,7 @@ class _OverviewCard extends StatelessWidget {
                   onTap: onCreateEvent,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppStyles.spacingS),
               Expanded(
                 child: _QuickAction(
                   icon: Icons.drive_folder_upload_rounded,
@@ -342,7 +384,7 @@ class _OverviewCard extends StatelessWidget {
                   onTap: onUploadDocument,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppStyles.spacingS),
               Expanded(
                 child: _QuickAction(
                   icon: Icons.edit_square,
@@ -386,28 +428,29 @@ class _MemberTextInfo extends StatelessWidget {
                 member.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 27,
-                  fontWeight: FontWeight.w900,
+                style: AppStyles.headline.copyWith(
                   color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppStyles.spacingS),
             InkWell(
               onTap: isCurrent ? null : onSetCurrent,
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppStyles.radiusFull),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppStyles.spacingS,
+                  vertical: AppStyles.spacingXs,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFDDF7E8),
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppStyles.radiusFull),
                 ),
                 child: Text(
                   isCurrent ? '当前成员' : '设为当前',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
+                  style: AppStyles.footnote.copyWith(
+                    fontWeight: FontWeight.w600,
                     color: MemberProfileScreen._green,
                   ),
                 ),
@@ -415,7 +458,7 @@ class _MemberTextInfo extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: AppStyles.spacingXs),
         Text(
           [
             memberRelationLabel(member.relation),
@@ -423,16 +466,15 @@ class _MemberTextInfo extends StatelessWidget {
           ].join(' · '),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 16,
+          style: AppStyles.footnote.copyWith(
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: AppStyles.spacingS),
         if (birthday != null)
           _InfoLine(icon: Icons.calendar_month_outlined, text: birthday),
-        const SizedBox(height: 8),
+        if (birthday != null) const SizedBox(height: AppStyles.spacingXs),
         _InfoLine(
           icon: Icons.favorite_border_rounded,
           text: member.notes?.trim().isNotEmpty == true
@@ -472,8 +514,7 @@ class _InfoLine extends StatelessWidget {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 15,
+            style: AppStyles.footnote.copyWith(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
@@ -498,17 +539,11 @@ class _StatsBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 74,
+      height: AppStyles.compactListRowHeight,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: .06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: MemberProfileScreen._softGreen,
+        borderRadius: BorderRadius.circular(AppStyles.radiusM),
+        border: Border.all(color: MemberProfileScreen._line),
       ),
       child: Row(
         children: [
@@ -554,34 +589,38 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, color: MemberProfileScreen._green, size: 28),
-        const SizedBox(width: 12),
-        Column(
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppStyles.spacingS),
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
+            Icon(icon, color: MemberProfileScreen._green, size: 20),
+            const SizedBox(width: AppStyles.spacingS),
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: label),
+                  const TextSpan(text: '  '),
+                  TextSpan(
+                    text: '$value',
+                    style: AppStyles.headline.copyWith(
+                      color: MemberProfileScreen._green,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              maxLines: 1,
+              style: AppStyles.footnote.copyWith(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            Text(
-              '$value',
-              style: const TextStyle(
-                fontSize: 25,
-                height: 1.05,
-                color: MemberProfileScreen._green,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
           ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -591,7 +630,11 @@ class _VerticalDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: 1, height: 34, color: MemberProfileScreen._line);
+    return Container(
+      width: AppStyles.dividerThin,
+      height: AppStyles.spacingL,
+      color: MemberProfileScreen._line,
+    );
   }
 }
 
@@ -610,34 +653,27 @@ class _QuickAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(AppStyles.radiusM),
       child: Container(
-        height: 56,
+        height: AppStyles.minTouchTarget,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: .055),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppStyles.radiusM),
+          border: Border.all(color: MemberProfileScreen._line),
         ),
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppStyles.spacingS),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: MemberProfileScreen._green, size: 25),
-                const SizedBox(width: 8),
+                Icon(icon, color: MemberProfileScreen._green, size: 20),
+                const SizedBox(width: AppStyles.spacingS),
                 Text(
                   label,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
+                  style: AppStyles.footnote.copyWith(
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -663,9 +699,7 @@ class _SectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.w900,
+            style: AppStyles.sectionTitle.copyWith(
               color: AppColors.textPrimary,
             ),
           ),
@@ -677,14 +711,16 @@ class _SectionHeader extends StatelessWidget {
             padding: EdgeInsets.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 '查看全部',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                style: AppStyles.footnote.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              Icon(Icons.chevron_right_rounded, size: 24),
+              const Icon(Icons.chevron_right_rounded, size: 20),
             ],
           ),
         ),
@@ -723,14 +759,14 @@ class _ReminderRow extends StatelessWidget {
     return InkWell(
       onTap: () => context.push('/events/${event.id}'),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 13),
+        padding: const EdgeInsets.symmetric(vertical: AppStyles.spacingS),
         child: Row(
           children: [
             _RoundIcon(
               icon: _eventIcon(event.eventType),
               color: _eventColor(event.eventType),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: AppStyles.spacingS),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -739,32 +775,29 @@ class _ReminderRow extends StatelessWidget {
                     event.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
+                    style: AppStyles.subhead.copyWith(
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: AppStyles.spacingXs),
                   Text(
                     _eventSubtitle(event),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: AppStyles.caption1.copyWith(
                       color: AppColors.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppStyles.spacingS),
             Text(
               _relativeTime(event.scheduledAt),
-              style: const TextStyle(
-                fontSize: 16,
+              style: AppStyles.footnote.copyWith(
                 color: MemberProfileScreen._green,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
               ),
             ),
             const Icon(
@@ -858,14 +891,14 @@ class _DocumentRow extends StatelessWidget {
     return InkWell(
       onTap: () => context.push('/documents/${document.id}'),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 13),
+        padding: const EdgeInsets.symmetric(vertical: AppStyles.spacingS),
         child: Row(
           children: [
             _RoundIcon(
               icon: Icons.description_rounded,
               color: _documentColor(document.category),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: AppStyles.spacingS),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -874,13 +907,12 @@ class _DocumentRow extends StatelessWidget {
                     document.title ?? document.fileName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
+                    style: AppStyles.subhead.copyWith(
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: AppStyles.spacingXs),
                   Text(
                     [
                       DateFormat('yyyy年M月d日').format(date.toLocal()),
@@ -890,15 +922,14 @@ class _DocumentRow extends StatelessWidget {
                     ].join(' · '),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: AppStyles.caption1.copyWith(
                       color: AppColors.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppStyles.spacingS),
             _Tag(text: _documentLabel(document.category)),
             const Icon(
               Icons.chevron_right_rounded,
@@ -942,7 +973,8 @@ class _MetricStrip extends StatelessWidget {
       children: [
         for (var i = 0; i < metrics.length; i++) ...[
           Expanded(child: _MetricTile(metric: metrics[i])),
-          if (i != metrics.length - 1) const SizedBox(width: 10),
+          if (i != metrics.length - 1)
+            const SizedBox(width: AppStyles.spacingS),
         ],
       ],
     );
@@ -958,16 +990,17 @@ class _MetricTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _metricColor(metric.metricType);
     return Container(
-      height: 126,
-      padding: const EdgeInsets.fromLTRB(14, 12, 12, 10),
+      height: 104,
+      padding: const EdgeInsets.all(AppStyles.spacingS),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(AppStyles.radiusM),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [color.withValues(alpha: .10), Colors.white],
+          colors: [color.withValues(alpha: .12), Colors.white],
         ),
-        border: Border.all(color: color.withValues(alpha: .18)),
+        border: Border.all(color: color.withValues(alpha: .20)),
+        boxShadow: AppStyles.subtleShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -979,47 +1012,56 @@ class _MetricTile extends StatelessWidget {
                   _metricLabel(metric.metricType),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
+                  style: AppStyles.footnote.copyWith(
+                    fontWeight: FontWeight.w600,
                     color: color,
                   ),
                 ),
               ),
               const SizedBox(width: 4),
               SizedBox(
-                width: 38,
-                height: 16,
+                width: 34,
+                height: 14,
                 child: CustomPaint(painter: _SparkPainter(color)),
               ),
             ],
           ),
           const Spacer(),
-          Text(
-            _metricValue(metric),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 25,
-              height: 1.05,
-              fontWeight: FontWeight.w900,
-              color: color,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: _metricValue(metric),
+                    style: AppStyles.title3.copyWith(
+                      height: 1.05,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' ${metric.unit}',
+                    style: AppStyles.caption1.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              maxLines: 1,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            metric.unit,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style:
-                const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 7),
+          const SizedBox(height: AppStyles.spacingXs),
           Text(
             DateFormat('M月d日 HH:mm').format(metric.recordedAt.toLocal()),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+            style: AppStyles.caption1.copyWith(
+              color: AppColors.textTertiary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -1073,12 +1115,12 @@ class _FullArchiveButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(17),
+      borderRadius: BorderRadius.circular(AppStyles.radiusM),
       child: Container(
-        height: 58,
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+        height: AppStyles.listRowHeight,
+        padding: const EdgeInsets.symmetric(horizontal: AppStyles.spacingM),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(17),
+          borderRadius: BorderRadius.circular(AppStyles.radiusM),
           gradient: const LinearGradient(
             colors: [Color(0xFFF7FFFB), Color(0xFFEFFAF5)],
           ),
@@ -1087,13 +1129,13 @@ class _FullArchiveButton extends StatelessWidget {
         child: const Row(
           children: [
             Icon(Icons.source_rounded, color: MemberProfileScreen._green),
-            SizedBox(width: 12),
+            SizedBox(width: AppStyles.spacingS),
             Expanded(
               child: Text(
                 '查看完整健康档案',
                 style: TextStyle(
                   fontSize: 17,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -1117,18 +1159,15 @@ class _ListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppStyles.cardPadding,
+        vertical: AppStyles.spacingXs,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7EEE9)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: .04),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        border: Border.all(color: AppColors.lightOutline),
+        boxShadow: AppStyles.cardShadow,
       ),
       child: Column(children: children),
     );
@@ -1143,17 +1182,17 @@ class _EmptyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 74,
+      height: AppStyles.listRowHeight,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7EEE9)),
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        border: Border.all(color: AppColors.lightOutline),
+        boxShadow: AppStyles.subtleShadow,
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 15,
+        style: AppStyles.footnote.copyWith(
           color: AppColors.textSecondary,
           fontWeight: FontWeight.w600,
         ),
@@ -1177,7 +1216,7 @@ class _RoundIcon extends StatelessWidget {
         color: color.withValues(alpha: .13),
         shape: BoxShape.circle,
       ),
-      child: Icon(icon, color: color, size: 25),
+      child: Icon(icon, color: color, size: 22),
     );
   }
 }
@@ -1197,9 +1236,8 @@ class _Tag extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
+        style: AppStyles.caption1.copyWith(
+          fontWeight: FontWeight.w600,
           color: MemberProfileScreen._green,
         ),
       ),
@@ -1214,49 +1252,23 @@ class _MemberPortrait extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isFemale = member.gender == 'female' || member.relation == 'mother';
     return Container(
-      width: 104,
-      height: 104,
-      padding: const EdgeInsets.all(7),
+      width: 72,
+      height: 72,
+      padding: const EdgeInsets.all(AppStyles.spacingXs),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: .08),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: MemberProfileScreen._line),
+        boxShadow: AppStyles.subtleShadow,
       ),
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isFemale
-                ? const [Color(0xFFFFEEF0), Color(0xFFFFDCD7)]
-                : const [Color(0xFFE8F5FF), Color(0xFFCFEAFF)],
-          ),
-        ),
-        child: CustomPaint(painter: _PortraitPainter(isFemale: isFemale)),
+      child: MemberAvatar(
+        name: member.name,
+        relation: member.relation,
+        size: 64,
+        borderColor: Colors.white,
+        borderWidth: 2,
       ),
-    );
-  }
-}
-
-class _FamilyArt extends StatelessWidget {
-  const _FamilyArt();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 150,
-      height: 95,
-      child: CustomPaint(painter: _FamilyPainter()),
     );
   }
 }
@@ -1286,180 +1298,4 @@ class _SparkPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _SparkPainter oldDelegate) =>
       oldDelegate.color != color;
-}
-
-class _PortraitPainter extends CustomPainter {
-  const _PortraitPainter({required this.isFemale});
-
-  final bool isFemale;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final skin = Paint()..color = const Color(0xFFFFBE9F);
-    final hair = Paint()
-      ..color = isFemale ? const Color(0xFF6A5650) : const Color(0xFF333438);
-    final shirt = Paint()
-      ..color = isFemale ? const Color(0xFFFF8F76) : const Color(0xFF5DADE9);
-
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(cx, size.height * .98),
-        width: size.width * .78,
-        height: size.height * .52,
-      ),
-      shirt,
-    );
-    if (isFemale) {
-      canvas.drawCircle(Offset(cx - 24, size.height * .36), 20, hair);
-      canvas.drawCircle(Offset(cx + 24, size.height * .36), 20, hair);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(cx, size.height * .42),
-          width: size.width * .65,
-          height: size.height * .58,
-        ),
-        hair,
-      );
-    } else {
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(cx - 32, size.height * .22, 64, 34),
-          const Radius.circular(22),
-        ),
-        hair,
-      );
-    }
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(cx, size.height * .50),
-        width: size.width * .46,
-        height: size.height * .52,
-      ),
-      skin,
-    );
-    final eye = Paint()..color = const Color(0xFF202225);
-    canvas.drawCircle(Offset(cx - 12, size.height * .48), 2.6, eye);
-    canvas.drawCircle(Offset(cx + 12, size.height * .48), 2.6, eye);
-    final smile = Paint()
-      ..color = const Color(0xFFD96D58)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(
-      Rect.fromCenter(
-        center: Offset(cx, size.height * .58),
-        width: 18,
-        height: 10,
-      ),
-      .15,
-      2.84,
-      false,
-      smile,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _PortraitPainter oldDelegate) =>
-      oldDelegate.isFemale != isFemale;
-}
-
-class _FamilyPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final green = Paint()
-      ..color = const Color(0xFF7BD4A4).withValues(alpha: .34)
-      ..style = PaintingStyle.fill;
-    final pale = Paint()
-      ..color = Colors.white.withValues(alpha: .7)
-      ..style = PaintingStyle.fill;
-    final coral = Paint()
-      ..color = const Color(0xFFFF9F92).withValues(alpha: .7)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(Offset(size.width * .46, size.height * .28), 25, pale);
-    canvas.drawCircle(Offset(size.width * .66, size.height * .36), 18, pale);
-
-    final roof = Paint()
-      ..color = const Color(0xFF70C997).withValues(alpha: .35)
-      ..strokeWidth = 5
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    canvas.drawLine(
-      Offset(size.width * .28, size.height * .58),
-      Offset(size.width * .52, size.height * .28),
-      roof,
-    );
-    canvas.drawLine(
-      Offset(size.width * .52, size.height * .28),
-      Offset(size.width * .77, size.height * .58),
-      roof,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(size.width * .34, size.height * .52, 58, 35),
-        const Radius.circular(8),
-      ),
-      Paint()..color = const Color(0xFFE6F8EF),
-    );
-
-    void person(double x, double h) {
-      canvas.drawCircle(Offset(x, size.height * .60), 4.5, green);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(
-            center: Offset(x, size.height * .73),
-            width: 9,
-            height: h,
-          ),
-          const Radius.circular(5),
-        ),
-        green,
-      );
-    }
-
-    person(size.width * .47, 22);
-    person(size.width * .56, 27);
-    person(size.width * .65, 18);
-
-    canvas.drawCircle(Offset(size.width * .82, size.height * .58), 14, coral);
-    canvas.drawCircle(Offset(size.width * .90, size.height * .58), 14, coral);
-    final heart = Path()
-      ..moveTo(size.width * .86, size.height * .79)
-      ..lineTo(size.width * .74, size.height * .60)
-      ..lineTo(size.width * .98, size.height * .60)
-      ..close();
-    canvas.drawPath(heart, coral);
-
-    final stem = Paint()
-      ..color = const Color(0xFF71C894).withValues(alpha: .5)
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-    for (final x in [size.width * .18, size.width * .96]) {
-      canvas.drawLine(
-        Offset(x, size.height * .84),
-        Offset(x, size.height * .30),
-        stem,
-      );
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(x - 7, size.height * .48),
-          width: 14,
-          height: 27,
-        ),
-        green,
-      );
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(x + 8, size.height * .62),
-          width: 14,
-          height: 27,
-        ),
-        green,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

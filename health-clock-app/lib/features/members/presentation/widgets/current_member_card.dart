@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_styles.dart';
 import 'member_avatar.dart';
 
 class CurrentMemberCard extends StatelessWidget {
@@ -34,123 +35,93 @@ class CurrentMemberCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+      margin: const EdgeInsets.fromLTRB(
+        AppStyles.screenMargin,
+        AppStyles.spacingXs,
+        AppStyles.screenMargin,
+        AppStyles.spacingM,
+      ),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.statusGradientStart,
-            AppColors.statusGradientEnd,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: AppColors.mintSoft.withValues(alpha: 0.6),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.mintDeep.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppStyles.radiusXl),
+        border: Border.all(color: AppColors.lightOutline),
+        boxShadow: AppStyles.cardShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: _buildLabel(),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppStyles.radiusXl),
+        child: CustomPaint(
+          painter: _CardPatternPainter(),
+          child: Padding(
+            padding: const EdgeInsets.all(AppStyles.cardPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildMain(context),
+                const SizedBox(height: AppStyles.spacingM),
+                _buildStats(),
+                const SizedBox(height: AppStyles.spacingS),
+                _buildActions(context),
+              ],
+            ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 12, 14),
-            child: _buildMain(context),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: _buildStats(),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
-            child: _buildActions(context),
-          ),
-        ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildLabel() {
-    return Row(
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: const BoxDecoration(
-            color: AppColors.mintDeep,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 6),
-        const Text(
-          '当前成员',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: AppColors.mintDeep,
-          ),
-        ),
-      ],
     );
   }
 
   Widget _buildMain(BuildContext context) {
     final ageText = age != null ? '$relationLabel · $age岁' : relationLabel;
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        MemberAvatarWithBadge(
+        MemberAvatar(
           name: name,
           relation: relation,
-          badgeText: '当前成员',
-          size: 78,
+          size: 64,
+          borderColor: Colors.white,
+          borderWidth: 2,
         ),
-        const SizedBox(width: 14),
+        const SizedBox(width: AppStyles.spacingM),
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    height: 1.1,
-                    letterSpacing: -0.4,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppStyles.headline.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ),
+                  if (isCurrent) ...[
+                    const SizedBox(width: AppStyles.spacingS),
+                    const _CurrentBadge(),
+                  ],
+                ],
+              ),
+              const SizedBox(height: AppStyles.spacingXs),
+              Text(
+                ageText,
+                style: AppStyles.footnote.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  ageText,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _buildPending(context),
-              ],
-            ),
+              ),
+              const SizedBox(height: AppStyles.spacingS),
+              _buildPending(context),
+            ],
           ),
         ),
+        const SizedBox(width: AppStyles.spacingS),
         const SizedBox(
-          width: 80,
-          height: 80,
+          width: 68,
+          height: 68,
           child: _FamilyIllustration(),
         ),
       ],
@@ -160,10 +131,8 @@ class CurrentMemberCard extends StatelessWidget {
   Widget _buildPending(BuildContext context) {
     return RichText(
       text: TextSpan(
-        style: const TextStyle(
-          fontSize: 12.5,
+        style: AppStyles.footnote.copyWith(
           color: AppColors.textSecondary,
-          height: 1.3,
         ),
         children: [
           const TextSpan(text: '近期有 '),
@@ -171,7 +140,7 @@ class CurrentMemberCard extends StatelessWidget {
             text: '$pendingCount',
             style: const TextStyle(
               color: AppColors.danger,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const TextSpan(text: ' 条待关注事项'),
@@ -181,44 +150,49 @@ class CurrentMemberCard extends StatelessWidget {
   }
 
   Widget _buildStats() {
-    return Row(
-      children: [
-        const SizedBox(width: 4),
-        Expanded(
-          child: _StatPill(
-            icon: Icons.notifications_active_rounded,
-            iconColor: AppColors.warmAmber,
-            label: '提醒',
-            value: '$reminderCount',
+    return Container(
+      height: AppStyles.compactListRowHeight,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FBF9),
+        borderRadius: BorderRadius.circular(AppStyles.radiusM),
+        border: Border.all(color: AppColors.lightOutline),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _StatPill(
+              icon: Icons.notifications_active_rounded,
+              iconColor: AppColors.warmAmber,
+              label: '提醒',
+              value: '$reminderCount',
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _StatPill(
-            icon: Icons.description_rounded,
-            iconColor: AppColors.careBlue,
-            label: '文档',
-            value: '$documentCount',
+          const _VerticalDivider(),
+          Expanded(
+            child: _StatPill(
+              icon: Icons.description_rounded,
+              iconColor: AppColors.careBlue,
+              label: '文档',
+              value: '$documentCount',
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _StatPill(
-            icon: Icons.monitor_heart_rounded,
-            iconColor: AppColors.mintDeep,
-            label: '指标',
-            value: '$metricCount',
+          const _VerticalDivider(),
+          Expanded(
+            child: _StatPill(
+              icon: Icons.monitor_heart_rounded,
+              iconColor: AppColors.mintDeep,
+              label: '指标',
+              value: '$metricCount',
+            ),
           ),
-        ),
-        const SizedBox(width: 4),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildActions(BuildContext context) {
     return Row(
       children: [
-        const SizedBox(width: 4),
         Expanded(
           child: _OutlinedAction(
             icon: Icons.assignment_outlined,
@@ -226,7 +200,7 @@ class CurrentMemberCard extends StatelessWidget {
             onTap: onViewProfile,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppStyles.spacingS),
         Expanded(
           child: _FilledAction(
             icon: isCurrent ? Icons.check_circle_rounded : Icons.swap_horiz,
@@ -234,8 +208,45 @@ class CurrentMemberCard extends StatelessWidget {
             onTap: isCurrent ? null : onSetCurrent,
           ),
         ),
-        const SizedBox(width: 4),
       ],
+    );
+  }
+}
+
+class _CurrentBadge extends StatelessWidget {
+  const _CurrentBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppStyles.spacingS,
+        vertical: AppStyles.spacingXs,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.mintSoft,
+        borderRadius: BorderRadius.circular(AppStyles.radiusFull),
+      ),
+      child: Text(
+        '当前',
+        style: AppStyles.caption1.copyWith(
+          color: AppColors.mintDeep,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _VerticalDivider extends StatelessWidget {
+  const _VerticalDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppStyles.dividerThin,
+      height: AppStyles.spacingL,
+      color: AppColors.lightOutline,
     );
   }
 }
@@ -255,44 +266,89 @@ class _StatPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: iconColor, size: 14),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppStyles.spacingS),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 18),
+            const SizedBox(width: AppStyles.spacingXs),
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: label),
+                  const TextSpan(text: '  '),
+                  TextSpan(
+                    text: value,
+                    style: AppStyles.headline.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-              height: 1.0,
+              maxLines: 1,
+              style: AppStyles.footnote.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
+
+class _CardPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final mint = Paint()
+      ..color = AppColors.mintSoft.withValues(alpha: 0.55)
+      ..style = PaintingStyle.fill;
+    final blue = Paint()
+      ..color = AppColors.careBlueSoft.withValues(alpha: 0.38)
+      ..style = PaintingStyle.fill;
+    final coral = Paint()
+      ..color = AppColors.coral.withValues(alpha: 0.12)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(Offset(size.width * .84, size.height * .18), 46, mint);
+    canvas.drawCircle(Offset(size.width * .96, size.height * .46), 28, blue);
+    canvas.drawCircle(Offset(size.width * .70, size.height * .04), 20, coral);
+
+    final line = Paint()
+      ..color = AppColors.mintDeep.withValues(alpha: 0.12)
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    final path = Path()
+      ..moveTo(size.width * .58, size.height * .12)
+      ..cubicTo(
+        size.width * .68,
+        size.height * .02,
+        size.width * .78,
+        size.height * .16,
+        size.width * .88,
+        size.height * .08,
+      );
+    canvas.drawPath(path, line);
+
+    final dotPaint = Paint()
+      ..color = AppColors.mintDeep.withValues(alpha: 0.14)
+      ..style = PaintingStyle.fill;
+    for (final point in [
+      Offset(size.width * .90, size.height * .20),
+      Offset(size.width * .94, size.height * .28),
+      Offset(size.width * .86, size.height * .34),
+    ]) {
+      canvas.drawCircle(point, 3, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _OutlinedAction extends StatelessWidget {
@@ -310,27 +366,26 @@ class _OutlinedAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppStyles.radiusM),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppStyles.radiusM),
         child: Container(
-          height: 44,
+          height: AppStyles.minTouchTarget,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppStyles.radiusM),
             border: Border.all(color: AppColors.lightOutline),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 16, color: AppColors.textPrimary),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppStyles.spacingXs),
               Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
+                style: AppStyles.footnote.copyWith(
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -357,22 +412,21 @@ class _FilledAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.mintDeep,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppStyles.radiusM),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppStyles.radiusM),
         child: SizedBox(
-          height: 44,
+          height: AppStyles.minTouchTarget,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 16, color: Colors.white),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppStyles.spacingXs),
               Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
+                style: AppStyles.footnote.copyWith(
+                  fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),
               ),
@@ -436,8 +490,10 @@ class _FamilyIllustrationPainter extends CustomPainter {
     final cx = w * 0.50;
     final cy = h * 0.55;
 
-    final adultPaint = Paint()..color = AppColors.mintDeep.withValues(alpha: 0.7);
-    final childPaint = Paint()..color = AppColors.warmAmber.withValues(alpha: 0.85);
+    final adultPaint = Paint()
+      ..color = AppColors.mintDeep.withValues(alpha: 0.7);
+    final childPaint = Paint()
+      ..color = AppColors.warmAmber.withValues(alpha: 0.85);
 
     canvas.drawCircle(Offset(cx - w * 0.13, cy), 4, adultPaint);
     canvas.drawCircle(Offset(cx + w * 0.13, cy), 4, adultPaint);

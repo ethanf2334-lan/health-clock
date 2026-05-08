@@ -27,7 +27,7 @@ class ProfileServiceGrid extends StatelessWidget {
             '我的服务',
             style: TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),

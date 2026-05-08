@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_styles.dart';
 
 class MembersHeader extends StatelessWidget {
   const MembersHeader({
@@ -17,7 +18,12 @@ class MembersHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.screenMargin,
+        AppStyles.spacingS,
+        AppStyles.screenMargin,
+        AppStyles.spacingM,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -27,62 +33,61 @@ class MembersHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
+                  style: AppStyles.screenTitle.copyWith(
                     color: AppColors.textPrimary,
-                    height: 1.2,
-                    letterSpacing: -0.4,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppStyles.spacingXs),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    fontSize: 13,
+                  style: AppStyles.footnote.copyWith(
                     color: AppColors.textSecondary,
-                    height: 1.3,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppStyles.spacingS),
           Material(
             color: AppColors.cardWhite,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppStyles.radiusFull),
             ),
             child: InkWell(
               onTap: onAdd,
-              borderRadius: BorderRadius.circular(999),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: AppColors.lightOutline),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.person_add_alt_1_rounded,
-                      size: 16,
-                      color: AppColors.mintDeep,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      '添加',
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
+              borderRadius: BorderRadius.circular(AppStyles.radiusFull),
+              child: ConstrainedBox(
+                constraints:
+                    const BoxConstraints(minHeight: AppStyles.minTouchTarget),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppStyles.spacingM,
+                    vertical: AppStyles.spacingS,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardWhite,
+                    borderRadius: BorderRadius.circular(AppStyles.radiusFull),
+                    border: Border.all(color: AppColors.lightOutline),
+                    boxShadow: AppStyles.subtleShadow,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.person_add_alt_1_rounded,
+                        size: 20,
                         color: AppColors.mintDeep,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: AppStyles.spacingXs),
+                      Text(
+                        '添加',
+                        style: AppStyles.footnote.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.mintDeep,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

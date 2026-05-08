@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_styles.dart';
 import '../../../core/services/auth_service.dart';
+import '../../members/presentation/widgets/member_avatar.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -35,13 +37,18 @@ class ProfileScreen extends ConsumerWidget {
       ),
       child: ListView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
+        padding: const EdgeInsets.fromLTRB(
+          AppStyles.spacingM,
+          AppStyles.spacingM,
+          AppStyles.spacingM,
+          AppStyles.spacingL,
+        ),
         children: [
           _Header(
             onNotificationTap: () => context.push('/notifications/permission'),
             onSettingsTap: () => context.push('/settings/general'),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: AppStyles.spacingL),
           _ProfileCard(
             name: _displayName(auth),
             phoneDisplay: _phoneLine(auth),
@@ -49,7 +56,7 @@ class ProfileScreen extends ConsumerWidget {
             accountOk: !isGuest,
             onTap: () => context.push('/account'),
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: AppStyles.spacingL),
           _MenuCard(
             children: [
               _MenuTile(
@@ -66,14 +73,14 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppStyles.spacingM),
           _MenuCard(
             children: [
               _MenuTile(
                 icon: Icons.help_outline_rounded,
                 iconColor: _blue,
                 title: '帮助与反馈',
-                onTap: () => _showHelp(context),
+                onTap: () => context.push('/help-feedback'),
               ),
               _MenuTile(
                 icon: Icons.info_outline_rounded,
@@ -101,7 +108,7 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 26),
+          const SizedBox(height: AppStyles.spacingM),
           _LogoutButton(
             label: isGuest ? '退出体验' : '退出登录',
             onTap: () => _confirmSignOut(context, ref, isGuest),
@@ -145,22 +152,6 @@ class ProfileScreen extends ConsumerWidget {
     return '${p.substring(0, 3)}****${p.substring(7)}';
   }
 
-  void _showHelp(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('帮助与反馈'),
-        content: const Text('如遇问题，请通过项目仓库 issue 与我们联系，或在「关于我们」中查看文档入口。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('知道了'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _confirmSignOut(
     BuildContext context,
     WidgetRef ref,
@@ -168,27 +159,135 @@ class ProfileScreen extends ConsumerWidget {
   ) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(isGuest ? '退出体验' : '退出登录'),
-        content: Text(isGuest ? '回到登录界面？' : '确定退出当前账号？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              '确定',
-              style: TextStyle(color: isGuest ? null : _red),
-            ),
-          ),
-        ],
+      builder: (dialogContext) => _AppDialog(
+        icon: Icons.logout_rounded,
+        iconColor: _red,
+        iconBg: AppColors.coralSoft,
+        title: isGuest ? '退出体验' : '退出登录',
+        content: isGuest ? '确认回到登录界面吗？' : '确认退出当前账号吗？退出后仍可再次登录。',
+        primaryLabel: '确定',
+        primaryColor: isGuest ? AppColors.mintDeep : _red,
+        onPrimary: () => Navigator.pop(dialogContext, true),
+        secondaryLabel: '取消',
+        onSecondary: () => Navigator.pop(dialogContext, false),
       ),
     );
     if (ok == true) {
       await ref.read(authProvider.notifier).signOut();
     }
+  }
+}
+
+class _AppDialog extends StatelessWidget {
+  const _AppDialog({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.content,
+    required this.primaryLabel,
+    required this.onPrimary,
+    this.iconBg,
+    this.primaryColor = AppColors.mintDeep,
+    this.secondaryLabel,
+    this.onSecondary,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final Color? iconBg;
+  final String title;
+  final String content;
+  final String primaryLabel;
+  final Color primaryColor;
+  final VoidCallback onPrimary;
+  final String? secondaryLabel;
+  final VoidCallback? onSecondary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppStyles.radiusXl),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppStyles.spacingM),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: iconBg ?? iconColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppStyles.radiusM),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(width: AppStyles.spacingS),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: AppStyles.headline.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppStyles.spacingM),
+            Text(
+              content,
+              style: AppStyles.footnote.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: AppStyles.spacingM),
+            Row(
+              children: [
+                if (secondaryLabel != null && onSecondary != null) ...[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: onSecondary,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.lightOutline),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppStyles.radiusFull),
+                        ),
+                      ),
+                      child: Text(secondaryLabel!),
+                    ),
+                  ),
+                  const SizedBox(width: AppStyles.spacingS),
+                ],
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: onPrimary,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppStyles.radiusFull),
+                      ),
+                    ),
+                    child: Text(primaryLabel),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -206,13 +305,10 @@ class _Header extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Expanded(
+        Expanded(
           child: Text(
             '我的',
-            style: TextStyle(
-              fontSize: 38,
-              height: 1.05,
-              fontWeight: FontWeight.w900,
+            style: AppStyles.screenTitle.copyWith(
               color: AppColors.textPrimary,
             ),
           ),
@@ -222,7 +318,7 @@ class _Header extends StatelessWidget {
           showDot: true,
           onTap: onNotificationTap,
         ),
-        const SizedBox(width: 18),
+        const SizedBox(width: AppStyles.spacingM),
         _HeaderIcon(
           icon: Icons.settings_outlined,
           onTap: onSettingsTap,
@@ -247,15 +343,15 @@ class _HeaderIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppStyles.radiusFull),
       child: SizedBox(
-        width: 38,
-        height: 38,
+        width: AppStyles.minTouchTarget,
+        height: AppStyles.minTouchTarget,
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.center,
           children: [
-            Icon(icon, color: AppColors.textPrimary, size: 33),
+            Icon(icon, color: AppColors.textPrimary, size: 28),
             if (showDot)
               Positioned(
                 right: 4,
@@ -295,20 +391,25 @@ class _ProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppStyles.radiusXl),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 360;
-          final avatarSize = compact ? 88.0 : 100.0;
-          final artWidth = compact ? 94.0 : 112.0;
+          final avatarSize = compact ? 72.0 : 80.0;
+          final artWidth = compact ? 78.0 : 88.0;
           final artRightInset = compact ? -12.0 : -8.0;
-          final textRightInset = compact ? 56.0 : 72.0;
+          final textRightInset = compact ? 40.0 : 56.0;
 
           return Container(
-            height: 158,
-            padding: EdgeInsets.fromLTRB(18, 18, compact ? 14 : 16, 18),
+            height: 128,
+            padding: EdgeInsets.fromLTRB(
+              AppStyles.spacingM,
+              AppStyles.spacingM,
+              compact ? AppStyles.spacingS : AppStyles.spacingM,
+              AppStyles.spacingM,
+            ),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppStyles.radiusXl),
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -318,8 +419,8 @@ class _ProfileCard extends StatelessWidget {
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF3D8B66).withValues(alpha: .10),
-                  blurRadius: 24,
-                  offset: const Offset(0, 12),
+                  blurRadius: 16,
+                  offset: const Offset(0, AppStyles.spacingS),
                 ),
               ],
             ),
@@ -336,7 +437,9 @@ class _ProfileCard extends StatelessWidget {
                 Row(
                   children: [
                     _PortraitAvatar(size: avatarSize),
-                    SizedBox(width: compact ? 16 : 20),
+                    SizedBox(
+                      width: compact ? AppStyles.spacingS : AppStyles.spacingM,
+                    ),
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.only(right: textRightInset),
@@ -352,9 +455,9 @@ class _ProfileCard extends StatelessWidget {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      fontSize: compact ? 19 : 20,
+                                      fontSize: AppStyles.headline.fontSize,
                                       height: 1.15,
-                                      fontWeight: FontWeight.w900,
+                                      fontWeight: FontWeight.w600,
                                       color: AppColors.textPrimary,
                                     ),
                                   ),
@@ -365,34 +468,34 @@ class _ProfileCard extends StatelessWidget {
                                 ],
                               ],
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: AppStyles.spacingS),
                             Text(
                               phoneDisplay,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: compact ? 18 : 19,
+                                fontSize: AppStyles.subhead.fontSize,
                                 height: 1.1,
                                 color: AppColors.textSecondary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppStyles.spacingS),
                             Row(
                               children: [
                                 const Icon(
                                   Icons.apple_rounded,
-                                  size: 20,
+                                  size: 18,
                                   color: AppColors.textPrimary,
                                 ),
-                                const SizedBox(width: 7),
+                                const SizedBox(width: AppStyles.spacingXs),
                                 Expanded(
                                   child: Text(
                                     bindingLine,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      fontSize: compact ? 14 : 15,
+                                      fontSize: AppStyles.footnote.fontSize,
                                       color: AppColors.textSecondary,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -443,7 +546,7 @@ class _AccountBadge extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11.5,
                 height: 1,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: ProfileScreen._green,
               ),
             ),
@@ -464,13 +567,13 @@ class _MenuCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
         border: Border.all(color: const Color(0xFFE9F0EC)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: .035),
-            blurRadius: 16,
-            offset: const Offset(0, 7),
+            blurRadius: 12,
+            offset: const Offset(0, AppStyles.spacingXs),
           ),
         ],
       ),
@@ -485,7 +588,7 @@ class _MenuCard extends StatelessWidget {
       if (i != items.length - 1) {
         result.add(
           const Padding(
-            padding: EdgeInsets.only(left: 34, right: 34),
+            padding: EdgeInsets.only(left: 64, right: 32),
             child: Divider(height: 1, color: ProfileScreen._line),
           ),
         );
@@ -512,26 +615,24 @@ class _MenuTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(AppStyles.radiusL),
       child: SizedBox(
-        height: 74,
+        height: 52,
         child: Row(
           children: [
-            const SizedBox(width: 32),
+            const SizedBox(width: AppStyles.spacingL),
             SizedBox(
-              width: 38,
-              child: Icon(icon, color: iconColor, size: 28),
+              width: AppStyles.spacingXl,
+              child: Icon(icon, color: iconColor, size: 24),
             ),
-            const SizedBox(width: 18),
+            const SizedBox(width: AppStyles.spacingM),
             Expanded(
               child: Text(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 19,
-                  height: 1.2,
-                  fontWeight: FontWeight.w700,
+                style: AppStyles.subhead.copyWith(
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -539,9 +640,9 @@ class _MenuTile extends StatelessWidget {
             const Icon(
               Icons.chevron_right_rounded,
               color: AppColors.textTertiary,
-              size: 30,
+              size: 24,
             ),
-            const SizedBox(width: 26),
+            const SizedBox(width: AppStyles.spacingL),
           ],
         ),
       ),
@@ -559,18 +660,18 @@ class _LogoutButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(AppStyles.radiusL),
       child: Container(
-        height: 70,
+        height: AppStyles.primaryButtonHeight,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppStyles.radiusL),
           color: const Color(0xFFFFFAF9),
           border: Border.all(color: const Color(0xFFFFD9D7)),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFFE53935).withValues(alpha: .035),
               blurRadius: 12,
-              offset: const Offset(0, 5),
+              offset: const Offset(0, AppStyles.spacingXs),
             ),
           ],
         ),
@@ -580,15 +681,13 @@ class _LogoutButton extends StatelessWidget {
             const Icon(
               Icons.logout_rounded,
               color: ProfileScreen._red,
-              size: 28,
+              size: 22,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppStyles.spacingS),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 20,
-                height: 1.2,
-                fontWeight: FontWeight.w800,
+              style: AppStyles.subhead.copyWith(
+                fontWeight: FontWeight.w600,
                 color: ProfileScreen._red,
               ),
             ),
@@ -606,116 +705,12 @@ class _PortraitAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      padding: const EdgeInsets.all(7),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF4D9FDB).withValues(alpha: .16),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFE8F5FF), Color(0xFFCFEAFF)],
-          ),
-        ),
-        child: const _PortraitFace(),
-      ),
-    );
-  }
-}
-
-class _PortraitFace extends StatelessWidget {
-  const _PortraitFace();
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Positioned(
-          bottom: -7,
-          child: Container(
-            width: 80,
-            height: 42,
-            decoration: const BoxDecoration(
-              color: Color(0xFF5DADE9),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(42)),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 22,
-          child: Container(
-            width: 53,
-            height: 58,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFC2A5),
-              borderRadius: BorderRadius.circular(28),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 16,
-          child: Container(
-            width: 64,
-            height: 34,
-            decoration: const BoxDecoration(
-              color: Color(0xFF333438),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(34),
-                topRight: Radius.circular(24),
-                bottomLeft: Radius.circular(13),
-                bottomRight: Radius.circular(28),
-              ),
-            ),
-          ),
-        ),
-        Positioned(top: 40, left: 36, child: _Eye()),
-        Positioned(top: 40, right: 36, child: _Eye()),
-        Positioned(
-          top: 56,
-          child: Container(
-            width: 16,
-            height: 8,
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: const Color(0xFFE47D65).withValues(alpha: .9),
-                  width: 2,
-                ),
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _Eye extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 5,
-      height: 9,
-      decoration: BoxDecoration(
-        color: const Color(0xFF25262A),
-        borderRadius: BorderRadius.circular(8),
-      ),
+    return MemberAvatar(
+      name: '用户',
+      relation: 'self',
+      size: size,
+      borderColor: Colors.white,
+      borderWidth: 4,
     );
   }
 }

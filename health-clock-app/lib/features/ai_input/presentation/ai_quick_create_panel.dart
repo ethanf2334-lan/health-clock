@@ -7,6 +7,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../app/theme/app_styles.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../shared/models/health_event.dart';
 import '../../calendar/presentation/event_form_screen.dart';
@@ -89,7 +90,12 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                 _scrollToBottom();
               },
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+                padding: const EdgeInsets.fromLTRB(
+                  AppStyles.spacingM,
+                  AppStyles.spacingS,
+                  AppStyles.spacingM,
+                  AppStyles.spacingS,
+                ),
                 child: Row(
                   children: [
                     const Icon(
@@ -97,7 +103,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                       size: 18,
                       color: AppColors.lavender,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppStyles.spacingS),
                     Expanded(
                       child: Text(
                         'AI 创建提醒',
@@ -110,10 +116,10 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                       '点这里输入',
                       style: TextStyle(
                         color: colorScheme.onSurfaceVariant,
-                        fontSize: 13,
+                        fontSize: AppStyles.footnote.fontSize,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppStyles.spacingXs),
                     const Icon(Icons.keyboard_arrow_up),
                   ],
                 ),
@@ -179,32 +185,48 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     return DecoratedBox(
       decoration: const BoxDecoration(
         color: Color(0xFFFDFEFE),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
       ),
       child: SafeArea(
         top: false,
         child: Column(
           children: [
-            const SizedBox(height: 14),
+            const SizedBox(height: AppStyles.spacingXs),
             Container(
-              width: 56,
-              height: 6,
+              width: 48,
+              height: AppStyles.spacingXs,
               decoration: BoxDecoration(
                 color: const Color(0xFFB8C0C3),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppStyles.radiusFull),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: const EdgeInsets.fromLTRB(
+                AppStyles.spacingM,
+                AppStyles.spacingS,
+                AppStyles.spacingM,
+                0,
+              ),
               child: _buildDesignedHeader(),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: const EdgeInsets.fromLTRB(
+                AppStyles.spacingM,
+                AppStyles.spacingXs,
+                AppStyles.spacingM,
+                0,
+              ),
               child: _buildExamples(),
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  AppStyles.spacingM,
+                  AppStyles.spacingXs,
+                  AppStyles.spacingM,
+                  0,
+                ),
                 child: _buildDesignedHistory(),
               ),
             ),
@@ -220,23 +242,23 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 62,
-          height: 62,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xFFC5B8FF),
-                Color(0xFF6D66F6),
+                Color(0xFFEAF1FF),
+                Color(0xFFDCE7FF),
               ],
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.lavender.withValues(alpha: 0.34),
-                blurRadius: 18,
-                offset: const Offset(0, 7),
+                color: AppColors.careBlue.withValues(alpha: 0.12),
+                blurRadius: 12,
+                offset: const Offset(0, AppStyles.spacingXs),
               ),
             ],
           ),
@@ -246,53 +268,55 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
               Text(
                 'AI',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
+                  color: AppColors.careBlue,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               Positioned(
-                right: 12,
-                top: 10,
-                child: Icon(Icons.auto_awesome, color: Colors.white, size: 17),
+                right: 10,
+                top: 9,
+                child: Icon(
+                  Icons.auto_awesome,
+                  color: AppColors.careBlue,
+                  size: 15,
+                ),
               ),
               Positioned(
-                right: 9,
-                bottom: 17,
-                child: Icon(Icons.auto_awesome, color: Colors.white, size: 10),
+                right: 8,
+                bottom: 15,
+                child: Icon(
+                  Icons.auto_awesome,
+                  color: AppColors.careBlue,
+                  size: 10,
+                ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 16),
-        const Expanded(
+        const SizedBox(width: AppStyles.spacingS),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'AI 创建提醒',
-                style: TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w900,
+                style: AppStyles.subhead.copyWith(
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
-                  height: 1.1,
-                  letterSpacing: 0,
                 ),
               ),
-              SizedBox(height: 7),
+              const SizedBox(height: AppStyles.spacingXs),
               Text(
                 '用一句话描述你想提醒的健康事项',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                style: AppStyles.caption1.copyWith(
                   color: AppColors.textSecondary,
-                  height: 1.1,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppStyles.spacingS),
         Material(
           color: Colors.white,
           shape: const CircleBorder(),
@@ -300,22 +324,22 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
             onTap: () => Navigator.of(context).maybePop(),
             customBorder: const CircleBorder(),
             child: Container(
-              width: 50,
-              height: 50,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.lightOutline),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    blurRadius: 16,
+                    offset: const Offset(0, AppStyles.spacingXs),
                   ),
                 ],
               ),
               child: const Icon(
                 Icons.close_rounded,
-                size: 30,
+                size: 22,
                 color: AppColors.textSecondary,
               ),
             ),
@@ -361,13 +385,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
       return ListView(
         padding: EdgeInsets.zero,
         children: [
-          _buildDesignedUserBubble('帮妈妈设置每天晚上8点吃降压药'),
-          const SizedBox(height: 18),
-          _buildDesignedAssistantText(
-            '好的，已为您解析出以下提醒信息，请确认是否正确：',
-          ),
-          const SizedBox(height: 18),
-          _buildDraftCard(_demoDraftEvent()),
+          _buildDesignedEmptyState(),
         ],
       );
     }
@@ -382,30 +400,75 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     );
   }
 
+  Widget _buildDesignedEmptyState() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppStyles.spacingS,
+        vertical: AppStyles.spacingS,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.56),
+        borderRadius: BorderRadius.circular(AppStyles.radiusM),
+        border:
+            Border.all(color: AppColors.lightOutline.withValues(alpha: 0.7)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: AppColors.amberSoft,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.warmAmber.withValues(alpha: 0.18),
+              ),
+            ),
+            child: const Icon(
+              Icons.lightbulb_outline_rounded,
+              color: AppColors.warmAmber,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: AppStyles.spacingS),
+          Expanded(
+            child: Text(
+              '输入一句话，我会帮你整理成可确认的健康提醒。',
+              style: AppStyles.footnote.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDesignedChatEntry(_AIChatEntry entry) {
     if (entry.role == _AIChatRole.user) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 18),
+        padding: const EdgeInsets.only(bottom: AppStyles.spacingM),
         child: _buildDesignedUserBubble(entry.text),
       );
     }
     if (entry.event != null) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 18),
+        padding: const EdgeInsets.only(bottom: AppStyles.spacingM),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildDesignedAssistantText(
               '好的，已为您解析出以下提醒信息，请确认是否正确：',
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: AppStyles.spacingM),
             _buildDraftCard(entry.event!),
           ],
         ),
       );
     }
     return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.only(bottom: AppStyles.spacingS),
       child: _buildDesignedAssistantText(entry.text),
     );
   }
@@ -418,30 +481,31 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
         Flexible(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 330),
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppStyles.spacingM,
+              vertical: AppStyles.spacingS,
+            ),
             decoration: BoxDecoration(
               color: const Color(0xFFDFF5EC),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(AppStyles.radiusL),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.mintDeep.withValues(alpha: 0.10),
                   blurRadius: 18,
-                  offset: const Offset(0, 7),
+                  offset: const Offset(0, AppStyles.spacingS),
                 ),
               ],
             ),
             child: Text(
               text,
-              style: const TextStyle(
-                fontSize: 17,
+              style: AppStyles.subhead.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
-                height: 1.28,
               ),
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppStyles.spacingS),
         const _SmallAvatar(),
       ],
     );
@@ -452,14 +516,17 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SparkAvatar(size: 42),
-        const SizedBox(width: 10),
+        const _SparkAvatar(size: 36),
+        const SizedBox(width: AppStyles.spacingS),
         Expanded(
           child: Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppStyles.spacingM,
+              vertical: AppStyles.spacingS,
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(AppStyles.radiusL),
               border: Border.all(
                 color: isError ? AppColors.coralSoft : AppColors.lightOutline,
               ),
@@ -467,17 +534,17 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.045),
                   blurRadius: 18,
-                  offset: const Offset(0, 7),
+                  offset: const Offset(0, AppStyles.spacingS),
                 ),
               ],
             ),
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: AppStyles.footnote.fontSize,
                 fontWeight: FontWeight.w600,
                 color: isError ? AppColors.danger : AppColors.textPrimary,
-                height: 1.35,
+                height: AppStyles.subhead.height,
               ),
             ),
           ),
@@ -488,22 +555,27 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
 
   Widget _buildDesignedComposerArea() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.spacingM,
+        AppStyles.spacingXs,
+        AppStyles.spacingM,
+        AppStyles.spacingS,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Container(
-              height: 58,
+              height: 44,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(AppStyles.radiusFull),
                 border: Border.all(color: AppColors.lightOutline),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 18,
-                    offset: const Offset(0, 7),
+                    offset: const Offset(0, AppStyles.spacingS),
                   ),
                 ],
               ),
@@ -520,7 +592,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                       decoration: const InputDecoration(
                         hintText: '继续补充或修改提醒...',
                         hintStyle: TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textTertiary,
                         ),
@@ -528,7 +600,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         filled: false,
-                        contentPadding: EdgeInsets.fromLTRB(22, 16, 8, 16),
+                        contentPadding: EdgeInsets.fromLTRB(16, 12, 8, 12),
                       ),
                     ),
                   ),
@@ -536,9 +608,9 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                     onTap: (_isProcessing || _saving) ? null : _toggleListening,
                     customBorder: const CircleBorder(),
                     child: Container(
-                      width: 44,
-                      height: 44,
-                      margin: const EdgeInsets.only(right: 7),
+                      width: 38,
+                      height: 38,
+                      margin: const EdgeInsets.only(right: AppStyles.spacingXs),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF8FAF9),
                         shape: BoxShape.circle,
@@ -547,7 +619,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                       child: Icon(
                         _isListening ? Icons.stop_rounded : Icons.mic_none,
                         color: AppColors.textSecondary,
-                        size: 25,
+                        size: 20,
                       ),
                     ),
                   ),
@@ -555,15 +627,15 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppStyles.spacingS),
           InkWell(
             onTap: (_isProcessing || _saving)
                 ? null
                 : () => _handleSubmit(fromVoice: false),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(AppStyles.radiusM),
             child: Container(
-              width: 76,
-              height: 58,
+              width: 56,
+              height: 44,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
@@ -573,12 +645,12 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                     Color(0xFF8454EE),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(AppStyles.radiusM),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.lavender.withValues(alpha: 0.35),
                     blurRadius: 18,
-                    offset: const Offset(0, 8),
+                    offset: const Offset(0, AppStyles.spacingS),
                   ),
                 ],
               ),
@@ -596,7 +668,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                   : const Icon(
                       Icons.auto_awesome_rounded,
                       color: Colors.white,
-                      size: 31,
+                      size: 22,
                     ),
             ),
           ),
@@ -763,57 +835,23 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     }
 
     if (!widget.compact) {
-      return Row(
-        children: [
-          Expanded(
-            child: SizedBox(
-              height: 36,
-              child: ListView.separated(
-                clipBehavior: Clip.none,
-                scrollDirection: Axis.horizontal,
-                itemCount: _examples.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (_, index) {
-                  final example = _examples[index];
-                  return _ExampleChip(
-                    label: example,
-                    enabled: !_isProcessing && !_saving,
-                    onTap: () => _useExample(example),
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Material(
-            color: Colors.white,
-            shape: const CircleBorder(),
-            child: InkWell(
-              onTap: _entries.isEmpty ? null : _clearHistory,
-              customBorder: const CircleBorder(),
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.lightOutline),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.035),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.refresh_rounded,
-                  color: AppColors.textSecondary,
-                  size: 24,
-                ),
-              ),
-            ),
-          ),
-        ],
+      return SizedBox(
+        height: 32,
+        child: ListView.separated(
+          clipBehavior: Clip.none,
+          scrollDirection: Axis.horizontal,
+          itemCount: _examples.length,
+          separatorBuilder: (_, __) =>
+              const SizedBox(width: AppStyles.spacingS),
+          itemBuilder: (_, index) {
+            final example = _examples[index];
+            return _ExampleChip(
+              label: example,
+              enabled: !_isProcessing && !_saving,
+              onTap: () => _useExample(example),
+            );
+          },
+        ),
       );
     }
 
@@ -929,7 +967,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -1006,7 +1044,8 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     final note = (event['description'] as String?)?.trim();
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+      padding: const EdgeInsets.all(AppStyles.spacingS),
+      margin: const EdgeInsets.only(right: AppStyles.spacingM),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -1016,13 +1055,13 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
             Color(0xFFF8FCFF),
           ],
         ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
         border: Border.all(color: const Color(0xFFDCD8FF)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.lavender.withValues(alpha: 0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: AppColors.lavender.withValues(alpha: 0.06),
+            blurRadius: 14,
+            offset: const Offset(0, AppStyles.spacingXs),
           ),
         ],
       ),
@@ -1031,19 +1070,18 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  '待确认提醒',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
+                  '待确认',
+                  style: AppStyles.footnote.copyWith(
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                     height: 1.1,
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.fromLTRB(11, 5, 11, 5),
+                padding: const EdgeInsets.fromLTRB(9, 4, 9, 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.86),
                   borderRadius: BorderRadius.circular(999),
@@ -1054,15 +1092,15 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                   children: [
                     Icon(
                       Icons.auto_awesome_rounded,
-                      size: 15,
+                      size: 13,
                       color: Color(0xFF7B6CF6),
                     ),
-                    SizedBox(width: 5),
+                    SizedBox(width: 4),
                     Text(
                       'AI 解析',
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                         color: Color(0xFF7B6CF6),
                       ),
                     ),
@@ -1071,61 +1109,63 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppStyles.spacingS),
           Container(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            padding: const EdgeInsets.all(AppStyles.spacingS),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppStyles.radiusL),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.07),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  color: Colors.black.withValues(alpha: 0.045),
+                  blurRadius: 14,
+                  offset: const Offset(0, AppStyles.spacingXs),
                 ),
               ],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.roseSoft,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: const Icon(
-                    Icons.medication_rounded,
-                    color: AppColors.rose,
-                    size: 37,
-                  ),
-                ),
-                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppColors.roseSoft,
+                              borderRadius: BorderRadius.circular(
+                                AppStyles.radiusM,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.medication_rounded,
+                              color: AppColors.rose,
+                              size: 21,
+                            ),
+                          ),
+                          const SizedBox(width: AppStyles.spacingS),
                           Expanded(
                             child: Text(
                               title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                                 height: 1.15,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppStyles.spacingS),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
+                              horizontal: AppStyles.spacingS,
+                              vertical: AppStyles.spacingXs,
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.roseSoft,
@@ -1134,37 +1174,39 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                             child: Text(
                               typeLabel,
                               style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
                                 color: AppColors.rose,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      _DraftInfoRow(
-                        icon: Icons.access_time_rounded,
-                        label: '时间',
-                        value: time,
-                      ),
-                      const SizedBox(height: 9),
-                      const _DraftInfoRow(
-                        icon: Icons.person_outline_rounded,
-                        label: '成员',
-                        value: '妈妈',
-                      ),
-                      const SizedBox(height: 9),
-                      _DraftInfoRow(
-                        icon: Icons.event_note_outlined,
-                        label: '备注',
-                        value: (note == null || note.isEmpty) ? '降压药' : note,
-                      ),
-                      const SizedBox(height: 9),
-                      const _DraftInfoRow(
-                        icon: Icons.medical_information_outlined,
-                        label: '来源',
-                        value: 'AI 解析',
+                      const SizedBox(height: AppStyles.spacingS),
+                      _DraftInfoGrid(
+                        items: [
+                          _DraftInfoItem(
+                            icon: Icons.access_time_rounded,
+                            label: '时间',
+                            value: time,
+                          ),
+                          const _DraftInfoItem(
+                            icon: Icons.person_outline_rounded,
+                            label: '成员',
+                            value: '妈妈',
+                          ),
+                          _DraftInfoItem(
+                            icon: Icons.event_note_outlined,
+                            label: '备注',
+                            value:
+                                (note == null || note.isEmpty) ? '降压药' : note,
+                          ),
+                          const _DraftInfoItem(
+                            icon: Icons.medical_information_outlined,
+                            label: '来源',
+                            value: 'AI 解析',
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1172,29 +1214,28 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: _DesignedActionButton(
-                  icon: _saving ? null : Icons.check_rounded,
-                  label: _saving ? '创建中...' : '确认创建',
-                  primary: true,
-                  onTap: _saving ? null : () => _confirmCreate(event),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                flex: 2,
-                child: _DesignedActionButton(
+          const SizedBox(height: AppStyles.spacingS),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _DesignedActionButton(
                   icon: Icons.edit_outlined,
-                  label: '修改',
+                  label: '改',
                   primary: false,
                   onTap: _saving ? null : () => _editDraft(event),
                 ),
-              ),
-            ],
+                const SizedBox(width: AppStyles.spacingS),
+                _DesignedActionButton(
+                  icon: _saving ? null : Icons.check_rounded,
+                  label: _saving ? '创建中' : '确认',
+                  primary: true,
+                  onTap: _saving ? null : () => _confirmCreate(event),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1461,24 +1502,6 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     if (repeat != null) return '$repeat $time';
     return DateFormat('M月d日 HH:mm').format(scheduledAt);
   }
-
-  Map<String, dynamic> _demoDraftEvent() {
-    final now = DateTime.now();
-    final scheduled = DateTime(now.year, now.month, now.day, 20);
-    return {
-      'event_title': '妈妈晚间用药提醒',
-      'event_type': 'medication',
-      'description': '降压药',
-      'scheduled_at': scheduled.toIso8601String(),
-      'repeat_rule': {
-        'frequency': 'daily',
-        'interval': 1,
-      },
-      '_source_text': '帮妈妈设置每天晚上8点吃降压药',
-      '_source_type': 'ai_text',
-      'confidence': 0.92,
-    };
-  }
 }
 
 class _ExampleChip extends StatelessWidget {
@@ -1500,7 +1523,10 @@ class _ExampleChip extends StatelessWidget {
       onTap: enabled ? onTap : null,
       child: Container(
         alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppStyles.spacingS,
+          vertical: AppStyles.spacingXs,
+        ),
         decoration: BoxDecoration(
           color: colorScheme.surface.withValues(alpha: 0.88),
           borderRadius: BorderRadius.circular(999),
@@ -1513,7 +1539,7 @@ class _ExampleChip extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             color: colorScheme.onSurface,
             fontWeight: FontWeight.w600,
           ),
@@ -1524,7 +1550,7 @@ class _ExampleChip extends StatelessWidget {
 }
 
 class _SparkAvatar extends StatelessWidget {
-  const _SparkAvatar({this.size = 42});
+  const _SparkAvatar({this.size = 36});
 
   final double size;
 
@@ -1562,21 +1588,21 @@ class _SmallAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 42,
-      height: 42,
+      width: 36,
+      height: 36,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.roseSoft,
         border: Border.all(color: Colors.white, width: 2),
       ),
-      child: const Text('👩🏻', style: TextStyle(fontSize: 24)),
+      child: const Text('👩🏻', style: TextStyle(fontSize: 15)),
     );
   }
 }
 
-class _DraftInfoRow extends StatelessWidget {
-  const _DraftInfoRow({
+class _DraftInfoItem {
+  const _DraftInfoItem({
     required this.icon,
     required this.label,
     required this.value,
@@ -1585,40 +1611,84 @@ class _DraftInfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+}
+
+class _DraftInfoGrid extends StatelessWidget {
+  const _DraftInfoGrid({required this.items});
+
+  final List<_DraftInfoItem> items;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 19, color: AppColors.mintDeep),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 44,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-              height: 1.1,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth = (constraints.maxWidth - AppStyles.spacingS) / 2;
+        return Wrap(
+          spacing: AppStyles.spacingS,
+          runSpacing: AppStyles.spacingS,
+          children: [
+            for (final item in items)
+              SizedBox(
+                width: itemWidth,
+                child: _DraftInfoTile(item: item),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _DraftInfoTile extends StatelessWidget {
+  const _DraftInfoTile({required this.item});
+
+  final _DraftInfoItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppStyles.spacingS,
+        vertical: AppStyles.spacingXs,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAF9),
+        borderRadius: BorderRadius.circular(AppStyles.radiusS),
+        border: Border.all(color: AppColors.lightOutline),
+      ),
+      child: Row(
+        children: [
+          Icon(item.icon, size: 13, color: AppColors.mintDeep),
+          if (item.label.isNotEmpty) ...[
+            const SizedBox(width: AppStyles.spacingXs),
+            Text(
+              item.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppStyles.caption1.copyWith(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textTertiary,
+                height: 1.05,
+              ),
+            ),
+          ],
+          const SizedBox(width: AppStyles.spacingXs),
+          Expanded(
+            child: Text(
+              item.value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: AppStyles.caption1.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+                height: 1.05,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-              height: 1.1,
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -1642,26 +1712,18 @@ class _DesignedActionButton extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (icon != null) ...[
-          Container(
-            width: 31,
-            height: 31,
-            decoration: BoxDecoration(
-              color: primary ? Colors.white : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              size: 22,
-              color: primary ? AppColors.mintDeep : AppColors.textSecondary,
-            ),
+          Icon(
+            icon,
+            size: 15,
+            color: primary ? Colors.white : AppColors.textSecondary,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppStyles.spacingXs),
         ],
         Text(
           label,
           style: TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.w900,
+            fontSize: AppStyles.footnote.fontSize,
+            fontWeight: FontWeight.w600,
             color: primary ? Colors.white : AppColors.textSecondary,
           ),
         ),
@@ -1670,9 +1732,11 @@ class _DesignedActionButton extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(AppStyles.radiusM),
       child: Container(
-        height: 58,
+        height: 34,
+        constraints: BoxConstraints(minWidth: primary ? 68 : 54),
+        padding: const EdgeInsets.symmetric(horizontal: AppStyles.spacingS),
         decoration: BoxDecoration(
           gradient: primary
               ? const LinearGradient(
@@ -1685,14 +1749,14 @@ class _DesignedActionButton extends StatelessWidget {
                 )
               : null,
           color: primary ? null : Colors.white,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(AppStyles.radiusFull),
           border: primary ? null : Border.all(color: AppColors.lightOutline),
           boxShadow: primary
               ? [
                   BoxShadow(
                     color: AppColors.mintDeep.withValues(alpha: 0.24),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
+                    blurRadius: 10,
+                    offset: const Offset(0, AppStyles.spacingXs),
                   ),
                 ]
               : null,

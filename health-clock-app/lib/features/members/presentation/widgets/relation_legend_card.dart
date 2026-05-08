@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_styles.dart';
 
 class RelationLegendCard extends StatelessWidget {
   const RelationLegendCard({super.key});
@@ -20,9 +21,10 @@ class RelationLegendCard extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.55),
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.lightOutline),
+        boxShadow: AppStyles.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,7 +51,7 @@ class RelationLegendCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12.5,
                   color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -90,7 +92,7 @@ class _Pill extends StatelessWidget {
         item.label,
         style: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: item.color,
         ),
       ),

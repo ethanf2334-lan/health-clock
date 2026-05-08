@@ -64,7 +64,7 @@ class MemberSwitcherBar extends ConsumerWidget {
                     _memberInitial(selectedMember?.name),
                     style: const TextStyle(
                       color: AppColors.mintDeep,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

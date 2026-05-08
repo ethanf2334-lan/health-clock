@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_styles.dart';
 
 class DocumentsFilterBar extends StatelessWidget {
   const DocumentsFilterBar({
@@ -89,7 +90,7 @@ class _FilterChip extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 12.5,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w600,
             color: selected ? AppColors.mintDeep : AppColors.textSecondary,
           ),
         ),
@@ -112,9 +113,10 @@ class _SortButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.cardWhite.withValues(alpha: 0.86),
+          color: AppColors.cardWhite,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: AppColors.lightOutline),
+          boxShadow: AppStyles.subtleShadow,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -129,7 +131,7 @@ class _SortButton extends StatelessWidget {
               label,
               style: const TextStyle(
                 fontSize: 12.5,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
               ),
             ),

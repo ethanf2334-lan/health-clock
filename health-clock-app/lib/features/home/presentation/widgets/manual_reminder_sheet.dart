@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_styles.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../shared/models/health_event.dart';
+import '../../../../shared/widgets/app_cupertino_pickers.dart';
 import '../../../calendar/providers/event_provider.dart';
 import '../../../members/presentation/widgets/member_avatar.dart';
 import '../../../members/providers/current_member_provider.dart';
@@ -21,8 +23,8 @@ class ManualReminderSheet extends ConsumerStatefulWidget {
 }
 
 class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
-  final _titleController = TextEditingController(text: '肺结节 CT 复查');
-  final _noteController = TextEditingController(text: '带上既往检查报告');
+  final _titleController = TextEditingController();
+  final _noteController = TextEditingController();
 
   String _eventType = 'follow_up';
   String? _memberId;
@@ -33,8 +35,7 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
 
   static DateTime _initialDate() {
     final now = DateTime.now();
-    final base = now.add(const Duration(days: 14));
-    return DateTime(base.year, base.month, base.day, 9, 30);
+    return DateTime(now.year, now.month, now.day, now.hour, now.minute);
   }
 
   static const _types = [
@@ -43,31 +44,31 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
       'revisit',
       '复诊',
       Icons.medical_services_outlined,
-      AppColors.textSecondary,
+      AppColors.careBlue,
     ),
     _ReminderType(
       'medication',
       '用药',
       Icons.medication_rounded,
-      AppColors.textSecondary,
+      AppColors.mintDeep,
     ),
     _ReminderType(
       'checkup',
       '体检',
       Icons.medical_information_outlined,
-      AppColors.textSecondary,
+      AppColors.warmAmber,
     ),
     _ReminderType(
       'monitoring',
       '监测',
       Icons.monitor_heart_outlined,
-      AppColors.textSecondary,
+      AppColors.lavender,
     ),
     _ReminderType(
       'custom',
       '自定义',
       Icons.more_horiz_rounded,
-      AppColors.textSecondary,
+      AppColors.textPrimary,
     ),
   ];
 
@@ -93,24 +94,20 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
     final membersAsync = ref.watch(memberListProvider);
     final memberName = _memberName(membersAsync);
     final memberRelation = _memberRelation(membersAsync);
-    final selectedType = _types.firstWhere(
-      (type) => type.value == _eventType,
-      orElse: () => _types.first,
-    );
-
     return DecoratedBox(
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
       ),
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
-            20,
-            12,
-            20,
-            18 + MediaQuery.of(context).padding.bottom * 0.18,
+            AppStyles.spacingM,
+            AppStyles.spacingS,
+            AppStyles.spacingM,
+            AppStyles.spacingM + MediaQuery.of(context).padding.bottom * 0.18,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,20 +115,20 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
               Center(
                 child: Container(
                   width: 56,
-                  height: 6,
+                  height: AppStyles.spacingXs,
                   decoration: BoxDecoration(
                     color: const Color(0xFFB8C0C3),
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppStyles.radiusFull),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppStyles.spacingS),
               _buildHeader(),
-              const SizedBox(height: 22),
+              const SizedBox(height: AppStyles.spacingM),
               const _FieldLabel('提醒类型'),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppStyles.spacingS),
               _buildTypeGrid(),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppStyles.spacingS),
               _LabeledRow(
                 label: '成员',
                 child: _InputShell(
@@ -141,15 +138,14 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
                       MemberAvatar(
                         name: memberName,
                         relation: memberRelation,
-                        size: 34,
+                        size: 24,
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppStyles.spacingS),
                       Expanded(
                         child: Text(
                           memberName,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
+                          style: AppStyles.subhead.copyWith(
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
                         ),
@@ -157,13 +153,13 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
                       const Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: AppColors.textSecondary,
-                        size: 24,
+                        size: 20,
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppStyles.spacingS),
               _LabeledRow(
                 label: '提醒标题',
                 child: _TextInputShell(
@@ -172,9 +168,9 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
                   onChanged: (_) => setState(() {}),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppStyles.spacingS),
               _buildDateTimeRow(),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppStyles.spacingS),
               const _LabeledRow(
                 label: '重复',
                 child: _InputShell(
@@ -185,13 +181,13 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
                         size: 22,
                         color: AppColors.textTertiary,
                       ),
-                      SizedBox(width: 10),
+                      SizedBox(width: AppStyles.spacingS),
                       Expanded(
                         child: Text(
                           '不重复',
                           style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
                         ),
@@ -199,15 +195,15 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
                       Icon(
                         Icons.chevron_right_rounded,
                         color: AppColors.textSecondary,
-                        size: 24,
+                        size: 20,
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppStyles.spacingS),
               _buildNotifyRow(),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppStyles.spacingS),
               _LabeledRow(
                 label: '备注',
                 child: _TextInputShell(
@@ -216,11 +212,9 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
                   onChanged: (_) => setState(() {}),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppStyles.spacingS),
               _buildSourceRow(),
-              const SizedBox(height: 18),
-              _buildPreviewCard(selectedType, memberName),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppStyles.spacingM),
               _buildActions(),
             ],
           ),
@@ -233,46 +227,42 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
     return Row(
       children: [
         Container(
-          width: 58,
-          height: 58,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: AppColors.mintBg,
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(AppStyles.radiusL),
           ),
           child: const Icon(
             Icons.add_box_outlined,
             color: AppColors.mintDeep,
-            size: 34,
+            size: 20,
           ),
         ),
-        const SizedBox(width: 18),
-        const Expanded(
+        const SizedBox(width: AppStyles.spacingS),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 '手动添加提醒',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
+                style: AppStyles.headline.copyWith(
                   color: AppColors.textPrimary,
-                  height: 1.1,
                 ),
               ),
-              SizedBox(height: 7),
+              const SizedBox(height: 2),
               Text(
                 '为家人创建清晰可靠的健康提醒',
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w600,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppStyles.caption1.copyWith(
                   color: AppColors.textSecondary,
-                  height: 1.1,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppStyles.spacingS),
         Material(
           color: Colors.white,
           shape: const CircleBorder(),
@@ -280,23 +270,23 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
             onTap: () => Navigator.of(context).maybePop(),
             customBorder: const CircleBorder(),
             child: Container(
-              width: 50,
-              height: 50,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.lightOutline),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    blurRadius: 16,
+                    offset: const Offset(0, AppStyles.spacingXs),
                   ),
                 ],
               ),
               child: const Icon(
                 Icons.close_rounded,
                 color: AppColors.textSecondary,
-                size: 30,
+                size: 22,
               ),
             ),
           ),
@@ -316,7 +306,7 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
               onTap: () => setState(() => _eventType = type.value),
             ),
           ),
-          if (type != _types.last) const SizedBox(width: 8),
+          if (type != _types.last) const SizedBox(width: AppStyles.spacingS),
         ],
       ],
     );
@@ -328,22 +318,25 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
       child: Row(
         children: [
           Expanded(
+            flex: 5,
             child: _InputShell(
               onTap: _pickDate,
               child: Row(
                 children: [
                   const Icon(
                     Icons.calendar_today_outlined,
-                    size: 21,
+                    size: 18,
                     color: AppColors.textSecondary,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppStyles.spacingXs),
                   Expanded(
                     child: Text(
-                      DateFormat('yyyy/MM/dd').format(_scheduledAt),
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
+                      DateFormat('M/d').format(_scheduledAt),
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.clip,
+                      style: AppStyles.subhead.copyWith(
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -351,38 +344,41 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
                   const Icon(
                     Icons.chevron_right_rounded,
                     color: AppColors.textSecondary,
+                    size: 18,
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          const Text(
+          const SizedBox(width: AppStyles.spacingS),
+          Text(
             '时间',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
+            style: AppStyles.subhead.copyWith(
+              fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppStyles.spacingXs),
           Expanded(
+            flex: 4,
             child: _InputShell(
               onTap: _pickTime,
               child: Row(
                 children: [
                   const Icon(
                     Icons.access_time_rounded,
-                    size: 22,
+                    size: 18,
                     color: AppColors.textSecondary,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppStyles.spacingXs),
                   Expanded(
                     child: Text(
                       DateFormat('HH:mm').format(_scheduledAt),
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.clip,
+                      style: AppStyles.subhead.copyWith(
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -390,6 +386,7 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
                   const Icon(
                     Icons.chevron_right_rounded,
                     color: AppColors.textSecondary,
+                    size: 18,
                   ),
                 ],
               ),
@@ -404,8 +401,8 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
     return _LabeledRow(
       label: '提醒方式',
       child: Wrap(
-        spacing: 10,
-        runSpacing: 8,
+        spacing: AppStyles.spacingS,
+        runSpacing: AppStyles.spacingS,
         children: [
           _NotifyChip(
             icon: Icons.notifications_none_rounded,
@@ -427,167 +424,34 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
   Widget _buildSourceRow() {
     return Row(
       children: [
-        const SizedBox(
+        SizedBox(
           width: 88,
           child: Text(
             '来源',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
+            style: AppStyles.body.copyWith(
+              fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),
         ),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppStyles.spacingM,
+            vertical: AppStyles.spacingS,
+          ),
           decoration: BoxDecoration(
             color: const Color(0xFFF0F3F1),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppStyles.radiusS),
           ),
-          child: const Text(
+          child: Text(
             '手动创建',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
+            style: AppStyles.footnote.copyWith(
+              fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildPreviewCard(_ReminderType selectedType, String memberName) {
-    final title = _titleController.text.trim().isEmpty
-        ? '肺结节 CT 复查'
-        : _titleController.text.trim();
-    final note = _noteController.text.trim();
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 16, 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.coralSoft),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 74,
-            height: 74,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFFFD7D8),
-                  Color(0xFFFF9D9F),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Icon(
-              Icons.air_rounded,
-              size: 42,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.coralSoft,
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Text(
-                        selectedType.label,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.rose,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 21,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 4,
-                  children: [
-                    _PreviewMeta(
-                      icon: Icons.access_time_rounded,
-                      label: DateFormat('yyyy/MM/dd').format(_scheduledAt),
-                    ),
-                    _PreviewMeta(
-                      icon: Icons.access_time_rounded,
-                      label: DateFormat('HH:mm').format(_scheduledAt),
-                    ),
-                    _PreviewMeta(
-                      icon: Icons.person_outline_rounded,
-                      label: memberName,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  note.isEmpty ? '带上既往检查报告' : note,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.lightOutline),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textSecondary,
-              size: 28,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -598,9 +462,9 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
           flex: 3,
           child: InkWell(
             onTap: _saving ? null : _save,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppStyles.radiusM),
             child: Container(
-              height: 60,
+              height: 44,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -611,45 +475,43 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
                     Color(0xFF16995C),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppStyles.radiusM),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.mintDeep.withValues(alpha: 0.22),
                     blurRadius: 16,
-                    offset: const Offset(0, 8),
+                    offset: const Offset(0, AppStyles.spacingS),
                   ),
                 ],
               ),
               child: Text(
                 _saving ? '创建中...' : '确认创建',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
+                style: AppStyles.subhead.copyWith(
+                  fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),
               ),
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: AppStyles.spacingM),
         Expanded(
           flex: 2,
           child: InkWell(
             onTap: _saving ? null : _reset,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppStyles.radiusM),
             child: Container(
-              height: 60,
+              height: 44,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppStyles.radiusM),
                 border: Border.all(color: AppColors.mintDeep),
               ),
-              child: const Text(
+              child: Text(
                 '重置',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
+                style: AppStyles.subhead.copyWith(
+                  fontWeight: FontWeight.w600,
                   color: AppColors.mintDeep,
                 ),
               ),
@@ -661,11 +523,12 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
   }
 
   Future<void> _pickDate() async {
-    final date = await showDatePicker(
+    final date = await AppCupertinoPickers.date(
       context: context,
       initialDate: _scheduledAt,
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime(2100),
+      minimumDate: DateTime.now().subtract(const Duration(days: 1)),
+      maximumDate: DateTime(2100),
+      title: '选择提醒日期',
     );
     if (date == null) return;
     setState(() {
@@ -680,9 +543,10 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
   }
 
   Future<void> _pickTime() async {
-    final time = await showTimePicker(
+    final time = await AppCupertinoPickers.time(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(_scheduledAt),
+      initialDateTime: _scheduledAt,
+      title: '选择提醒时间',
     );
     if (time == null) return;
     setState(() {
@@ -702,21 +566,30 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
       ),
       builder: (context) => SafeArea(
         child: membersAsync.when(
           data: (members) => ListView(
             shrinkWrap: true,
-            padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
+            padding: const EdgeInsets.fromLTRB(
+              0,
+              AppStyles.spacingS,
+              0,
+              AppStyles.spacingM,
+            ),
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 8, 20, 12),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppStyles.spacingM,
+                  AppStyles.spacingS,
+                  AppStyles.spacingM,
+                  AppStyles.spacingM,
+                ),
                 child: Text(
                   '选择成员',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
+                  style: AppStyles.headline.copyWith(
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -729,7 +602,9 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
                   ),
                   title: Text(
                     member.name,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: AppStyles.subhead.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   trailing: _memberId == member.id
                       ? const Icon(
@@ -746,11 +621,11 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
             ],
           ),
           loading: () => const Padding(
-            padding: EdgeInsets.all(40),
+            padding: EdgeInsets.all(AppStyles.spacingXxl),
             child: Center(child: CircularProgressIndicator()),
           ),
           error: (e, _) => Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppStyles.spacingM),
             child: Text('加载失败：$e'),
           ),
         ),
@@ -828,8 +703,8 @@ class _ManualReminderSheetState extends ConsumerState<ManualReminderSheet> {
     setState(() {
       _eventType = 'follow_up';
       _scheduledAt = _initialDate();
-      _titleController.text = '肺结节 CT 复查';
-      _noteController.text = '带上既往检查报告';
+      _titleController.clear();
+      _noteController.clear();
       _appNotify = true;
       _sameDayNotify = false;
       _memberId = ref.read(currentMemberIdProvider);
@@ -878,9 +753,8 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: const TextStyle(
-        fontSize: 17,
-        fontWeight: FontWeight.w900,
+      style: AppStyles.subhead.copyWith(
+        fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
     );
@@ -898,7 +772,7 @@ class _LabeledRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SizedBox(width: 88, child: _FieldLabel(label)),
+        SizedBox(width: 64, child: _FieldLabel(label)),
         Expanded(child: child),
       ],
     );
@@ -915,15 +789,15 @@ class _InputShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppStyles.radiusM),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppStyles.radiusM),
         child: Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          height: AppStyles.minTouchTarget,
+          padding: const EdgeInsets.symmetric(horizontal: AppStyles.spacingM),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppStyles.radiusM),
             border: Border.all(color: AppColors.lightOutline),
           ),
           child: child,
@@ -947,18 +821,17 @@ class _TextInputShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 48,
+      height: AppStyles.minTouchTarget,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppStyles.radiusM),
         border: Border.all(color: AppColors.lightOutline),
       ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        style: const TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
+        style: AppStyles.subhead.copyWith(
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
         decoration: InputDecoration(
@@ -967,7 +840,12 @@ class _TextInputShell extends StatelessWidget {
           border: InputBorder.none,
           focusedBorder: InputBorder.none,
           enabledBorder: InputBorder.none,
-          contentPadding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+          contentPadding: const EdgeInsets.fromLTRB(
+            AppStyles.spacingM,
+            10,
+            AppStyles.spacingM,
+            10,
+          ),
           suffixIcon: controller.text.isEmpty
               ? null
               : InkWell(
@@ -1001,35 +879,37 @@ class _TypeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.rose : type.color;
+    final color = type.color;
+    final selectedBg = Color.alphaBlend(
+      type.color.withValues(alpha: 0.12),
+      Colors.white,
+    );
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppStyles.radiusM),
       child: Container(
-        height: 68,
+        height: 58,
         decoration: BoxDecoration(
-          color: selected
-              ? AppColors.roseSoft.withValues(alpha: 0.45)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          color: selected ? selectedBg : Colors.white,
+          borderRadius: BorderRadius.circular(AppStyles.radiusM),
           border: Border.all(
             color: selected
-                ? AppColors.rose.withValues(alpha: 0.45)
+                ? type.color.withValues(alpha: 0.45)
                 : AppColors.lightOutline,
           ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(type.icon, color: color, size: 23),
-            const SizedBox(height: 5),
+            Icon(type.icon, color: color, size: 20),
+            const SizedBox(height: AppStyles.spacingXs),
             Text(
               type.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
+                fontSize: AppStyles.caption1.fontSize,
+                fontWeight: FontWeight.w600,
                 color: color,
               ),
             ),
@@ -1059,8 +939,8 @@ class _NotifyChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        height: 44,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        height: AppStyles.minTouchTarget,
+        padding: const EdgeInsets.symmetric(horizontal: AppStyles.spacingM),
         decoration: BoxDecoration(
           color: selected ? AppColors.mintBg : Colors.white,
           borderRadius: BorderRadius.circular(14),
@@ -1075,47 +955,21 @@ class _NotifyChip extends StatelessWidget {
           children: [
             Icon(
               icon,
-              size: 21,
+              size: 18,
               color: selected ? AppColors.mintDeep : AppColors.textSecondary,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppStyles.spacingXs),
             Text(
               label,
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+                fontSize: AppStyles.footnote.fontSize,
+                fontWeight: FontWeight.w600,
                 color: selected ? AppColors.mintDeep : AppColors.textSecondary,
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _PreviewMeta extends StatelessWidget {
-  const _PreviewMeta({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: AppColors.textSecondary),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13.5,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
     );
   }
 }

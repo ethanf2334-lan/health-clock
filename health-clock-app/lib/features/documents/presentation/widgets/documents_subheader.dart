@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_styles.dart';
 import '../../../members/presentation/widgets/member_avatar.dart';
 import '../../../members/providers/current_member_provider.dart';
 import '../../../members/providers/member_provider.dart';
@@ -16,11 +17,16 @@ class DocumentsSubheader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.screenMargin,
+        0,
+        AppStyles.screenMargin,
+        AppStyles.spacingM,
+      ),
       child: Row(
         children: [
           _MemberPill(),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppStyles.spacingS),
           Expanded(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -75,44 +81,52 @@ class _MemberPill extends ConsumerWidget {
     return Material(
       color: AppColors.cardWhite,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppStyles.radiusFull),
       ),
       child: InkWell(
         onTap: () => _showPicker(context, ref),
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(11, 5, 6, 5),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: AppColors.lightOutline),
+        borderRadius: BorderRadius.circular(AppStyles.radiusFull),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: AppStyles.minTouchTarget,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                '当前成员 ',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(
+              AppStyles.spacingS,
+              AppStyles.spacingS,
+              AppStyles.spacingS,
+              AppStyles.spacingS,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppStyles.radiusFull),
+              border: Border.all(color: AppColors.lightOutline),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '当前成员 ',
+                  style: AppStyles.caption1.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
+                Text(
+                  name,
+                  style: AppStyles.footnote.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 5),
-              MemberAvatar(name: name, relation: relation, size: 24),
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 16,
-                color: AppColors.textSecondary,
-              ),
-            ],
+                const SizedBox(width: AppStyles.spacingXs),
+                MemberAvatar(name: name, relation: relation, size: 28),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 20,
+                  color: AppColors.textSecondary,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -127,21 +141,30 @@ class _MemberPill extends ConsumerWidget {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
       ),
       builder: (context) => SafeArea(
         child: membersAsync.when(
           data: (members) => ListView(
             shrinkWrap: true,
-            padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
+            padding: const EdgeInsets.fromLTRB(
+              0,
+              AppStyles.spacingS,
+              0,
+              AppStyles.spacingM,
+            ),
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 8, 20, 12),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppStyles.spacingM,
+                  AppStyles.spacingS,
+                  AppStyles.spacingM,
+                  AppStyles.spacingM,
+                ),
                 child: Text(
                   '选择成员',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                  style: AppStyles.headline.copyWith(
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -186,11 +209,11 @@ class _MemberPill extends ConsumerWidget {
             ],
           ),
           loading: () => const Padding(
-            padding: EdgeInsets.all(40),
+            padding: EdgeInsets.all(AppStyles.spacingXxl),
             child: Center(child: CircularProgressIndicator()),
           ),
           error: (e, _) => Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppStyles.spacingM),
             child: Text('加载失败: $e'),
           ),
         ),
@@ -217,21 +240,19 @@ class _CategoryCount extends StatelessWidget {
             shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppStyles.spacingXs),
         Text(
           count.label,
-          style: const TextStyle(
-            fontSize: 11.5,
+          style: AppStyles.caption1.copyWith(
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(width: 2),
+        const SizedBox(width: AppStyles.spacingXxs),
         Text(
           '${count.count}',
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
+          style: AppStyles.caption1.copyWith(
+            fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
         ),

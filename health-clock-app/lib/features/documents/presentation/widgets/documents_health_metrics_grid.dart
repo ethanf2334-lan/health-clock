@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_styles.dart';
 
 class DocumentsHealthMetricsGrid extends StatelessWidget {
   const DocumentsHealthMetricsGrid({super.key});
@@ -67,7 +68,7 @@ class DocumentsHealthMetricsGrid extends StatelessWidget {
                     '健康指标',
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -118,16 +119,10 @@ class _MetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.lightOutline),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.025),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        boxShadow: AppStyles.cardShadow,
       ),
       child: Stack(
         children: [
@@ -171,7 +166,7 @@ class _MetricCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -189,7 +184,7 @@ class _MetricCard extends StatelessWidget {
                       data.status,
                       style: TextStyle(
                         fontSize: 10,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: data.color,
                         height: 1.0,
                       ),
@@ -204,8 +199,8 @@ class _MetricCard extends StatelessWidget {
                   Text(
                     data.value,
                     style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                       height: 1.0,
                       letterSpacing: 0,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_styles.dart';
 import '../../../shared/models/health_event.dart';
 import '../../ai_input/presentation/ai_quick_create_panel.dart';
 import '../../calendar/providers/event_provider.dart';
@@ -31,6 +32,7 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
   String _range = 'today';
   String _view = 'list';
   DateTime _selectedDate = _today();
+  DateTime _periodAnchor = _today();
 
   static DateTime _today() {
     final now = DateTime.now();
@@ -46,23 +48,32 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
   void _applyFilter() {
     final memberId = ref.read(currentMemberIdProvider);
     final today = _today();
-    DateTime? start = today;
+    DateTime? start;
     DateTime? end;
 
-    switch (_range) {
-      case 'today':
-        end = today.add(const Duration(days: 1));
-        break;
-      case 'week':
-        end = today.add(const Duration(days: 7));
-        break;
-      case 'month':
-        end = today.add(const Duration(days: 30));
-        break;
-      case 'all':
-        start = null;
-        end = null;
-        break;
+    if (_view == 'cal_week') {
+      start = _startOfWeek(_periodAnchor);
+      end = start.add(const Duration(days: 7));
+    } else if (_view == 'cal_month') {
+      start = DateTime(_periodAnchor.year, _periodAnchor.month);
+      end = DateTime(_periodAnchor.year, _periodAnchor.month + 1);
+    } else {
+      start = today;
+      switch (_range) {
+        case 'today':
+          end = today.add(const Duration(days: 1));
+          break;
+        case 'week':
+          end = today.add(const Duration(days: 7));
+          break;
+        case 'month':
+          end = today.add(const Duration(days: 30));
+          break;
+        case 'all':
+          start = null;
+          end = null;
+          break;
+      }
     }
 
     ref.read(eventListProvider.notifier).setFilter(
@@ -81,23 +92,14 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
     final eventsAsync = ref.watch(eventListProvider);
 
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomCenter,
-          colors: [
-            AppColors.bgGradientStart,
-            AppColors.bgGradientEnd,
-          ],
-        ),
-      ),
+      color: Colors.white,
       child: SafeArea(
         bottom: false,
         child: Column(
           children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: AppStyles.spacingS),
                 children: [
                   HomeHeader(
                     title: '健康日历',
@@ -105,15 +107,21 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
                   ),
                   _buildStatusCard(eventsAsync),
                   ViewSwitchBar(
-                    selectedRange: _range,
-                    onRangeChanged: (v) {
-                      setState(() => _range = v);
+                    selectedView: _view,
+                    onViewChanged: (v) {
+                      setState(() {
+                        final wasList = _view == 'list';
+                        _view = v;
+                        if (v != 'list' && wasList) {
+                          _periodAnchor = _selectedDate;
+                        }
+                      });
                       _applyFilter();
                     },
-                    selectedView: _view,
-                    onViewChanged: (v) => setState(() => _view = v),
                   ),
-                  _buildDateStrip(eventsAsync),
+                  _buildModeControls(),
+                  if (_view == 'cal_week') _buildDateStrip(eventsAsync),
+                  if (_view == 'cal_month') _buildMonthGrid(eventsAsync),
                   QuickActionsRow(
                     actions: [
                       QuickAction(
@@ -135,12 +143,12 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
                     ],
                   ),
                   HomeSectionHeader(
-                    title: '近期提醒',
+                    title: _sectionTitle,
                     actionLabel: '全部提醒',
-                    onActionTap: () => setState(() => _range = 'all'),
+                    onActionTap: () => context.push('/events'),
                   ),
                   ..._buildReminders(eventsAsync),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppStyles.spacingM),
                 ],
               ),
             ),
@@ -254,7 +262,7 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
   }
 
   Widget _buildDateStrip(AsyncValue<List<HealthEvent>> async) {
-    final today = _today();
+    final start = _view == 'cal_week' ? _startOfWeek(_periodAnchor) : _today();
     final items = <DateStripItem>[];
 
     final allEvents = async.maybeWhen(
@@ -263,21 +271,12 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
     );
 
     for (var i = 0; i < 7; i++) {
-      final date = today.add(Duration(days: i));
+      final date = start.add(Duration(days: i));
       final dayEvents = allEvents
           .where((e) => _isSameDay(e.scheduledAt.toLocal(), date))
           .toList();
 
-      String label;
-      if (i == 0) {
-        label = '今天';
-      } else if (i == 1) {
-        label = '明天';
-      } else if (i == 2) {
-        label = '后天';
-      } else {
-        label = '${date.month}/${date.day}';
-      }
+      final label = _dateLabel(date);
 
       final dotColors =
           dayEvents.take(3).map((e) => _eventTypeColor(e.eventType)).toList();
@@ -298,42 +297,117 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
     );
   }
 
+  Widget _buildMonthGrid(AsyncValue<List<HealthEvent>> async) {
+    final allEvents = async.maybeWhen(
+      data: (e) => e,
+      orElse: () => <HealthEvent>[],
+    );
+    final firstDay = DateTime(_periodAnchor.year, _periodAnchor.month);
+    final daysInMonth =
+        DateTime(_periodAnchor.year, _periodAnchor.month + 1, 0).day;
+    final leadingEmpty = firstDay.weekday - 1;
+    final cells = <MonthDateCell>[];
+
+    for (var i = 0; i < leadingEmpty; i++) {
+      cells.add(const MonthDateCell.empty());
+    }
+
+    for (var day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(_periodAnchor.year, _periodAnchor.month, day);
+      final dayEvents = allEvents
+          .where((e) => _isSameDay(e.scheduledAt.toLocal(), date))
+          .toList();
+      cells.add(
+        MonthDateCell(
+          date: date,
+          dotColors: dayEvents
+              .take(3)
+              .map((e) => _eventTypeColor(e.eventType))
+              .toList(),
+        ),
+      );
+    }
+
+    return MonthDateGrid(
+      cells: cells,
+      selected: _selectedDate,
+      onSelected: (d) => setState(() => _selectedDate = d),
+    );
+  }
+
+  Widget _buildModeControls() {
+    if (_view == 'list') {
+      return ListRangeBar(
+        selectedRange: _range,
+        onRangeChanged: (v) {
+          setState(() => _range = v);
+          _applyFilter();
+        },
+      );
+    }
+
+    return CalendarPeriodBar(
+      title: _periodTitle,
+      onPrevious: () {
+        setState(() {
+          _periodAnchor = _shiftPeriod(-1);
+          _selectedDate = _periodAnchor;
+        });
+        _applyFilter();
+      },
+      onNext: () {
+        setState(() {
+          _periodAnchor = _shiftPeriod(1);
+          _selectedDate = _periodAnchor;
+        });
+        _applyFilter();
+      },
+    );
+  }
+
   List<Widget> _buildReminders(AsyncValue<List<HealthEvent>> async) {
     return async.when(
       data: (events) {
         if (events.isEmpty) {
           return [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(
+                AppStyles.screenMargin,
+                0,
+                AppStyles.screenMargin,
+                AppStyles.spacingM,
+              ),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 28),
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppStyles.spacingXl,
+                  horizontal: AppStyles.cardPadding,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.cardWhite,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(AppStyles.radiusL),
                   border: Border.all(color: AppColors.lightOutline),
+                  boxShadow: AppStyles.cardShadow,
                 ),
-                child: const Center(
+                child: Center(
                   child: Column(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.event_note_outlined,
-                        size: 36,
+                        size: AppStyles.spacingXxl,
                         color: AppColors.textTertiary,
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: AppStyles.spacingS),
                       Text(
                         '暂无提醒',
-                        style: TextStyle(
-                          fontSize: 13,
+                        style: AppStyles.footnote.copyWith(
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: AppStyles.spacingXs),
                       Text(
                         '可手动创建，或用 AI 输入一句话生成提醒',
-                        style: TextStyle(
-                          fontSize: 11,
+                        style: AppStyles.caption1.copyWith(
                           color: AppColors.textTertiary,
                         ),
                       ),
@@ -352,9 +426,19 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
 
         return visible
             .map(
-              (e) => ReminderCard(
-                data: _toCardData(e),
-                onTap: () => context.push('/events/${e.id}'),
+              (e) => Dismissible(
+                key: ValueKey('home-reminder-${e.id}'),
+                direction: DismissDirection.endToStart,
+                background: _buildCompleteDismissBackground(),
+                confirmDismiss: (_) async {
+                  await _completeReminder(e);
+                  return false;
+                },
+                child: ReminderCard(
+                  data: _toCardData(e),
+                  onTap: () => context.push('/events/${e.id}'),
+                  onComplete: () => _completeReminder(e),
+                ),
               ),
             )
             .toList();
@@ -367,11 +451,73 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
       ],
       error: (e, _) => [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('加载失败：$e'),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppStyles.screenMargin,
+          ),
+          child: Text(
+            _friendlyErrorMessage(e),
+            style: AppStyles.footnote.copyWith(color: AppColors.textSecondary),
+          ),
         ),
       ],
     );
+  }
+
+  Widget _buildCompleteDismissBackground() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.screenMargin,
+        0,
+        AppStyles.screenMargin,
+        AppStyles.spacingS,
+      ),
+      child: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: AppStyles.spacingM),
+        decoration: BoxDecoration(
+          color: AppColors.mintDeep,
+          borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        ),
+        child: const Icon(
+          Icons.check_circle_rounded,
+          color: Colors.white,
+          size: 28,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _completeReminder(HealthEvent event) async {
+    try {
+      await ref.read(eventListProvider.notifier).completeEvent(event.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text('已完成：${event.title}'),
+            duration: const Duration(milliseconds: 1200),
+          ),
+        );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('标记完成失败，请稍后重试')),
+        );
+    }
+  }
+
+  String _friendlyErrorMessage(Object error) {
+    final message = error.toString();
+    if (message.contains('500') || message.contains('bad response')) {
+      return '提醒加载失败，服务暂时没有返回可用数据。请稍后重试。';
+    }
+    if (message.contains('receive timeout')) {
+      return '提醒加载超时，请检查网络或稍后重试。';
+    }
+    return '提醒加载失败，请稍后重试。';
   }
 
   ReminderCardData _toCardData(HealthEvent e) {
@@ -429,7 +575,8 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
       barrierColor: Colors.black.withValues(alpha: 0.42),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
       ),
       builder: (ctx) {
         return Padding(
@@ -437,7 +584,9 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
             bottom: MediaQuery.of(ctx).viewInsets.bottom,
           ),
           child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppStyles.radiusXl),
+            ),
             child: SizedBox(
               height: MediaQuery.of(ctx).size.height * 0.68,
               child: AIQuickCreatePanel(
@@ -460,7 +609,8 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
       barrierColor: Colors.black.withValues(alpha: 0.42),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
       ),
       builder: (ctx) {
         return Padding(
@@ -468,7 +618,9 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
             bottom: MediaQuery.of(ctx).viewInsets.bottom,
           ),
           child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppStyles.radiusXl),
+            ),
             child: SizedBox(
               height: MediaQuery.of(ctx).size.height * 0.73,
               child: ManualReminderSheet(
@@ -488,7 +640,8 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
       barrierColor: Colors.black.withValues(alpha: 0.42),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
       ),
       builder: (ctx) {
         return Padding(
@@ -496,7 +649,9 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
             bottom: MediaQuery.of(ctx).viewInsets.bottom,
           ),
           child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppStyles.radiusXl),
+            ),
             child: SizedBox(
               height: MediaQuery.of(ctx).size.height * 0.73,
               child: const MetricRecordSheet(),
@@ -590,4 +745,46 @@ class _HomeCalendarScreenState extends ConsumerState<HomeCalendarScreen> {
 
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+
+  DateTime _shiftPeriod(int direction) {
+    if (_view == 'cal_week') {
+      return _periodAnchor.add(Duration(days: 7 * direction));
+    }
+    return DateTime(_periodAnchor.year, _periodAnchor.month + direction);
+  }
+
+  DateTime _startOfWeek(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    return normalized.subtract(Duration(days: normalized.weekday - 1));
+  }
+
+  String get _periodTitle {
+    if (_view == 'cal_week') {
+      final start = _startOfWeek(_periodAnchor);
+      final end = start.add(const Duration(days: 6));
+      return '${DateFormat('M月d日', 'zh_CN').format(start)} - ${DateFormat('M月d日', 'zh_CN').format(end)}';
+    }
+    return DateFormat('yyyy年M月', 'zh_CN').format(_periodAnchor);
+  }
+
+  String get _sectionTitle {
+    switch (_view) {
+      case 'cal_week':
+        return '本周提醒';
+      case 'cal_month':
+        return '本月提醒';
+      default:
+        return '近期提醒';
+    }
+  }
+
+  String _dateLabel(DateTime date) {
+    final today = _today();
+    final diff =
+        DateTime(date.year, date.month, date.day).difference(today).inDays;
+    if (diff == 0) return '今天';
+    if (diff == 1) return '明天';
+    if (diff == 2) return '后天';
+    return '${date.month}/${date.day}';
+  }
 }

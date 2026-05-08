@@ -20,15 +20,29 @@ class EventRepository:
         event_type: str | None = None,
     ) -> list[dict]:
         """获取用户的提醒列表（支持筛选）"""
-        query = (
-            self.supabase.table(self.table)
-            .select("*, profile_members!inner(user_id)")
-            .eq("profile_members.user_id", user_id)
+        member_query = (
+            self.supabase.table("profile_members")
+            .select("id")
+            .eq("user_id", user_id)
             .is_("deleted_at", "null")
         )
 
         if member_id:
-            query = query.eq("member_id", member_id)
+            member_query = member_query.eq("id", member_id)
+
+        member_response = member_query.execute()
+        member_ids = [member["id"] for member in member_response.data]
+
+        if not member_ids:
+            return []
+
+        query = (
+            self.supabase.table(self.table)
+            .select("*")
+            .in_("member_id", member_ids)
+            .is_("deleted_at", "null")
+        )
+
         if start_date:
             query = query.gte("scheduled_at", start_date.isoformat())
         if end_date:

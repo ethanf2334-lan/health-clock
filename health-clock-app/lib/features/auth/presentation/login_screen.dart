@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_styles.dart';
 import '../../../core/services/auth_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -140,32 +141,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
           SafeArea(
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(22, 12, 22, 24 + bottomInset),
+              padding: EdgeInsets.fromLTRB(
+                AppStyles.spacingM,
+                AppStyles.spacingM,
+                AppStyles.spacingM,
+                AppStyles.spacingL + bottomInset,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 8),
-                  const Text(
+                  const SizedBox(height: AppStyles.spacingS),
+                  Text(
                     '健康时钟',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
+                    style: AppStyles.screenTitle.copyWith(
                       color: AppColors.mintDeep,
-                      letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppStyles.spacingS),
                   Text(
                     'AI 帮你轻松管理个人与家庭健康提醒',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: AppStyles.footnote.copyWith(
                       color: Colors.grey.shade600,
-                      height: 1.35,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppStyles.spacingM),
                   Center(
                     child: SizedBox(
                       width: 260,
@@ -175,7 +176,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppStyles.spacingM),
                   Material(
                     elevation: 6,
                     shadowColor: Colors.black.withValues(alpha: 0.06),
@@ -231,12 +232,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     minimumSize: const Size(0, 44),
                                   ),
                                   child: Text(
-                                    _countdown > 0
-                                        ? '${_countdown}s'
-                                        : '获取验证码',
+                                    _countdown > 0 ? '${_countdown}s' : '获取验证码',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      fontWeight: FontWeight.w700,
+                                      fontWeight: FontWeight.w600,
                                       color: _countdown > 0
                                           ? Colors.grey
                                           : AppColors.mintDeep,
@@ -260,7 +259,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.mintDeep.withValues(alpha: 0.35),
+                                  color: AppColors.mintDeep
+                                      .withValues(alpha: 0.35),
                                   blurRadius: 12,
                                   offset: const Offset(0, 6),
                                 ),
@@ -295,7 +295,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         '登录 / 注册',
                                         style: TextStyle(
                                           fontSize: 16,
-                                          fontWeight: FontWeight.w800,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                               ),
@@ -303,11 +303,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 12),
                           OutlinedButton(
-                            onPressed:
-                                (_loading || _appleLoading) ? null : _signInWithApple,
+                            onPressed: (_loading || _appleLoading)
+                                ? null
+                                : _signInWithApple,
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.black87,
-                              side: const BorderSide(color: AppColors.lightOutline),
+                              side: const BorderSide(
+                                color: AppColors.lightOutline,
+                              ),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(999),
@@ -317,18 +320,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 ? const SizedBox(
                                     width: 22,
                                     height: 22,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.apple, size: 22, color: Colors.black87),
+                                      Icon(
+                                        Icons.apple,
+                                        size: 22,
+                                        color: Colors.black87,
+                                      ),
                                       SizedBox(width: 8),
                                       Text(
                                         '通过 Apple 登录',
                                         style: TextStyle(
                                           fontSize: 15,
-                                          fontWeight: FontWeight.w700,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ],
@@ -411,7 +420,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     const link = TextStyle(
       fontSize: 12,
       color: AppColors.mintDeep,
-      fontWeight: FontWeight.w700,
+      fontWeight: FontWeight.w600,
       height: 1.45,
     );
     return Text.rich(
@@ -509,13 +518,24 @@ class _LoginHeroPainter extends CustomPainter {
     canvas.drawLine(c, c + const Offset(7, 2), hand);
 
     final calRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(w * 0.55, h * 0.48), width: 68, height: 58),
+      Rect.fromCenter(
+        center: Offset(w * 0.55, h * 0.48),
+        width: 68,
+        height: 58,
+      ),
       const Radius.circular(12),
     );
-    canvas.drawRRect(calRect.shift(const Offset(0, 3)), Paint()..color = Colors.black.withValues(alpha: 0.06));
+    canvas.drawRRect(
+      calRect.shift(const Offset(0, 3)),
+      Paint()..color = Colors.black.withValues(alpha: 0.06),
+    );
     canvas.drawRRect(calRect, Paint()..color = Colors.white);
     final calHead = RRect.fromRectAndCorners(
-      Rect.fromCenter(center: Offset(w * 0.55, h * 0.36), width: 68, height: 22),
+      Rect.fromCenter(
+        center: Offset(w * 0.55, h * 0.36),
+        width: 68,
+        height: 22,
+      ),
       topLeft: const Radius.circular(12),
       topRight: const Radius.circular(12),
     );
@@ -540,9 +560,19 @@ class _LoginHeroPainter extends CustomPainter {
     final sy = h * 0.42;
     const sr = 16.0;
     shieldPath.moveTo(sx, sy - sr);
-    shieldPath.quadraticBezierTo(sx + sr, sy - sr * 0.2, sx + sr * 0.95, sy + sr * 0.2);
+    shieldPath.quadraticBezierTo(
+      sx + sr,
+      sy - sr * 0.2,
+      sx + sr * 0.95,
+      sy + sr * 0.2,
+    );
     shieldPath.quadraticBezierTo(sx + sr * 0.9, sy + sr * 0.85, sx, sy + sr);
-    shieldPath.quadraticBezierTo(sx - sr * 0.9, sy + sr * 0.85, sx - sr * 0.95, sy + sr * 0.2);
+    shieldPath.quadraticBezierTo(
+      sx - sr * 0.9,
+      sy + sr * 0.85,
+      sx - sr * 0.95,
+      sy + sr * 0.2,
+    );
     shieldPath.quadraticBezierTo(sx - sr, sy - sr * 0.2, sx, sy - sr);
     shieldPath.close();
     canvas.drawPath(shieldPath, Paint()..color = const Color(0xFFE8F5EC));
@@ -566,8 +596,22 @@ class _LoginHeroPainter extends CustomPainter {
     const hs = 7.0;
     final hp = Path();
     hp.moveTo(hx, hy + hs * 0.65);
-    hp.cubicTo(hx - hs * 1.1, hy, hx - hs * 0.5, hy - hs * 0.9, hx, hy - hs * 0.2);
-    hp.cubicTo(hx + hs * 0.5, hy - hs * 0.9, hx + hs * 1.1, hy, hx, hy + hs * 0.65);
+    hp.cubicTo(
+      hx - hs * 1.1,
+      hy,
+      hx - hs * 0.5,
+      hy - hs * 0.9,
+      hx,
+      hy - hs * 0.2,
+    );
+    hp.cubicTo(
+      hx + hs * 0.5,
+      hy - hs * 0.9,
+      hx + hs * 1.1,
+      hy,
+      hx,
+      hy + hs * 0.65,
+    );
     canvas.drawPath(hp, heart);
 
     final leaf = Paint()..color = AppColors.mintDeep.withValues(alpha: 0.45);

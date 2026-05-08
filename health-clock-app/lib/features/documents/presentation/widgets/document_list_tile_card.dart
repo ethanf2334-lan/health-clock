@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_styles.dart';
 
 class DocumentListTileCard extends StatelessWidget {
   const DocumentListTileCard({
@@ -44,7 +45,7 @@ class DocumentListTileCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
       child: Material(
-        color: AppColors.cardWhite,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
@@ -53,8 +54,10 @@ class DocumentListTileCard extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.fromLTRB(10, 9, 10, 9),
             decoration: BoxDecoration(
+              color: AppColors.cardWhite,
               border: Border.all(color: AppColors.lightOutline),
               borderRadius: BorderRadius.circular(14),
+              boxShadow: AppStyles.cardShadow,
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -83,7 +86,7 @@ class DocumentListTileCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 15,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                                 height: 1.2,
                               ),
@@ -160,7 +163,7 @@ class _Tag extends StatelessWidget {
         label,
         style: TextStyle(
           fontSize: 11,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
           color: color,
         ),
       ),

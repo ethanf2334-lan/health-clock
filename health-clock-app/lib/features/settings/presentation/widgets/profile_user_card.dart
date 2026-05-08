@@ -62,8 +62,8 @@ class ProfileUserCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
                         ),
@@ -92,7 +92,7 @@ class ProfileUserCard extends StatelessWidget {
                                 '账号正常',
                                 style: TextStyle(
                                   fontSize: 10.5,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w600,
                                   color: AppColors.mintDeep,
                                 ),
                               ),
@@ -161,8 +161,8 @@ class _Avatar extends StatelessWidget {
       child: Text(
         initial,
         style: const TextStyle(
-          fontSize: 26,
-          fontWeight: FontWeight.w800,
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
           color: AppColors.mintDeep,
         ),
       ),
@@ -211,11 +211,21 @@ class _ShieldPainter extends CustomPainter {
     path.moveTo(cx, cy - s);
     path.quadraticBezierTo(cx + s, cy - s * 0.2, cx + s * 0.95, cy + s * 0.15);
     path.quadraticBezierTo(cx + s * 0.9, cy + s * 0.85, cx, cy + s);
-    path.quadraticBezierTo(cx - s * 0.9, cy + s * 0.85, cx - s * 0.95, cy + s * 0.15);
+    path.quadraticBezierTo(
+      cx - s * 0.9,
+      cy + s * 0.85,
+      cx - s * 0.95,
+      cy + s * 0.15,
+    );
     path.quadraticBezierTo(cx - s, cy - s * 0.2, cx, cy - s);
     path.close();
 
-    canvas.drawShadow(path, AppColors.mintDeep.withValues(alpha: 0.25), 4, false);
+    canvas.drawShadow(
+      path,
+      AppColors.mintDeep.withValues(alpha: 0.25),
+      4,
+      false,
+    );
     canvas.drawPath(path, Paint()..color = AppColors.mintDeep);
 
     final tick = Paint()
@@ -223,8 +233,16 @@ class _ShieldPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.8
       ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(cx - s * 0.35, cy + s * 0.05), Offset(cx - s * 0.08, cy + s * 0.32), tick);
-    canvas.drawLine(Offset(cx - s * 0.08, cy + s * 0.32), Offset(cx + s * 0.42, cy - s * 0.22), tick);
+    canvas.drawLine(
+      Offset(cx - s * 0.35, cy + s * 0.05),
+      Offset(cx - s * 0.08, cy + s * 0.32),
+      tick,
+    );
+    canvas.drawLine(
+      Offset(cx - s * 0.08, cy + s * 0.32),
+      Offset(cx + s * 0.42, cy - s * 0.22),
+      tick,
+    );
   }
 
   @override

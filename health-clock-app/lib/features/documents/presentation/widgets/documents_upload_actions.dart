@@ -83,7 +83,7 @@ class _UploadAction extends StatelessWidget {
                 label,
                 style: const TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),

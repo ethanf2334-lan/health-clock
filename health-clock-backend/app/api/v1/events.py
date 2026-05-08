@@ -1,3 +1,6 @@
+from datetime import datetime
+import logging
+
 from fastapi import APIRouter, Query, status
 
 from app.core.response import error_response, success_response
@@ -6,6 +9,13 @@ from app.repositories.event_repository import EventRepository
 from app.schemas.event import EventCreate, EventListQuery, EventUpdate
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+
+def _parse_iso_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
 @router.get("", response_model=dict)
@@ -28,21 +38,26 @@ def list_events(
     - status: pending/completed/cancelled
     - event_type: follow_up/revisit/checkup/medication/monitoring/custom
     """
-    from datetime import datetime
-
     repo = EventRepository(supabase)
 
-    start = datetime.fromisoformat(start_date) if start_date else None
-    end = datetime.fromisoformat(end_date) if end_date else None
+    try:
+        start = _parse_iso_datetime(start_date)
+        end = _parse_iso_datetime(end_date)
+    except ValueError:
+        return error_response(code=1003, message="日期格式无效")
 
-    events = repo.list_by_user(
-        user_id=current_user["id"],
-        member_id=member_id,
-        start_date=start,
-        end_date=end,
-        status=status_filter,
-        event_type=event_type,
-    )
+    try:
+        events = repo.list_by_user(
+            user_id=current_user["id"],
+            member_id=member_id,
+            start_date=start,
+            end_date=end,
+            status=status_filter,
+            event_type=event_type,
+        )
+    except Exception as exc:
+        logger.exception("List events failed for user_id=%s", current_user["id"])
+        return error_response(code=1002, message=f"获取提醒列表失败: {str(exc)}")
 
     return success_response(events)
 

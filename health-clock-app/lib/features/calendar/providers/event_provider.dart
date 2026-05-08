@@ -23,44 +23,55 @@ class EventListFilter {
 
 @riverpod
 class EventList extends _$EventList {
-  EventListFilter _filter = const EventListFilter();
+  EventListFilter? _filter;
+  int _requestSerial = 0;
 
   @override
   Future<List<HealthEvent>> build() async {
-    return ref.read(eventRepositoryProvider).getEvents(
-          memberId: _filter.memberId,
-          startDate: _filter.startDate,
-          endDate: _filter.endDate,
-          status: _filter.status,
-          eventType: _filter.eventType,
-        );
+    final filter = _filter;
+    if (filter == null) return const <HealthEvent>[];
+    return _fetch(filter);
   }
 
   Future<void> setFilter(EventListFilter filter) async {
     _filter = filter;
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() {
-      return ref.read(eventRepositoryProvider).getEvents(
-            memberId: filter.memberId,
-            startDate: filter.startDate,
-            endDate: filter.endDate,
-            status: filter.status,
-            eventType: filter.eventType,
-          );
-    });
+    await _reload(filter);
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() {
-      return ref.read(eventRepositoryProvider).getEvents(
-            memberId: _filter.memberId,
-            startDate: _filter.startDate,
-            endDate: _filter.endDate,
-            status: _filter.status,
-            eventType: _filter.eventType,
-          );
-    });
+    final filter = _filter;
+    if (filter == null) {
+      state = const AsyncValue.data(<HealthEvent>[]);
+      return;
+    }
+    await _reload(filter);
+  }
+
+  Future<List<HealthEvent>> _fetch(EventListFilter filter) {
+    return ref.read(eventRepositoryProvider).getEvents(
+          memberId: filter.memberId,
+          startDate: filter.startDate,
+          endDate: filter.endDate,
+          status: filter.status,
+          eventType: filter.eventType,
+        );
+  }
+
+  Future<void> _reload(EventListFilter filter) async {
+    final requestId = ++_requestSerial;
+    state = const AsyncLoading<List<HealthEvent>>().copyWithPrevious(state);
+
+    try {
+      final events = await _fetch(filter);
+      if (requestId != _requestSerial) return;
+      state = AsyncValue.data(events);
+    } catch (error, stackTrace) {
+      if (requestId != _requestSerial) return;
+      state = AsyncValue<List<HealthEvent>>.error(
+        error,
+        stackTrace,
+      ).copyWithPrevious(state);
+    }
   }
 
   Future<HealthEvent> createEvent(EventCreate data) async {
@@ -84,7 +95,7 @@ class EventList extends _$EventList {
     final current = state.valueOrNull;
     if (current != null) {
       state = AsyncValue.data(
-        _filter.status == 'pending'
+        _filter?.status == 'pending'
             ? current.where((event) => event.id != id).toList()
             : current
                 .map(

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_styles.dart';
 import '../../../shared/models/document.dart';
 import '../data/document_repository.dart';
 import '../providers/document_provider.dart';
@@ -19,23 +22,14 @@ class DocumentDetailScreen extends ConsumerWidget {
     final detailAsync = ref.watch(_documentDetailProvider(documentId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('文档详情'),
-        actions: [
-          detailAsync.whenOrNull(
-                data: (doc) => IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  tooltip: '删除文档',
-                  onPressed: () => _confirmDelete(context, ref, doc),
-                ),
-              ) ??
-              const SizedBox.shrink(),
-        ],
-      ),
-      body: detailAsync.when(
-        data: (doc) => _buildBody(context, ref, doc),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('加载失败：$e')),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        bottom: false,
+        child: detailAsync.when(
+          data: (doc) => _buildBody(context, ref, doc),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => _ErrorState(message: '加载失败：$e'),
+        ),
       ),
     );
   }
@@ -50,73 +44,89 @@ class DocumentDetailScreen extends ConsumerWidget {
     final candidateEvents = _candidateEvents(doc);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(
+        AppStyles.screenMargin,
+        AppStyles.spacingS,
+        AppStyles.screenMargin,
+        AppStyles.spacingL + MediaQuery.of(context).padding.bottom,
+      ),
       children: [
-        // 图片预览
+        _DetailHeader(
+          title: doc.title ?? doc.fileName,
+          subtitle: '${_categoryLabel(doc.category)} · $dateText',
+          icon: _iconFor(doc.category),
+          iconColor: _colorFor(doc.category),
+          iconBg: _bgFor(doc.category),
+          tagLabel: _categoryLabel(doc.category),
+          onBack: () {
+            if (context.canPop()) context.pop();
+          },
+          onDelete: () => _confirmDelete(context, ref, doc),
+        ),
+        const SizedBox(height: AppStyles.spacingM),
         if (isImage && doc.downloadUrl != null) ...[
           _buildImagePreview(doc.downloadUrl!),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppStyles.spacingM),
         ],
-
-        // PDF / 文件打开按钮
         if ((isPdf || doc.downloadUrl != null)) ...[
-          OutlinedButton.icon(
-            onPressed: () => _openInBrowser(context, doc),
-            icon: Icon(isPdf ? Icons.picture_as_pdf : Icons.open_in_new),
-            label: Text(isPdf ? '在浏览器中打开 PDF' : '查看原文件'),
+          _OpenFileCard(
+            isPdf: isPdf,
+            fileName: doc.fileName,
+            fileSize: _formatSize(doc.fileSize),
+            onTap: () => _openInBrowser(context, doc),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppStyles.spacingM),
         ],
-
-        // 基本信息
-        _section(
-          context,
-          '文档信息',
-          [
-            _infoRow('标题', doc.title ?? doc.fileName),
-            _infoRow('分类', _categoryLabel(doc.category)),
-            if (doc.hospitalName != null) _infoRow('医院', doc.hospitalName!),
-            _infoRow('日期', dateText),
-            _infoRow('文件名', doc.fileName),
-            _infoRow('大小', _formatSize(doc.fileSize)),
+        _InfoSection(
+          title: '文档信息',
+          icon: Icons.description_outlined,
+          rows: [
+            _InfoItem('标题', doc.title ?? doc.fileName),
+            _InfoItem('分类', _categoryLabel(doc.category)),
+            if (doc.hospitalName != null) _InfoItem('医院', doc.hospitalName!),
+            _InfoItem('日期', dateText),
+            _InfoItem('文件名', doc.fileName),
+            _InfoItem('大小', _formatSize(doc.fileSize)),
           ],
         ),
-        const SizedBox(height: 16),
-
-        // AI 摘要
+        const SizedBox(height: AppStyles.spacingM),
         if (aiEntries.isNotEmpty) ...[
-          _section(
-            context,
-            'AI 提取信息',
-            aiEntries
-                .map((e) => _infoRow(_labelKey(e.key), _formatValue(e.value)))
+          _InfoSection(
+            title: 'AI 提取信息',
+            icon: Icons.auto_awesome_rounded,
+            accentColor: AppColors.lavender,
+            accentBg: AppColors.lavenderSoft,
+            rows: aiEntries
+                .map((e) => _InfoItem(_labelKey(e.key), _formatValue(e.value)))
                 .toList(),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppStyles.spacingM),
         ],
-
-        // 候选提醒
         if (candidateEvents.isNotEmpty) ...[
-          Text('候选提醒', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          CandidateEventList(
-            memberId: doc.memberId,
-            candidates: candidateEvents,
-            showEmptyState: false,
+          _SectionShell(
+            title: '候选提醒',
+            icon: Icons.notifications_active_outlined,
+            child: CandidateEventList(
+              memberId: doc.memberId,
+              candidates: candidateEvents,
+              showEmptyState: false,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppStyles.spacingM),
         ],
-
-        // OCR 全文
         if (doc.ocrText != null && doc.ocrText!.isNotEmpty) ...[
-          Text('OCR 识别文本', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Card(
+          _SectionShell(
+            title: 'OCR 识别文本',
+            icon: Icons.document_scanner_outlined,
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppStyles.spacingM),
               child: SelectableText(
                 doc.ocrText!,
-                style: const TextStyle(fontSize: 13, height: 1.6),
+                style: AppStyles.footnote.copyWith(
+                  color: AppColors.textSecondary,
+                  height: 1.55,
+                ),
               ),
             ),
           ),
@@ -126,8 +136,14 @@ class DocumentDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildImagePreview(String url) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        border: Border.all(color: AppColors.lightOutline),
+        boxShadow: AppStyles.cardShadow,
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InteractiveViewer(
         child: Image.network(
           url,
@@ -135,7 +151,7 @@ class DocumentDetailScreen extends ConsumerWidget {
           loadingBuilder: (_, child, progress) {
             if (progress == null) return child;
             return SizedBox(
-              height: 200,
+              height: 220,
               child: Center(
                 child: CircularProgressIndicator(
                   value: progress.expectedTotalBytes != null
@@ -160,43 +176,6 @@ class DocumentDetailScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _section(BuildContext context, String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Column(children: children),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: const TextStyle(color: Colors.grey, fontSize: 13),
-            ),
-          ),
-          Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 14)),
-          ),
-        ],
       ),
     );
   }
@@ -338,6 +317,512 @@ class DocumentDetailScreen extends ConsumerWidget {
       return v.entries.map((e) => '${e.key}: ${e.value}').join('、');
     }
     return v.toString();
+  }
+
+  IconData _iconFor(String category) {
+    switch (category) {
+      case 'checkup_report':
+      case 'lab_report':
+        return Icons.assignment_rounded;
+      case 'examination_result':
+        return Icons.biotech_rounded;
+      case 'outpatient_record':
+        return Icons.local_hospital_rounded;
+      case 'prescription':
+        return Icons.medication_liquid_rounded;
+      case 'hospitalization_record':
+        return Icons.hotel_rounded;
+      default:
+        return Icons.description_rounded;
+    }
+  }
+
+  Color _colorFor(String category) {
+    switch (category) {
+      case 'checkup_report':
+        return AppColors.mintDeep;
+      case 'examination_result':
+      case 'lab_report':
+        return AppColors.careBlue;
+      case 'outpatient_record':
+        return AppColors.lavender;
+      case 'prescription':
+        return AppColors.warmAmber;
+      case 'hospitalization_record':
+        return AppColors.rose;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
+
+  Color _bgFor(String category) {
+    switch (category) {
+      case 'checkup_report':
+        return AppColors.mintBg;
+      case 'examination_result':
+      case 'lab_report':
+        return AppColors.careBlueSoft;
+      case 'outpatient_record':
+        return AppColors.lavenderSoft;
+      case 'prescription':
+        return AppColors.amberSoft;
+      case 'hospitalization_record':
+        return AppColors.roseSoft;
+      default:
+        return AppColors.lightSurface;
+    }
+  }
+}
+
+class _DetailHeader extends StatelessWidget {
+  const _DetailHeader({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    required this.tagLabel,
+    required this.onBack,
+    required this.onDelete,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBg;
+  final String tagLabel;
+  final VoidCallback onBack;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _CircleIconButton(
+              icon: Icons.chevron_left_rounded,
+              color: AppColors.textPrimary,
+              onTap: onBack,
+            ),
+            const SizedBox(width: AppStyles.spacingS),
+            Expanded(
+              child: Text(
+                '文档详情',
+                style: AppStyles.screenTitle.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            _CircleIconButton(
+              icon: Icons.delete_outline_rounded,
+              color: AppColors.danger,
+              bg: AppColors.coralSoft.withValues(alpha: 0.55),
+              onTap: onDelete,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppStyles.spacingM),
+        Container(
+          padding: const EdgeInsets.all(AppStyles.cardPadding),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppStyles.radiusL),
+            border: Border.all(color: AppColors.lightOutline),
+            boxShadow: AppStyles.cardShadow,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(AppStyles.radiusM),
+                ),
+                child: Icon(icon, color: iconColor, size: 26),
+              ),
+              const SizedBox(width: AppStyles.spacingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppStyles.subhead.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppStyles.spacingS),
+                        _SmallTag(
+                          label: tagLabel,
+                          color: iconColor,
+                          bg: iconBg,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppStyles.spacingXs),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppStyles.footnote.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CircleIconButton extends StatelessWidget {
+  const _CircleIconButton({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+    this.bg = Colors.white,
+  });
+
+  final IconData icon;
+  final Color color;
+  final Color bg;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: AppStyles.minTouchTarget,
+          height: AppStyles.minTouchTarget,
+          child: Center(
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: bg,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.lightOutline),
+                boxShadow: AppStyles.subtleShadow,
+              ),
+              child: Icon(icon, size: 22, color: color),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OpenFileCard extends StatelessWidget {
+  const _OpenFileCard({
+    required this.isPdf,
+    required this.fileName,
+    required this.fileSize,
+    required this.onTap,
+  });
+
+  final bool isPdf;
+  final String fileName;
+  final String fileSize;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isPdf ? AppColors.coral : AppColors.careBlue;
+    final bg = isPdf ? AppColors.coralSoft : AppColors.careBlueSoft;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppStyles.radiusL),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        child: Container(
+          padding: const EdgeInsets.all(AppStyles.cardPadding),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppStyles.radiusL),
+            border: Border.all(color: AppColors.lightOutline),
+            boxShadow: AppStyles.cardShadow,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(AppStyles.radiusM),
+                ),
+                child: Icon(
+                  isPdf ? Icons.picture_as_pdf_rounded : Icons.open_in_new,
+                  color: color,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: AppStyles.spacingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isPdf ? '打开 PDF 原件' : '查看原文件',
+                      style: AppStyles.subhead.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: AppStyles.spacingXs),
+                    Text(
+                      '$fileName · $fileSize',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppStyles.footnote.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionShell extends StatelessWidget {
+  const _SectionShell({
+    required this.title,
+    required this.icon,
+    required this.child,
+    this.accentColor = AppColors.mintDeep,
+    this.accentBg = AppColors.mintBg,
+  });
+
+  final String title;
+  final IconData icon;
+  final Widget child;
+  final Color accentColor;
+  final Color accentBg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        border: Border.all(color: AppColors.lightOutline),
+        boxShadow: AppStyles.cardShadow,
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppStyles.spacingM,
+              AppStyles.spacingM,
+              AppStyles.spacingM,
+              AppStyles.spacingS,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: accentBg,
+                    borderRadius: BorderRadius.circular(AppStyles.radiusM),
+                  ),
+                  child: Icon(icon, color: accentColor, size: 18),
+                ),
+                const SizedBox(width: AppStyles.spacingS),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: AppStyles.subhead.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoSection extends StatelessWidget {
+  const _InfoSection({
+    required this.title,
+    required this.icon,
+    required this.rows,
+    this.accentColor = AppColors.mintDeep,
+    this.accentBg = AppColors.mintBg,
+  });
+
+  final String title;
+  final IconData icon;
+  final List<_InfoItem> rows;
+  final Color accentColor;
+  final Color accentBg;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionShell(
+      title: title,
+      icon: icon,
+      accentColor: accentColor,
+      accentBg: accentBg,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppStyles.spacingM,
+          0,
+          AppStyles.spacingM,
+          AppStyles.spacingS,
+        ),
+        child: Column(
+          children: [
+            for (var i = 0; i < rows.length; i++) ...[
+              _InfoRow(item: rows[i]),
+              if (i != rows.length - 1)
+                const Divider(
+                  height: AppStyles.dividerThin,
+                  color: AppColors.lightDivider,
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoItem {
+  const _InfoItem(this.label, this.value);
+
+  final String label;
+  final String value;
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.item});
+
+  final _InfoItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppStyles.spacingS),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 76,
+            child: Text(
+              item.label,
+              style: AppStyles.footnote.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppStyles.spacingS),
+          Expanded(
+            child: Text(
+              item.value,
+              style: AppStyles.footnote.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+                height: 1.42,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SmallTag extends StatelessWidget {
+  const _SmallTag({
+    required this.label,
+    required this.color,
+    required this.bg,
+  });
+
+  final String label;
+  final Color color;
+  final Color bg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppStyles.spacingS,
+        vertical: AppStyles.spacingXs,
+      ),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppStyles.radiusS),
+      ),
+      child: Text(
+        label,
+        style: AppStyles.caption1.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppStyles.spacingL),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: AppStyles.subhead.copyWith(color: AppColors.textSecondary),
+        ),
+      ),
+    );
   }
 }
 

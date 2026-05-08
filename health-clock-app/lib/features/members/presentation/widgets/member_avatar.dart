@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
 
-/// 通用成员头像。基于关系生成 emoji 和柔和背景色。
+/// 轻量成员头像：柔和圆形底色 + 角色 emoji。
 class MemberAvatar extends StatelessWidget {
   const MemberAvatar({
     super.key,
@@ -21,60 +21,110 @@ class MemberAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final emoji = _emojiFor(relation, name);
-    final bg = _bgFor(relation);
+    final style = _styleFor(relation);
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: bg,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [style.bgTop, style.bgBottom],
+        ),
         shape: BoxShape.circle,
-        border: borderColor != null
-            ? Border.all(color: borderColor!, width: borderWidth)
-            : null,
+        border: Border.all(
+          color: borderColor ?? Colors.white.withValues(alpha: 0.72),
+          width: borderColor == null ? 1 : borderWidth,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: style.fg.withValues(alpha: 0.14),
+            blurRadius: size * 0.20,
+            offset: Offset(0, size * 0.05),
+          ),
+        ],
       ),
       alignment: Alignment.center,
       child: Text(
-        emoji,
-        style: TextStyle(fontSize: size * 0.55),
+        _emojiFor(relation),
+        style: TextStyle(
+          fontSize: size * 0.46,
+          height: 1,
+          letterSpacing: 0,
+        ),
       ),
     );
   }
 
-  static String _emojiFor(String? relation, String? name) {
+  static String _emojiFor(String? relation) {
     switch (relation) {
-      case 'mother':
-        return '👩';
+      case 'self':
+        return '🙂';
       case 'father':
         return '👨';
-      case 'self':
-        return '🧑';
+      case 'mother':
+        return '👩';
       case 'spouse':
-        return '💑';
+        return '😊';
       case 'child':
         return '🧒';
       default:
-        if (name == null || name.isEmpty) return '🙂';
-        return name.characters.first;
+        return '🙂';
     }
   }
 
-  static Color _bgFor(String? relation) {
+  static _AvatarStyle _styleFor(String? relation) {
     switch (relation) {
-      case 'mother':
-        return AppColors.roseSoft;
-      case 'father':
-        return AppColors.careBlueSoft;
       case 'self':
-        return AppColors.lavenderSoft;
+        return const _AvatarStyle(
+          bgTop: Color(0xFFE3F8EA),
+          bgBottom: Color(0xFFCFF2DC),
+          fg: AppColors.mintDeep,
+        );
+      case 'father':
+        return const _AvatarStyle(
+          bgTop: Color(0xFFEAF4FF),
+          bgBottom: Color(0xFFDCEEFF),
+          fg: Color(0xFF3578C6),
+        );
+      case 'mother':
+        return const _AvatarStyle(
+          bgTop: Color(0xFFFFEDF6),
+          bgBottom: Color(0xFFFFDDEA),
+          fg: Color(0xFFD84E83),
+        );
       case 'spouse':
-        return AppColors.mintSoft;
+        return const _AvatarStyle(
+          bgTop: Color(0xFFE9F7FF),
+          bgBottom: Color(0xFFDCEFFF),
+          fg: Color(0xFF209966),
+        );
       case 'child':
-        return AppColors.sunSoft;
+        return const _AvatarStyle(
+          bgTop: Color(0xFFFFF5DE),
+          bgBottom: Color(0xFFFFE8B8),
+          fg: Color(0xFFC77710),
+        );
       default:
-        return AppColors.mintSoft;
+        return const _AvatarStyle(
+          bgTop: Color(0xFFEAF7F0),
+          bgBottom: Color(0xFFD9EFE5),
+          fg: AppColors.mintDeep,
+        );
     }
   }
+}
+
+class _AvatarStyle {
+  const _AvatarStyle({
+    required this.bgTop,
+    required this.bgBottom,
+    required this.fg,
+  });
+
+  final Color bgTop;
+  final Color bgBottom;
+  final Color fg;
 }
 
 /// 头像 + 底部小徽章 (例如 "当前成员")
@@ -110,8 +160,7 @@ class MemberAvatarWithBadge extends StatelessWidget {
           Positioned(
             bottom: 0,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: AppColors.mintDeep,
                 borderRadius: BorderRadius.circular(999),
@@ -121,7 +170,7 @@ class MemberAvatarWithBadge extends StatelessWidget {
                 badgeText,
                 style: const TextStyle(
                   fontSize: 10,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),
               ),

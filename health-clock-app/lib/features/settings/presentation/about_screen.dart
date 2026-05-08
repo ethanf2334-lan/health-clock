@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_styles.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -7,78 +10,227 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('关于健康时钟')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        bottom: false,
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            AppStyles.screenMargin,
+            AppStyles.spacingS,
+            AppStyles.screenMargin,
+            AppStyles.spacingL + MediaQuery.of(context).padding.bottom,
+          ),
+          children: [
+            _PageHeader(
+              title: '关于我们',
+              onBack: () {
+                if (context.canPop()) context.pop();
+              },
+            ),
+            const SizedBox(height: AppStyles.spacingM),
+            const _BrandCard(),
+            const SizedBox(height: AppStyles.spacingM),
+            const _IntroCard(
+              title: '健康时钟是什么',
+              body:
+                  '健康时钟是一款面向个人与家庭的健康提醒和档案管理 App。你可以把复查、用药、体检、健康指标和医疗文档集中整理在一个清晰的健康日历里。',
+              icon: Icons.favorite_border_rounded,
+              color: AppColors.mintDeep,
+              bg: AppColors.mintBg,
+            ),
+            const SizedBox(height: AppStyles.spacingM),
+            const _IntroCard(
+              title: '我们如何帮助你',
+              body:
+                  '应用支持按家庭成员管理资料，通过 OCR 和 AI 辅助理解医疗文档，也可以用自然语言快速创建提醒，帮助你少遗漏、少翻找。',
+              icon: Icons.auto_awesome_rounded,
+              color: AppColors.lavender,
+              bg: AppColors.lavenderSoft,
+            ),
+            const SizedBox(height: AppStyles.spacingM),
+            const _NoticeCard(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PageHeader extends StatelessWidget {
+  const _PageHeader({required this.title, required this.onBack});
+
+  final String title;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _CircleButton(onTap: onBack),
+        const SizedBox(width: AppStyles.spacingS),
+        Expanded(
+          child: Text(
+            title,
+            style: AppStyles.screenTitle.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CircleButton extends StatelessWidget {
+  const _CircleButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: AppStyles.minTouchTarget,
+          height: AppStyles.minTouchTarget,
+          alignment: Alignment.center,
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.lightOutline),
+              boxShadow: AppStyles.subtleShadow,
+            ),
+            child: const Icon(
+              Icons.chevron_left_rounded,
+              color: AppColors.textPrimary,
+              size: 24,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BrandCard extends StatelessWidget {
+  const _BrandCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppStyles.cardPadding),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white,
+            AppColors.mintBgLight.withValues(alpha: 0.85),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        border: Border.all(color: AppColors.lightOutline),
+        boxShadow: AppStyles.cardShadow,
+      ),
+      child: Column(
         children: [
-          Center(
-            child: CircleAvatar(
-              radius: 42,
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              child: Icon(
-                Icons.health_and_safety,
-                size: 46,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-              ),
+          Container(
+            width: 64,
+            height: 64,
+            decoration: const BoxDecoration(
+              color: AppColors.mintBg,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.health_and_safety_rounded,
+              color: AppColors.mintDeep,
+              size: 34,
             ),
           ),
-          const SizedBox(height: 16),
-          const Center(
-            child: Text(
-              '健康时钟',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          const SizedBox(height: AppStyles.spacingM),
+          Text(
+            '健康时钟',
+            style: AppStyles.headline.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 4),
-          Center(
-            child: Text(
-              'v1.0.0 MVP',
-              style: TextStyle(color: Colors.grey[600]),
+          const SizedBox(height: AppStyles.spacingXs),
+          Text(
+            '家庭健康提醒与档案管理',
+            style: AppStyles.footnote.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 24),
-          _section(
-            context,
-            '我们在解决什么',
-            '健康时钟帮助家庭记录健康档案、管理复查和用药提醒，并用 AI 从自然语言、语音和医疗文档中提取健康事项。',
+        ],
+      ),
+    );
+  }
+}
+
+class _IntroCard extends StatelessWidget {
+  const _IntroCard({
+    required this.title,
+    required this.body,
+    required this.icon,
+    required this.color,
+    required this.bg,
+  });
+
+  final String title;
+  final String body;
+  final IconData icon;
+  final Color color;
+  final Color bg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppStyles.cardPadding),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        border: Border.all(color: AppColors.lightOutline),
+        boxShadow: AppStyles.cardShadow,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(AppStyles.radiusM),
+            ),
+            child: Icon(icon, color: color, size: 22),
           ),
-          _section(
-            context,
-            '当前能力',
-            '手机号/Apple 登录、家庭成员管理、AI 创建提醒、文档 OCR、健康指标趋势、本地通知和日历视图。',
-          ),
-          const SizedBox(height: 12),
-          Card(
+          const SizedBox(width: AppStyles.spacingM),
+          Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ListTile(
-                  leading: const Icon(Icons.article_outlined),
-                  title: const Text('项目文档'),
-                  subtitle: const Text('docs/健康时钟-MVP项目进度总览.md'),
-                  onTap: () => _showText(
-                    context,
-                    '项目文档',
-                    '项目文档在仓库 docs 目录中维护，MVP 进度以“健康时钟-MVP项目进度总览.md”为准。',
+                Text(
+                  title,
+                  style: AppStyles.subhead.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.privacy_tip_outlined),
-                  title: const Text('隐私说明'),
-                  subtitle: const Text('健康数据仅用于本应用核心功能'),
-                  onTap: () => _showText(
-                    context,
-                    '隐私说明',
-                    'MVP 阶段不会做广告追踪。上传的健康文档用于 OCR 和 AI 摘要；提醒通知使用设备本地通知。',
-                  ),
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.open_in_new),
-                  title: const Text('打开项目仓库'),
-                  onTap: () => launchUrl(
-                    Uri.parse('https://github.com/ethanf2334-lan/health-clock'),
-                    mode: LaunchMode.externalApplication,
+                const SizedBox(height: AppStyles.spacingS),
+                Text(
+                  body,
+                  style: AppStyles.footnote.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.45,
                   ),
                 ),
               ],
@@ -88,38 +240,26 @@ class AboutScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _section(BuildContext context, String title, String body) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(body, style: const TextStyle(height: 1.5)),
-          ],
-        ),
+class _NoticeCard extends StatelessWidget {
+  const _NoticeCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppStyles.cardPadding),
+      decoration: BoxDecoration(
+        color: AppColors.mintBgLight.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(AppStyles.radiusL),
+        border: Border.all(color: AppColors.lightOutline),
       ),
-    );
-  }
-
-  void _showText(BuildContext context, String title, String content) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('知道了'),
-          ),
-        ],
+      child: Text(
+        '健康时钟不提供医学诊断。所有提醒、摘要和趋势仅用于记录与管理，具体医疗建议请以专业医生意见为准。',
+        style: AppStyles.footnote.copyWith(
+          color: AppColors.textSecondary,
+          height: 1.45,
+        ),
       ),
     );
   }

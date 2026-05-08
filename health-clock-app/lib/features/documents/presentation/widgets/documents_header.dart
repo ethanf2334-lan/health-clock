@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_styles.dart';
 
 class DocumentsHeader extends StatelessWidget {
   const DocumentsHeader({
@@ -17,7 +18,12 @@ class DocumentsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 16, 10),
+      padding: const EdgeInsets.fromLTRB(
+        AppStyles.screenMargin,
+        AppStyles.spacingS,
+        AppStyles.screenMargin,
+        AppStyles.spacingM,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -27,62 +33,56 @@ class DocumentsHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w900,
+                  style: AppStyles.screenTitle.copyWith(
                     color: AppColors.textPrimary,
-                    height: 1.12,
-                    letterSpacing: 0,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: AppStyles.spacingXs),
                 _buildSubtitle(),
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppStyles.spacingS),
           Material(
             color: AppColors.cardWhite,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppStyles.radiusFull),
             ),
             child: InkWell(
               onTap: onUpload,
-              borderRadius: BorderRadius.circular(999),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 13,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: AppColors.lightOutline),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.035),
-                      blurRadius: 12,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.upload_rounded,
-                      size: 19,
-                      color: Color(0xFF0BA84A),
-                    ),
-                    SizedBox(width: 5),
-                    Text(
-                      '上传',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+              borderRadius: BorderRadius.circular(AppStyles.radiusFull),
+              child: ConstrainedBox(
+                constraints:
+                    const BoxConstraints(minHeight: AppStyles.minTouchTarget),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppStyles.spacingM,
+                    vertical: AppStyles.spacingS,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardWhite,
+                    borderRadius: BorderRadius.circular(AppStyles.radiusFull),
+                    border: Border.all(color: AppColors.lightOutline),
+                    boxShadow: AppStyles.subtleShadow,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.upload_rounded,
+                        size: 20,
+                        color: Color(0xFF0BA84A),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: AppStyles.spacingXs),
+                      Text(
+                        '上传',
+                        style: AppStyles.footnote.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -98,10 +98,8 @@ class DocumentsHeader extends StatelessWidget {
     if (match == null) {
       return Text(
         subtitle,
-        style: const TextStyle(
-          fontSize: 13,
+        style: AppStyles.footnote.copyWith(
           color: AppColors.textSecondary,
-          height: 1.3,
         ),
       );
     }
@@ -110,19 +108,16 @@ class DocumentsHeader extends StatelessWidget {
     final after = subtitle.substring(match.end);
     return RichText(
       text: TextSpan(
-        style: const TextStyle(
-          fontSize: 13,
+        style: AppStyles.footnote.copyWith(
           color: AppColors.textSecondary,
-          height: 1.3,
         ),
         children: [
           if (before.isNotEmpty) TextSpan(text: before),
           TextSpan(
             text: number,
-            style: const TextStyle(
+            style: AppStyles.footnote.copyWith(
               color: AppColors.mintDeep,
-              fontWeight: FontWeight.w800,
-              fontSize: 15,
+              fontWeight: FontWeight.w600,
             ),
           ),
           if (after.isNotEmpty) TextSpan(text: after),
