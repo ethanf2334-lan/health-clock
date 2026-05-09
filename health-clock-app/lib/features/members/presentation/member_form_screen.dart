@@ -325,6 +325,8 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
               ),
               decoration: InputDecoration(
                 hintText: hint,
+                filled: false,
+                fillColor: Colors.transparent,
                 hintStyle: const TextStyle(
                   color: AppColors.textTertiary,
                   fontWeight: FontWeight.w500,

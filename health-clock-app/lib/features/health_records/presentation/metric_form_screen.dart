@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_styles.dart';
 import '../../../shared/models/metric_record.dart';
 import '../../../shared/widgets/app_cupertino_pickers.dart';
 import '../../members/presentation/member_picker_field.dart';
@@ -97,6 +99,10 @@ class _MetricFormScreenState extends ConsumerState<MetricFormScreen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _valueController,
+              style: AppStyles.subhead.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
               decoration: InputDecoration(
                 labelText: _def.hasExtra ? '收缩压（高压）' : '数值',
                 suffixText: _def.unit,
@@ -113,6 +119,10 @@ class _MetricFormScreenState extends ConsumerState<MetricFormScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _extraController,
+                style: AppStyles.subhead.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
                 decoration: InputDecoration(
                   labelText: '舒张压（低压）',
                   suffixText: _def.unit,
@@ -137,6 +147,10 @@ class _MetricFormScreenState extends ConsumerState<MetricFormScreen> {
             ),
             TextFormField(
               controller: _noteController,
+              style: AppStyles.subhead.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
               decoration: const InputDecoration(labelText: '备注（可选）'),
               maxLines: 2,
             ),

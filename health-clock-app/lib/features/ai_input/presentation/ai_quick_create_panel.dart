@@ -33,7 +33,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
   static const _examples = [
     '甲状腺三个月后复查',
     '两周后复查肺结节 CT',
-    '每天晚上8点提醒妈妈吃药',
+    '每天晚上8点提醒吃药',
   ];
 
   final _textController = TextEditingController();
@@ -587,6 +587,10 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                       minLines: 1,
                       maxLines: 1,
                       enabled: !_isProcessing && !_saving,
+                      style: AppStyles.subhead.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _handleSubmit(fromVoice: false),
                       decoration: const InputDecoration(
@@ -912,6 +916,10 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
         Expanded(
           child: TextField(
             controller: _textController,
+            style: AppStyles.subhead.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
             decoration: const InputDecoration(
               hintText: '发一条健康提醒需求...',
               border: OutlineInputBorder(),
@@ -1034,7 +1042,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
 
   Widget _buildDesignedDraftCard(Map<String, dynamic> event) {
     final scheduledAt = _parseScheduledAt(event);
-    final title = (event['event_title'] ?? '妈妈晚间用药提醒').toString();
+    final title = (event['event_title'] ?? '健康提醒').toString();
     final typeLabel =
         _typeLabel((event['event_type'] ?? 'medication').toString());
     final repeat = _repeatLabel(_parseStringMap(event['repeat_rule']));
@@ -1042,6 +1050,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
         ? (repeat == null ? '每天 20:00' : '$repeat 20:00')
         : _designedTimeLabel(scheduledAt, repeat);
     final note = (event['description'] as String?)?.trim();
+    final memberName = _draftMemberName(event);
 
     return Container(
       padding: const EdgeInsets.all(AppStyles.spacingS),
@@ -1190,16 +1199,16 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
                             label: '时间',
                             value: time,
                           ),
-                          const _DraftInfoItem(
+                          _DraftInfoItem(
                             icon: Icons.person_outline_rounded,
                             label: '成员',
-                            value: '妈妈',
+                            value: memberName,
                           ),
                           _DraftInfoItem(
                             icon: Icons.event_note_outlined,
                             label: '备注',
                             value:
-                                (note == null || note.isEmpty) ? '降压药' : note,
+                                (note == null || note.isEmpty) ? '未填写' : note,
                           ),
                           const _DraftInfoItem(
                             icon: Icons.medical_information_outlined,
@@ -1261,7 +1270,7 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
     try {
       final result = await ref
           .read(aIParseResultProvider.notifier)
-          .parseText(text, memberId: _memberId);
+          .parseText(text, memberId: _memberId, memberName: _currentMemberName);
       final parsedEvent = _parseStringMap(result['parsed_event']);
       if (parsedEvent == null) {
         throw const FormatException('AI 没有返回可用的提醒草稿');
@@ -1442,6 +1451,17 @@ class _AIQuickCreatePanelState extends ConsumerState<AIQuickCreatePanel> {
       });
       widget.onCreated?.call(result);
     }
+  }
+
+  String? get _currentMemberName {
+    final member = ref.read(currentMemberProvider);
+    return member?.name.trim().isEmpty == false ? member!.name.trim() : null;
+  }
+
+  String _draftMemberName(Map<String, dynamic> event) {
+    final fromEvent = event['member_name']?.toString().trim();
+    if (fromEvent != null && fromEvent.isNotEmpty) return fromEvent;
+    return _currentMemberName ?? '当前成员';
   }
 
   void _scrollToBottom() {

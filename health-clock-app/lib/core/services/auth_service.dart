@@ -30,6 +30,8 @@ class AuthState {
   final String? userId;
   final String? phone;
   final String? email;
+  final String? provider;
+  final String? appleUserIdentifier;
   final String? accessToken;
   final int? expiresAt; // unix seconds
 
@@ -38,6 +40,8 @@ class AuthState {
     this.userId,
     this.phone,
     this.email,
+    this.provider,
+    this.appleUserIdentifier,
     this.accessToken,
     this.expiresAt,
   });
@@ -47,6 +51,8 @@ class AuthState {
     String? userId,
     String? phone,
     String? email,
+    String? provider,
+    String? appleUserIdentifier,
     String? accessToken,
     int? expiresAt,
   }) {
@@ -55,6 +61,8 @@ class AuthState {
       userId: userId ?? this.userId,
       phone: phone ?? this.phone,
       email: email ?? this.email,
+      provider: provider ?? this.provider,
+      appleUserIdentifier: appleUserIdentifier ?? this.appleUserIdentifier,
       accessToken: accessToken ?? this.accessToken,
       expiresAt: expiresAt ?? this.expiresAt,
     );
@@ -65,6 +73,8 @@ class _StoredAuth {
   final String userId;
   final String? phone;
   final String? email;
+  final String? provider;
+  final String? appleUserIdentifier;
   final String accessToken;
   final int expiresAt;
 
@@ -74,6 +84,8 @@ class _StoredAuth {
     required this.expiresAt,
     this.phone,
     this.email,
+    this.provider,
+    this.appleUserIdentifier,
   });
 }
 
@@ -85,6 +97,8 @@ class Auth extends _$Auth {
   static const _userIdKey = 'auth.userId';
   static const _phoneKey = 'auth.phone';
   static const _emailKey = 'auth.email';
+  static const _providerKey = 'auth.provider';
+  static const _appleUserKey = 'auth.appleUserIdentifier';
   static const _refreshWindowSeconds = 60 * 60 * 24;
 
   @override
@@ -135,6 +149,7 @@ class Auth extends _$Auth {
           userId: user['id'] as String?,
           phone: user['phone'] as String?,
           email: _publicEmail(user['email'] as String?),
+          provider: 'phone',
           accessToken: token,
           expiresAt: expiresAt,
         ),
@@ -191,6 +206,8 @@ class Auth extends _$Auth {
           userId: user['id'] as String?,
           phone: user['phone'] as String?,
           email: _publicEmail(user['email'] as String?),
+          provider: 'apple',
+          appleUserIdentifier: credential.userIdentifier,
           accessToken: token,
           expiresAt: expiresAt,
         ),
@@ -232,6 +249,8 @@ class Auth extends _$Auth {
           userId: user['id'] as String? ?? state.userId,
           phone: user['phone'] as String? ?? state.phone,
           email: _publicEmail(user['email'] as String?) ?? state.email,
+          provider: state.provider,
+          appleUserIdentifier: state.appleUserIdentifier,
           accessToken: newToken,
           expiresAt: expiresAt,
         ),
@@ -256,6 +275,8 @@ class Auth extends _$Auth {
       userId: stored.userId,
       phone: stored.phone,
       email: stored.email,
+      provider: stored.provider,
+      appleUserIdentifier: stored.appleUserIdentifier,
       accessToken: stored.accessToken,
       expiresAt: stored.expiresAt,
     );
@@ -306,6 +327,8 @@ class Auth extends _$Auth {
       expiresAt: expiresAt,
       phone: prefs.getString(_phoneKey),
       email: _publicEmail(prefs.getString(_emailKey)),
+      provider: prefs.getString(_providerKey),
+      appleUserIdentifier: prefs.getString(_appleUserKey),
     );
   }
 
@@ -328,6 +351,20 @@ class Auth extends _$Auth {
     } else {
       await prefs.setString(_emailKey, email);
     }
+
+    final provider = auth.provider;
+    if (provider == null || provider.isEmpty) {
+      await prefs.remove(_providerKey);
+    } else {
+      await prefs.setString(_providerKey, provider);
+    }
+
+    final appleUser = auth.appleUserIdentifier;
+    if (appleUser == null || appleUser.isEmpty) {
+      await prefs.remove(_appleUserKey);
+    } else {
+      await prefs.setString(_appleUserKey, appleUser);
+    }
   }
 
   Future<void> _clearStoredAuth() async {
@@ -337,6 +374,8 @@ class Auth extends _$Auth {
     await prefs.remove(_userIdKey);
     await prefs.remove(_phoneKey);
     await prefs.remove(_emailKey);
+    await prefs.remove(_providerKey);
+    await prefs.remove(_appleUserKey);
   }
 
   String _extractError(DioException e, String fallback) {

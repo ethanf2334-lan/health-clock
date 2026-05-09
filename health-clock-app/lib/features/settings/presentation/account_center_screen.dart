@@ -13,7 +13,7 @@ class AccountCenterScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
     final phone = auth.phone ?? '';
-    final email = auth.email;
+    final appleAccount = _appleAccountLabel(auth);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -56,7 +56,7 @@ class AccountCenterScreen extends ConsumerWidget {
                   iconColor: AppColors.textPrimary,
                   iconBg: AppColors.lightSurface,
                   title: '邮箱 / Apple',
-                  subtitle: email ?? '未绑定',
+                  subtitle: appleAccount,
                 ),
               ],
             ),
@@ -78,6 +78,23 @@ class AccountCenterScreen extends ConsumerWidget {
     if (d.length < 11) return raw;
     final p = d.length > 11 ? d.substring(d.length - 11) : d;
     return '${p.substring(0, 3)}****${p.substring(7)}';
+  }
+
+  String _appleAccountLabel(AuthState auth) {
+    final email = auth.email;
+    if (email != null && email.isNotEmpty) return email;
+    if (auth.provider == 'apple') {
+      final identifier = auth.appleUserIdentifier;
+      if (identifier != null && identifier.length >= 8) {
+        return 'Apple 已登录 · ${identifier.substring(0, 4)}…${identifier.substring(identifier.length - 4)}';
+      }
+      return 'Apple 已登录';
+    }
+    if (auth.status == AuthStatus.authenticated &&
+        (auth.phone == null || auth.phone!.isEmpty)) {
+      return 'Apple 已登录';
+    }
+    return '未绑定';
   }
 }
 

@@ -14,6 +14,7 @@ import '../../documents/data/document_repository.dart';
 import '../../documents/presentation/document_quick_upload.dart';
 import '../../health_records/data/metric_repository.dart';
 import '../../home/presentation/widgets/metric_record_sheet.dart';
+import '../../home/presentation/widgets/manual_reminder_sheet.dart';
 import '../data/member_repository.dart';
 import '../providers/current_member_provider.dart';
 import '../providers/member_provider.dart';
@@ -142,8 +143,7 @@ class _ProfileContent extends ConsumerWidget {
                 documentCount: summary.documents.length,
                 metricCount: summary.metrics.length,
                 onSetCurrent: onSetCurrent,
-                onCreateEvent: () =>
-                    _setCurrentAndGo(ref, context, '/events/new'),
+                onCreateEvent: () => _openManualReminderPanel(ref, context),
                 onUploadDocument: () => _pickAndUploadDocument(ref, context),
                 onRecordMetric: () => _openMetricRecordPanel(ref, context),
               ),
@@ -182,6 +182,40 @@ class _ProfileContent extends ConsumerWidget {
   void _setCurrentAndGo(WidgetRef ref, BuildContext context, String path) {
     ref.read(currentMemberIdProvider.notifier).state = summary.member.id;
     context.push(path);
+  }
+
+  void _openManualReminderPanel(WidgetRef ref, BuildContext context) {
+    ref.read(currentMemberIdProvider.notifier).state = summary.member.id;
+    showModalBottomSheet<HealthEvent>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.42),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppStyles.radiusXl)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppStyles.radiusXl),
+            ),
+            child: SizedBox(
+              height: MediaQuery.of(ctx).size.height * 0.73,
+              child: ManualReminderSheet(
+                onCreated: (_) => ref.invalidate(
+                  memberProfileSummaryProvider(summary.member.id),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _openFullArchive(WidgetRef ref, BuildContext context) {
@@ -373,6 +407,7 @@ class _OverviewCard extends StatelessWidget {
                 child: _QuickAction(
                   icon: Icons.notification_add_rounded,
                   label: '新建提醒',
+                  primary: true,
                   onTap: onCreateEvent,
                 ),
               ),
@@ -643,23 +678,46 @@ class _QuickAction extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.primary = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool primary;
 
   @override
   Widget build(BuildContext context) {
+    final textColor = primary ? Colors.white : AppColors.textPrimary;
+    final iconColor = primary ? Colors.white : MemberProfileScreen._green;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppStyles.radiusM),
       child: Container(
-        height: AppStyles.minTouchTarget,
+        height: 44,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: primary ? null : Colors.white,
+          gradient: primary
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF34C58A),
+                    Color(0xFF16995C),
+                  ],
+                )
+              : null,
           borderRadius: BorderRadius.circular(AppStyles.radiusM),
-          border: Border.all(color: MemberProfileScreen._line),
+          border: primary ? null : Border.all(color: MemberProfileScreen._line),
+          boxShadow: primary
+              ? [
+                  BoxShadow(
+                    color: AppColors.mintDeep.withValues(alpha: 0.22),
+                    blurRadius: 16,
+                    offset: const Offset(0, AppStyles.spacingS),
+                  ),
+                ]
+              : null,
         ),
         child: FittedBox(
           fit: BoxFit.scaleDown,
@@ -668,13 +726,13 @@ class _QuickAction extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: MemberProfileScreen._green, size: 20),
+                Icon(icon, color: iconColor, size: 20),
                 const SizedBox(width: AppStyles.spacingS),
                 Text(
                   label,
                   style: AppStyles.footnote.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: textColor,
                   ),
                 ),
               ],
@@ -1117,32 +1175,28 @@ class _FullArchiveButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppStyles.radiusM),
       child: Container(
-        height: AppStyles.listRowHeight,
+        height: 44,
         padding: const EdgeInsets.symmetric(horizontal: AppStyles.spacingM),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppStyles.radiusM),
-          gradient: const LinearGradient(
-            colors: [Color(0xFFF7FFFB), Color(0xFFEFFAF5)],
-          ),
-          border: Border.all(color: const Color(0xFFDDEFE7)),
+          color: Colors.white,
+          border: Border.all(color: AppColors.mintDeep),
         ),
-        child: const Row(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.source_rounded, color: MemberProfileScreen._green),
-            SizedBox(width: AppStyles.spacingS),
-            Expanded(
-              child: Text(
-                '查看完整健康档案',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
+            const Icon(
+              Icons.source_rounded,
+              color: AppColors.mintDeep,
+              size: 20,
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: MemberProfileScreen._green,
+            const SizedBox(width: AppStyles.spacingS),
+            Text(
+              '查看完整健康档案',
+              style: AppStyles.subhead.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.mintDeep,
+              ),
             ),
           ],
         ),

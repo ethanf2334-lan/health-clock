@@ -250,11 +250,19 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
           const SizedBox(height: 16),
           TextField(
             controller: _titleController,
+            style: AppStyles.subhead.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
             decoration: const InputDecoration(labelText: '标题（可选）'),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _hospitalController,
+            style: AppStyles.subhead.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
             decoration: const InputDecoration(labelText: '医院名称（可选）'),
           ),
           const SizedBox(height: 16),

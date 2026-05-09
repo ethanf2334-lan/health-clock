@@ -190,6 +190,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           TextField(
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
+                            style: AppStyles.subhead.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
                             decoration: _fieldDecoration(
                               hint: '请输入手机号',
                               prefixIcon: Icon(
@@ -207,6 +211,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 child: TextField(
                                   controller: _codeController,
                                   keyboardType: TextInputType.number,
+                                  style: AppStyles.subhead.copyWith(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                   decoration: _fieldDecoration(
                                     hint: '请输入验证码',
                                     prefixIcon: Icon(
